@@ -7,8 +7,18 @@ pub fn compile(name: &String) {
 
     let main_app = collect_gen(app.clone(), "app {".to_string(),
         0, "}");
+
+    let mut js = String::new();
+    let split = main_app.split("\n");
+
+    for s in split {
+        if s != "<html>" {
+            js = format!("{}\n{}", js, s);
+        } else { break }
+    }
+
     let html = collect_gen(main_app, "<html>".to_string(),
                            0, "<html/>");
 
-    println!("{}", html);
+    println!("{}---{}", html, js);
 }

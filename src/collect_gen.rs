@@ -1,25 +1,26 @@
 pub fn collect_gen(toks: String, keyword: String, found_id: usize, end: &str) -> String {
     let splited_v = toks.split("\n").collect::<Vec<&str>>();
+    //println!("{:?}", splited_v);
     let mut lines: Vec<&str> = vec![];
     let mut _idx = 0;
 
     for (si, spl) in splited_v.clone().into_iter().enumerate() {
+        let t = spl.trim();
 
         if spl.len() >= found_id + keyword.len() {
 
-
-            println!("{} - {}", &spl.trim(), keyword);
-
-            if spl[found_id..found_id + keyword.len()].trim() == keyword.as_str() {
-
+            if &t[found_id..found_id + keyword.len()] == keyword.as_str() {
                 for spl in &splited_v.clone()[si + 1..splited_v.len() - 1] {
+
+                   // println!("{:?} {:?}", &spl.trim(), lines);
 
                     if spl == &"" {
                         continue
                     }
 
-                    while spl.trim() != end {
-                        lines.push(spl);
+
+                    while t != end {
+                        lines.push(spl.trim());
                         break;
                     }
                 }
@@ -32,17 +33,10 @@ pub fn collect_gen(toks: String, keyword: String, found_id: usize, end: &str) ->
 }
 
 pub fn concat_lines_exponent0(lines: Vec<&str>) -> String {
-    let mut idx = 0;
     let mut result = String::new();
-    let len = lines.len() - 1;
 
     for l in lines.iter() {
-        if idx == len {
-            result = format!("{}{}", result, l);
-        } else {
-            result = format!("{}\n{}", result, l)
-        }
-        idx += 1
+        result = format!("{}\n{}", result, l);
     }
     return result;
 }
