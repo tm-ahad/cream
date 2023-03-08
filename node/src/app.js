@@ -1,9 +1,13 @@
 
 app {
-    let hello = <h1>Hello World<h1/>
+    let count = 0;
+    let a = 9;
+
+    a = count.single()
+    count += 1
 
     <html>
-        <div>Hello World<div/>
+        <p id='count'><p>
+        <button onclick="act()"><button>
     <html/>
-
 }
