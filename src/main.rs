@@ -4,6 +4,8 @@ mod compiler;
 mod state_base;
 mod state;
 mod std_err;
+mod browser_;
+mod component;
 
 use std::env;
 use std::fs::read_to_string;

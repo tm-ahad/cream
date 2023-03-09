@@ -1,7 +1,6 @@
 
 const utilRandomNumber = () => {
-    	let first = Math.round(Math.random()*seed)
-    	console.log("---------------------------------\n", first)
+    let first = Math.round(Math.random()*seed)
 
     let i = 0
     let newd = Math.round(Math.random()*seed)

@@ -1,3 +1,4 @@
+use crate::browser_::browser_objects;
 use crate::collect_gen::concat_lines_exponent0;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::SyntaxError;
@@ -54,7 +55,18 @@ pub fn _state(js: String, b: &mut _StateBase) -> String {
                     b.parse(c.clone());
 
                     lines.push(b.parse.clone());
-                    lines.push(format!("update{}({})",c, ac))
+                    let mut f = true;
+
+                    for s in browser_objects() {
+                        if li.contains(s) {
+                            f = false;
+                            lines.push(format!("update{}({})",c, c))
+                        }
+                    }
+
+                    if f {
+                        lines.push(format!("update{}({})",c, ac))
+                    }
                 }
                 else if li.starts_with("const")
                     || li.starts_with("let")

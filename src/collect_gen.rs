@@ -1,3 +1,4 @@
+
 pub fn collect_gen(toks: String, keyword: String, found_id: usize, end: &str) -> String {
     let splited_v = toks.split("\n").collect::<Vec<&str>>();
     //println!("{:?}", splited_v);
@@ -36,6 +37,9 @@ pub fn concat_lines_exponent0(lines: Vec<String>) -> String {
     let mut result = String::new();
 
     for l in lines.iter() {
+        if l.trim() == "" {
+            continue
+        }
         result = format!("{}\n{}", result, l);
     }
     return result;

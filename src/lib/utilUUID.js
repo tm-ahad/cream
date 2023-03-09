@@ -12,9 +12,13 @@ const hash = {
 }
 
 const utilUUID = () => {
-    let str = (Math.random()*10).toString()
+    let str = '$' + Math.random().toString()
 
-    for v in str {
+    for (let v in str) {
         str.replaceAll(v, hash[v])
     }
+
+    return str
 }
+
+export default utilUUID
