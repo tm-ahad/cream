@@ -1,4 +1,3 @@
-
 pub fn collect_gen(toks: String, keyword: String, found_id: usize, end: &str) -> String {
     let splited_v = toks.split("\n").collect::<Vec<&str>>();
     //println!("{:?}", splited_v);
@@ -9,16 +8,13 @@ pub fn collect_gen(toks: String, keyword: String, found_id: usize, end: &str) ->
         let t = spl.trim();
 
         if t.len() >= found_id + keyword.len() {
-
             if &t[found_id..found_id + keyword.len()] == keyword.as_str() {
                 for spl in &splited_v.clone()[si + 1..splited_v.len() - 1] {
-
-                   // println!("{:?} {:?}", &spl.trim(), lines);
+                    // println!("{:?} {:?}", &spl.trim(), lines);
 
                     if spl == &"" {
-                        continue
+                        continue;
                     }
-
 
                     while t != end {
                         lines.push(spl.trim().to_string());
@@ -38,7 +34,7 @@ pub fn concat_lines_exponent0(lines: Vec<String>) -> String {
 
     for l in lines.iter() {
         if l.trim() == "" {
-            continue
+            continue;
         }
         result = format!("{}\n{}", result, l);
     }

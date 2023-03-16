@@ -3,6 +3,7 @@ use crate::collect_gen::concat_lines_exponent0;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::SyntaxError;
 use crate::std_err::StdErr;
+use serde_json::Value;
 
 pub fn _state(js: String, b: &mut _StateBase) -> String {
     let spl = js.split("\n").collect::<Vec<&str>>();
@@ -14,81 +15,89 @@ pub fn _state(js: String, b: &mut _StateBase) -> String {
 
         match li.find("=") {
             Some(a) => {
-                let arth: [&str; 12] = ["+=", "-=", "*=", "^=", "|=", "&&=",
-                    "||=", "^=", "~=", "<<=", ">>=", ">>>="];
+                let arth: [&str; 12] = [
+                    "+=", "-=", "*=", "^=", "|=", "&&=", "||=", "^=", "~=", "<<=", ">>=", ">>>=",
+                ];
 
+                let name = &li[..a - 1];
 
-                let name = &li[..a-1];
+                if arth.contains(&&li[a - 1..a + 1]) && !li.ends_with(".single()") {
+                    let c = &li[a + 1..li.len()];
 
-                if arth.contains(&&li[a-1..a+1]) && !li.ends_with(".single()") {
-                    let mut bored: bool = true;
+                    match serde_json::from_str::<Value>(c) {
+                        Err(_) if !(c.starts_with("`") && c.ends_with("`")) => {
+                            let mut bored: bool = true;
 
-                    let mut l = li.to_string();
+                            let mut l = li.to_string();
 
-                    let backup: String = l.clone();
-                    l.replace_range(a..a+1 , "");
+                            let backup: String = l.clone();
+                            l.replace_range(a..a + 1, "");
 
-                    v = l.as_str();
-                    li = &v;
+                            v = l.as_str();
+                            li = &v;
 
-                    for l in b.map.clone() {
+                            for l in b.map.clone() {
+                                if l.0 == name.trim() {
+                                    bored = false;
+                                    lines.push(format!("update{}({})", name, li));
+                                }
+                            }
 
-                        if l.0 == name.trim() {
-                            bored = false;
-                            lines.push(format!("update{}({})", name, li));
+                            if bored {
+                                lines.push(backup)
+                            }
                         }
+                        _ => lines.push(li.to_string()),
                     }
-
-                    if bored {
-                        lines.push(backup)
-                    }
-                }
-                else if &li[a..a+1] == "=" && !(li.starts_with("const")
-                    || li.starts_with("let")
-                    || li.starts_with("var")) && !li.ends_with(".single()") {
-
+                } else if &li[a..a + 1] == "="
+                    && !(li.starts_with("const") || li.starts_with("let") || li.starts_with("var"))
+                    && !li.ends_with(".single()")
+                {
                     let len = li.len();
-                    let c = li[a+1..len].trim().to_string();
-                    let ac = &li[0..a].trim();
+                    let c = li[a + 1..len].trim().to_string();
 
-                    b._set(c.clone(),li[..a].trim().to_string());
-                    b.parse(c.clone());
+                    match serde_json::from_str::<Value>(&*c.clone()) {
+                        Err(_) => {
+                            let ac = &li[0..a].trim();
 
-                    lines.push(b.parse.clone());
-                    let mut f = true;
+                            b._set(c.clone(), li[..a].trim().to_string());
+                            b.parse(c.clone());
 
-                    for s in browser_objects() {
-                        if li.contains(s) {
-                            f = false;
-                            lines.push(format!("update{}({})",c, c))
+                            lines.push(b.parse.clone());
+                            let mut f = true;
+
+                            for s in browser_objects() {
+                                if li.contains(s) {
+                                    f = false;
+                                    lines.push(format!("update{}({})", c, c))
+                                }
+                            }
+
+                            if f {
+                                lines.push(format!("update{}({})", c, ac))
+                            }
                         }
+                        Ok(_) => lines.push(li.to_string()),
                     }
-
-                    if f {
-                        lines.push(format!("update{}({})",c, ac))
-                    }
-                }
-                else if li.starts_with("const")
+                } else if li.starts_with("const")
                     || li.starts_with("let")
                     || li.starts_with("var")
-                    || li.ends_with(".single()") {
-
+                    || li.ends_with(".single()")
+                {
                     lines.push(li.to_string())
-                }
-                else {
+                } else {
                     let err = StdErr::new(SyntaxError, "Invalid Operator");
 
                     err.exec()
                 }
 
-                continue
+                continue;
             }
             None => {
                 lines.push(li.parse().unwrap());
             }
         }
-
     }
 
-    return concat_lines_exponent0(lines)
+    return concat_lines_exponent0(lines);
 }

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./main.js"></script>
+</head>
+<body>
+    
+
+    <script>
+    
+var Route = {"/app":"\n\n\n\nHello World\n<script>\n\n\nconsole.log(\"Hello9\")\n</script>\n    \n<script>\n\n\n<script>\n    "}
+function main() {
+        for (let k in Route) {
+            if (window.location.pathname == k) {
+                document.body.innerHTML = Route[k]
+                window.history.pushState({}, "", k)
+            }
+        }
+    }
+
+    main()
+                
+    </script>
+</body>
+</html>

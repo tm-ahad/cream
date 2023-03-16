@@ -1,15 +1,14 @@
-
 #[derive(Debug)]
 pub struct _StateBase {
     pub map: Vec<(String, Vec<String>)>,
-    pub parse: String
+    pub parse: String,
 }
 
 impl _StateBase {
     pub fn new() -> _StateBase {
         _StateBase {
             map: vec![],
-            parse: String::new()
+            parse: String::new(),
         }
     }
 
@@ -30,13 +29,11 @@ impl _StateBase {
         }
     }
 
-    pub fn parse(&mut self, key:String) {
-
+    pub fn parse(&mut self, key: String) {
         for l in &self.map {
             if l.0 == key {
-
                 let mut p = format!("function update{}(v) ", l.0);
-                p.push_str( "{\n   ");
+                p.push_str("{\n   ");
                 p.push_str(format!("{}=v\n", l.0).as_str());
 
                 for vls in &l.1 {
@@ -46,9 +43,6 @@ impl _StateBase {
 
                 self.parse = p
             }
-
         }
-
     }
-
 }
