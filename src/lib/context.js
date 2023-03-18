@@ -1,4 +1,3 @@
-
  class Context {
     map
 
@@ -11,3 +10,5 @@
         this.map[name](for_)
     }
  }
+
+ export default Context;

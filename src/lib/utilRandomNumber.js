@@ -1,4 +1,3 @@
-
 const utilRandomNumber = () => {
     let first = Math.round(Math.random()*seed)
 
