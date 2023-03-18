@@ -10,9 +10,12 @@
 <body>
     
 
+<p id=" H">$value</p>
+<p><p/>
     <script>
     
-var Route = {"/app":"\n\n\n\nHello World\n<script>\n\n\nconsole.log(\"Hello9\")\n</script>\n    \n<script>\n\n\n<script>\n    "}
+let value = 3
+var Route = {"/app":"\n\n\n\nHello World\n<script>\n\n\nconsole.log(\"Hello9\")\n<script>\n    \n<script>\n\n\n<script>\n    "}
 function main() {
         for (let k in Route) {
             if (window.location.pathname == k) {
@@ -24,6 +27,7 @@ function main() {
 
     main()
                 
+document.getElementById(" H").innerText=value
     </script>
 </body>
 </html>

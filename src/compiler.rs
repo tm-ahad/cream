@@ -8,6 +8,7 @@ use crate::std_err::StdErr;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{self, read_to_string};
+use crate::template::template;
 
 pub fn compile(name: &String, mut state: _StateBase) {
     let app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
@@ -212,6 +213,8 @@ pub fn compile(name: &String, mut state: _StateBase) {
             }
         }
     }
+
+    js = template(comp_html.clone(), js.clone());
 
 
     fs::write(

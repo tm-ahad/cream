@@ -75,7 +75,6 @@ pub fn component(p_name: &String, f_name: String, c_name: String) -> Component {
             }
         }
     }
-    println!("{}", html);
 
     return Component {
         js,

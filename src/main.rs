@@ -6,6 +6,7 @@ mod new;
 mod state;
 mod state_base;
 mod std_err;
+mod template;
 
 use crate::state_base::_StateBase;
 use compiler::compile;
@@ -15,6 +16,7 @@ use std::os::unix::process::CommandExt;
 use std::process::Command;
 
 fn main() {
+
     let args = env::args().collect::<Vec<String>>();
     let state_base = _StateBase::new();
 
