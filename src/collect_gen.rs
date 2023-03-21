@@ -9,8 +9,6 @@ pub fn collect_gen(toks: String, keyword: String, found_id: usize, end: &str) ->
         if t.len() >= found_id + keyword.len() {
             if &t[found_id..found_id + keyword.len()] == keyword.as_str() {
                 for spl in &splited_v.clone()[si + 1..splited_v.len() - 1] {
-                    // println!("{:?} {:?}", &spl.trim(), lines);
-
                     if spl == &"" {
                         continue;
                     }

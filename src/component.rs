@@ -9,8 +9,7 @@ pub struct Component {
 }
 
 pub fn component(p_name: &String, f_name: String, c_name: String) -> Component {
-    let path = format!("./{}/src/{}", p_name, f_name)
-        .replace("\"", "");
+    let path = format!("./{}/src/{}", p_name, f_name).replace("\"", "");
 
     let app = read_to_string(path).expect("file not found");
     let mut imports: Vec<Component> = vec![];
@@ -49,7 +48,7 @@ pub fn component(p_name: &String, f_name: String, c_name: String) -> Component {
                 namei += 1;
             }
 
-            while &app[ci..ci+1] != "\n" {
+            while &app[ci..ci + 1] != "\n" {
                 fnm.push(app.chars().nth(ci).unwrap());
                 ci += 1
             }
@@ -66,7 +65,6 @@ pub fn component(p_name: &String, f_name: String, c_name: String) -> Component {
         if html.contains(m.clone()) {
             for i in &imports {
                 if i.name == n {
-
                     match html.find(m.clone()) {
                         Some(e) => html.replace_range(e..m.len() + 1, &*parse(i)),
                         _ => {}

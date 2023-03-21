@@ -1,14 +1,15 @@
 use crate::collect_gen::collect_gen;
 use crate::component::Component;
 use crate::component::{component, parse};
+use crate::scope::scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::SyntaxError;
 use crate::std_err::StdErr;
+use crate::template::template;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{self, read_to_string};
-use crate::template::template;
 
 pub fn compile(name: &String, mut state: _StateBase) {
     let app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
@@ -90,6 +91,12 @@ pub fn compile(name: &String, mut state: _StateBase) {
         }
     }
 
+    let scoope = scope(comp_html.clone(), js.clone());
+
+    js = scoope.0;
+    comp_html = scoope.1;
+
+    js = template(comp_html.clone(), js.clone());
     js = _state(js.clone(), &mut state);
 
     js = js.replace(".single()", "");
@@ -106,25 +113,36 @@ pub fn compile(name: &String, mut state: _StateBase) {
                     idx += 1
                 }
 
-                let json = &comp_html[a+14..idx + 1];
+                let json = &comp_html[a + 14..idx + 1];
 
                 match serde_json::from_str::<Value>(json) {
                     Ok(a) => {
-                        let obj = a.as_object()
-                            .unwrap();
+                        let obj = a.as_object().unwrap();
 
                         let mut map = Map::new();
 
                         for (key, val) in obj {
                             let s = val.as_str().unwrap();
-                            map.insert(key.clone(), Value::String(parse(&component(name, s.to_string(),
-                                                                                  "Render".to_string()))));
+                            map.insert(
+                                key.clone(),
+                                Value::String(parse(&component(
+                                    name,
+                                    s.to_string(),
+                                    "Render".to_string(),
+                                ))),
+                            );
                         }
 
-                        js = format!("{}\n{}", js, format!("var Route = {}", serde_json::to_string::<Value>
-                            (&Value::Object(map)).unwrap()));
+                        js = format!(
+                            "{}\n{}",
+                            js,
+                            format!(
+                                "var Route = {}",
+                                serde_json::to_string::<Value>(&Value::Object(map)).unwrap()
+                            )
+                        );
                     }
-                    Err(_) => panic!("Can't evern parse njsion in ohio")
+                    Err(_) => panic!("Can't evern parse njsion in ohio"),
                 }
 
                 js = format!(
@@ -143,7 +161,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                 "
                 );
 
-                comp_html.replace_range(a..idx+2, "")
+                comp_html.replace_range(a..idx + 2, "")
             } else {
                 let mut idx = a + 14;
 
@@ -154,25 +172,34 @@ pub fn compile(name: &String, mut state: _StateBase) {
                 let name_ = comp_html[a + 14..idx].trim();
                 let binding: Value;
 
-
                 match router_hash.get(name_) {
                     Some(a) => {
-                        binding = serde_json::from_str::<Value>(a)
-                            .unwrap();
+                        binding = serde_json::from_str::<Value>(a).unwrap();
 
-                        let obj = binding.as_object()
-                            .unwrap();
+                        let obj = binding.as_object().unwrap();
 
                         let mut map = Map::new();
 
                         for (key, val) in obj {
                             let s = val.as_str().unwrap();
-                            map.insert(key.clone(), Value::String(parse(&component(name, s.to_string(),
-                                                                                  "Render".to_string()))));
+                            map.insert(
+                                key.clone(),
+                                Value::String(parse(&component(
+                                    name,
+                                    s.to_string(),
+                                    "Render".to_string(),
+                                ))),
+                            );
                         }
 
-                        js = format!("{}\n{}", js, format!("var Route = {}", serde_json::to_string::<Value>
-                            (&Value::Object(map)).unwrap()));
+                        js = format!(
+                            "{}\n{}",
+                            js,
+                            format!(
+                                "var Route = {}",
+                                serde_json::to_string::<Value>(&Value::Object(map)).unwrap()
+                            )
+                        );
                     }
                     _ => {}
                 }
@@ -193,7 +220,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                 "
                 );
 
-                comp_html.replace_range(a..idx+2 , "");
+                comp_html.replace_range(a..idx + 2, "");
             }
         }
     }
@@ -213,9 +240,6 @@ pub fn compile(name: &String, mut state: _StateBase) {
             }
         }
     }
-
-    js = template(comp_html.clone(), js.clone());
-
 
     fs::write(
         format!("./{}/build/index.html", name),
