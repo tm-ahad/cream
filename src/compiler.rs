@@ -95,12 +95,14 @@ pub fn compile(name: &String, mut state: _StateBase) {
 
     js = scoope.0;
     comp_html = scoope.1;
+    println!("{}", js);
 
     js = template(comp_html.clone(), js.clone());
     js = _state(js.clone(), &mut state);
 
     js = js.replace(".single()", "");
 
+    #[allow(unused_assignments)]
     let mut fail: String = String::new();
 
     match comp_html.find("<Router route=") {
