@@ -1,12 +1,10 @@
 use std::string::String;
+use crate::state_base::_StateBase;
 
 pub struct Pair(pub String, pub String);
 
-impl Pair {
-    pub fn new() -> Self { Pair(String::new(), String::new())  }
-}
+pub fn scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
 
-pub fn scope(mut html: String, mut js: String) -> Pair {
     while html.contains("{") && html.contains("}") {
          match html.find("{") {
             Some(a) => {
@@ -33,7 +31,7 @@ pub fn scope(mut html: String, mut js: String) -> Pair {
                             zig += 1
                         }
 
-                        while &fin[vend..vend+1] != " " {
+                        while &fin[vend..vend+1] != " " && &fin[vend..vend+1] != "`" {
                             vend += 1
                         }
 
@@ -80,13 +78,13 @@ pub fn scope(mut html: String, mut js: String) -> Pair {
                                     ))
                                 }
                                 changer.push_str(&*format!(
-                                    "document.getElementById({:?}){}={};",
+                                    "document.getElementById({:?}).innerHTML{}={};",
                                     id, c, val
                                 ));
 
                                 if !end.is_empty() {
                                     changer.push_str(&*format!(
-                                        "document.getElementById({:?}){}={:?};",
+                                        "document.getElementById({:?}).innerHTML{}={:?};",
                                         id, c, end
                                     ))
                                 }
@@ -99,14 +97,19 @@ pub fn scope(mut html: String, mut js: String) -> Pair {
                                 js = format!("{js}\n{cn}");
                                 let mut yu = html.clone();
 
+                                st._set(val.to_string(), format!(
+                                    "document.getElementById({:?}).innerHTML{}={:?};",
+                                    id, c, end
+                                ));
+
                                 yu.replace_range(a..f+2, "");
 
                                 Pair(js, yu)
                             }
-                            None => Pair::new()
+                            None =>  return Pair(js, html)
                         }
                     }
-                    None => return Pair::new()
+                    None => return Pair(js, html)
                 }
             }
 
@@ -114,5 +117,7 @@ pub fn scope(mut html: String, mut js: String) -> Pair {
         }
     }
 
-    Pair::new()
+
+
+    Pair(js, html)
 }

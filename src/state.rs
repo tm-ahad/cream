@@ -3,6 +3,7 @@ use crate::collect_gen::concat_lines_exponent0;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::SyntaxError;
 use crate::std_err::StdErr;
+use std::string::String;
 use serde_json::Value;
 
 pub fn _state(js: String, b: &mut _StateBase) -> String {
@@ -10,22 +11,23 @@ pub fn _state(js: String, b: &mut _StateBase) -> String {
     let mut lines: Vec<String> = vec![];
 
     for mut li in spl.iter() {
-        #[allow(unused_assignments)]
-        let mut v: &str = "";
 
         match li.find("=") {
             Some(a) => {
                 let arth: [&str; 12] = [
                     "+=", "-=", "*=", "^=", "|=", "&&=", "||=", "^=", "~=", "<<=", ">>=", ">>>=",
                 ];
+                let big_brain = &li[..a].split(" ").collect::<Vec<&str>>();
 
-                let name = &li[..a - 1];
+                let v;
+                let name = big_brain.last().unwrap();
 
                 if arth.contains(&&li[a - 1..a + 1]) && !li.ends_with(".single()") {
-                    let c = &li[a + 1..li.len()];
+                    let c = &li[a + 1..].split(";").collect::<Vec<&str>>()[0];
 
                     match serde_json::from_str::<Value>(c) {
                         Err(_) if !(c.starts_with("`") && c.ends_with("`")) => {
+
                             let mut bored: bool = true;
 
                             let mut l = li.to_string();
@@ -61,7 +63,7 @@ pub fn _state(js: String, b: &mut _StateBase) -> String {
                             let ac = &li[0..a].trim();
 
                             b._set(c.clone(), li[..a].trim().to_string());
-                            b.parse(c.clone());
+                            b.parse(c.clone(), String::new());
 
                             lines.push(b.parse.clone());
                             let mut f = true;

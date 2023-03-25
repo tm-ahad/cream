@@ -12,39 +12,47 @@ use std::collections::HashMap;
 use std::fs::{self, read_to_string};
 
 pub fn compile(name: &String, mut state: _StateBase) {
-    let app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
+    let mut app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
+    let mut fail = String::new();
 
     let mut router_hash: HashMap<String, String> = HashMap::new();
 
-    let main_app = collect_gen(app.clone(), "app {".to_string(), 0, "}");
+    let main_app = collect_gen(app.clone(), "app{".to_string(), 0, "}");
 
     let mut js = String::new();
     let split = main_app.split("\n");
 
-    match app.find("import component") {
-        None => {}
-        Some(e) => {
-            let mut namei = e + 17;
-            let mut ci = e + 30;
-            let mut cn: String = String::new();
-            let mut fnm: String = String::new();
+    while app.contains("import component") {
+        match app.find("import component") {
+            None => {}
+            Some(e) => {
+                let mut namei = e + 17;
+                let mut ci = e + 30;
+                let mut cn: String = String::new();
+                let mut fnm: String = String::new();
 
-            while &app[namei..namei + 4] != "from" {
-                cn.push(app.chars().nth(namei).unwrap());
-                namei += 1;
+                while &app[namei..namei + 4] != "from" {
+                    cn.push(app.chars().nth(namei).unwrap());
+                    namei += 1;
+                }
+
+                while &app[ci..ci + 1] != "\n" {
+                    fnm.push(app.chars().nth(ci).unwrap());
+                    ci += 1
+                }
+
+                names.push(app[e + 16..namei].trim().to_string());
+                imports.push(component(name, fnm.to_string(), cn.trim().to_string(),
+                                       &mut state));
+
+
+                app.replace_range(e..ci+1, "")
             }
-
-            while &app[ci..ci + 1] != "\n" {
-                fnm.push(app.chars().nth(ci).unwrap());
-                ci += 1
-            }
-
-            names.push(app[e + 16..namei].trim().to_string());
-            imports.push(component(name, fnm.to_string(), cn.trim().to_string()));
         }
     }
+
 
     for s in split {
         if s != "<html>" {
@@ -55,6 +63,24 @@ pub fn compile(name: &String, mut state: _StateBase) {
     }
 
     let mut comp_html = collect_gen(main_app, "<html>".to_string(), 0, "</html>");
+
+    while app.contains("import lib:") {
+        match app.find("import lib:") {
+            None => {}
+            Some(e) => {
+                let mut ci = e + 9;
+
+                while &app[ci..ci + 1] != "\n" {
+                    ci += 1
+                }
+
+                comp_html = format!("{comp_html}\n<script type=\"modules\" src=\"./lib/{}\"></script>",
+                    &app[e+9..ci+1]);
+
+                app.replace_range(e..ci+1, "")
+            }
+        }
+    }
 
     while js.find("Router") != None {
         match js.find("Router") {
@@ -91,19 +117,18 @@ pub fn compile(name: &String, mut state: _StateBase) {
         }
     }
 
-    let scoope = scope(comp_html.clone(), js.clone());
+    js = _state(js.clone(), &mut state);
+    let scoope = scope(comp_html.clone(), js.clone(), &mut state);
 
     js = scoope.0;
     comp_html = scoope.1;
-    println!("{}", js);
 
-    js = template(comp_html.clone(), js.clone());
-    js = _state(js.clone(), &mut state);
+    let caught = template(comp_html, js.clone());
+
+    js = caught.1;
+    comp_html = caught.0;
 
     js = js.replace(".single()", "");
-
-    #[allow(unused_assignments)]
-    let mut fail: String = String::new();
 
     match comp_html.find("<Router route=") {
         None => {}
@@ -131,6 +156,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                                     name,
                                     s.to_string(),
                                     "Render".to_string(),
+                                    &mut state
                                 ))),
                             );
                         }
@@ -190,6 +216,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                                     name,
                                     s.to_string(),
                                     "Render".to_string(),
+                                    &mut state
                                 ))),
                             );
                         }
@@ -230,12 +257,14 @@ pub fn compile(name: &String, mut state: _StateBase) {
     for n in names {
         fail = format!("<{}/>", n);
         let m = fail.as_str();
-
         if comp_html.contains(m.clone()) {
             for i in &imports {
                 if i.name == n {
                     match comp_html.find(m.clone()) {
-                        Some(e) => comp_html.replace_range(e..m.len() + 1, ""),
+                        Some(e) => {
+                            comp_html.replace_range(e..m.len() + 1, &*i.html);
+                            js = format!("{js}\n{}", i.js);
+                        },
                         _ => {}
                     }
                 }
@@ -253,11 +282,10 @@ pub fn compile(name: &String, mut state: _StateBase) {
     <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">
     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
     <title>Document</title>
-    <script src=\"./main.js\"></script>
 </head>
 <body>
     {comp_html}
-    <script>
+    <script type=\"modules\">
     {js}
     </script>
 </body>

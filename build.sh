@@ -1,3 +1,3 @@
-cargo build --release
+RUSTFLAGS="$RUSTFLAGS -A dead_code" cargo build --release
 cp ./target/release/nts ./ntc
-./ntc build my+project
+./ntc build prac
