@@ -10,6 +10,7 @@ use crate::template::template;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{self, read_to_string};
+use crate::at_html::at_html;
 
 pub fn compile(name: &String, mut state: _StateBase) {
     let mut app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
@@ -117,16 +118,21 @@ pub fn compile(name: &String, mut state: _StateBase) {
         }
     }
 
-    js = _state(js.clone(), &mut state);
-    let scoope = scope(comp_html.clone(), js.clone(), &mut state);
+    let ht = at_html(comp_html.clone(), js.clone());
 
-    js = scoope.0;
-    comp_html = scoope.1;
+    comp_html = ht.0;
+    js = ht.1;
 
     let caught = template(comp_html, js.clone());
 
     js = caught.1;
     comp_html = caught.0;
+
+    js = _state(js.clone(), &mut state);
+    let scoope = scope(comp_html.clone(), js.clone(), &mut state);
+
+    js = scoope.0;
+    comp_html = scoope.1;
 
     js = js.replace(".single()", "");
 
@@ -285,7 +291,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
 </head>
 <body>
     {comp_html}
-    <script type=\"modules\">
+    <script type=\"module\">
     {js}
     </script>
 </body>

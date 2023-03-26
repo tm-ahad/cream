@@ -63,6 +63,7 @@ pub fn _state(js: String, b: &mut _StateBase) -> String {
                             let ac = &li[0..a].trim();
 
                             b._set(c.clone(), li[..a].trim().to_string());
+
                             b.parse(c.clone(), String::new());
 
                             lines.push(b.parse.clone());

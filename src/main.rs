@@ -8,6 +8,7 @@ mod state;
 mod state_base;
 mod std_err;
 mod template;
+mod at_html;
 
 use crate::state_base::_StateBase;
 use compiler::compile;

@@ -6,7 +6,8 @@ pub fn new(name: &String) {
     fs::create_dir(format!("./{}/src", name)).expect("Creating dir not allowed");
     fs::create_dir(format!("./{}/build", name)).expect("Cannot create dir!");
 
-    fs::rename("./src/lib", format!("./{}/lib", name)).expect("Can't even move dir in ohio");
+    fs::rename("./lib", format!("./{}/lib", name)).expect("Can't even move dir in ohio");
+    fs::rename(format!("./{}/lib", name), "./lib").expect("Can't even move dir in ohio");
 
     let mut f = File::create(format!("./{}/src/app.js", name)).expect("Cannot create file");
 
