@@ -1,5 +1,6 @@
 use crate::collect_gen::collect_gen;
 use std::fs::read_to_string;
+use crate::at_html::at_html;
 use crate::scope::scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
@@ -43,13 +44,16 @@ pub fn component(p_name: &String, f_name: String, c_name: String, mut st: &mut _
     js = caught.1;
     html = caught.0;
 
-    println!("{html}");
+    let ht = at_html(html.clone(), js.clone());
 
+    html = ht.0;
+    js = ht.1;
+
+    js = _state(js.clone(), st);
     let catch = scope(html.clone(), js.clone(), st);
 
     js = catch.0;
     html = catch.1;
-    js = _state(js.clone(), st);
 
     js = js.replace(".single()", "");
 
