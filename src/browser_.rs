@@ -216,5 +216,5 @@ pub fn browser_objects<'a>() -> [&'a str; 214] {
         "top",
     ];
 
-    return res;
+    res
 }
