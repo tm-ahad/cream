@@ -11,7 +11,6 @@ pub fn _state(js: String, b: &mut _StateBase) -> String {
     let mut lines: Vec<String> = vec![];
 
     for mut li in spl.iter() {
-
         match li.find("=") {
             Some(a) => {
                 let arth: [&str; 12] = [

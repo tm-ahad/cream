@@ -4,7 +4,9 @@ use std::io::Write;
 pub fn new(name: &String) {
     fs::create_dir(format!("./{}", name)).expect("Creating dir not allowed");
     fs::create_dir(format!("./{}/src", name)).expect("Creating dir not allowed");
-    fs::create_dir(format!("./{}/build", name)).expect("Cannot create dir!");
+
+    fs::rename("./build/node", format!("./{}/build", name)).expect("Cannot create dir!");
+    fs::rename(format!("./{}/build", name), "./build/node").expect("Cannot create dir!");
 
     fs::rename("./lib", format!("./{}/lib", name)).expect("Can't even move dir in ohio");
     fs::rename(format!("./{}/lib", name), "./lib").expect("Can't even move dir in ohio");

@@ -1,7 +1,8 @@
 use crate::collect_gen::collect_gen;
 use std::fs::read_to_string;
+use rusty_v8::{ContextScope, HandleScope, Local, Script};
 use crate::at_html::at_html;
-use crate::scope::scope;
+use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
@@ -13,10 +14,11 @@ pub struct Component {
     pub name: String,
 }
 
-pub fn component(p_name: &String, f_name: String, c_name: String, mut st: &mut _StateBase) -> Component {
-    let path = format!("./{}/src/{}", p_name, f_name).replace("\"", "");
+pub fn component(p_name: &String, f_name: String, c_name: String, script: Local<Script>,
+    scope: &mut ContextScope<HandleScope>,
+    st: &mut _StateBase) -> Component {
 
-    let mut fail = String::new();
+    let path = format!("./{}/src/{}", p_name, f_name).replace("\"", "");
 
     let app = read_to_string(path).expect("file not found");
     let mut _imports: Vec<Component> = vec![];
@@ -39,7 +41,7 @@ pub fn component(p_name: &String, f_name: String, c_name: String, mut st: &mut _
     }
 
     let mut html = collect_gen(main_app, "<html>".to_string(), 0, "<html/>");
-    let caught = template(html, js.clone());
+    let caught = template(html, js.clone(), scope, st);
 
     js = caught.1;
     html = caught.0;
@@ -50,7 +52,7 @@ pub fn component(p_name: &String, f_name: String, c_name: String, mut st: &mut _
     js = ht.1;
 
     js = _state(js.clone(), st);
-    let catch = scope(html.clone(), js.clone(), st);
+    let catch = _scope(html.clone(), js.clone(), st);
 
     js = catch.0;
     html = catch.1;
@@ -77,9 +79,11 @@ pub fn component(p_name: &String, f_name: String, c_name: String, mut st: &mut _
 
             _names.push(app[e + 16..namei].trim().to_string());
             _imports.push(component(p_name, fnm.to_string(), cn.trim().to_string(),
-                                   &mut st));
+                script, scope, st));
         }
     }
+
+    let mut fail = String::new();
 
     for n in _names {
         fail = format!("<{}/>", n);

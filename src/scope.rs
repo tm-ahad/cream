@@ -3,10 +3,10 @@ use crate::state_base::_StateBase;
 
 pub struct Pair(pub String, pub String);
 
-pub fn scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
+pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
 
     while html.contains("{") && html.contains("}") {
-         match html.find("{") {
+        match html.find("{") {
             Some(a) => {
                 html.replace_range(a..a + 1, "");
                 let mut f = a;
@@ -15,15 +15,20 @@ pub fn scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                     f += 1
                 }
 
-                let fin = format!("\n{}\n", &html[a..f + 1]);
+                let mut fin = format!("{}", &html[a..f + 1]);
 
                 match fin.find("$") {
                     Some(au) => {
-                        let mut zig = au;
-                        let mut vend = au;
-
                         let mut pig = au;
-                        let mut cn = html[a..f+1].to_string();
+
+                        while &fin[pig..pig + 1] != "`" {
+                            pig -= 1
+                        }
+
+                        fin.insert(pig, ' ');
+
+                        let mut zig = au+1;
+                        let mut vend = au+1;
 
                         let mut idx = au;
 
@@ -35,12 +40,14 @@ pub fn scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                             vend += 1
                         }
 
-                        while &fin[pig..pig + 1] != "`" {
-                            pig -= 1
-                        }
-
                         let start = &fin[pig+1..au];
-                        let end = &fin[vend..zig];
+                        let  end = &fin[vend..zig];
+
+                        let mut op_end = pig;
+
+                        while &fin[op_end..op_end+1] != "{" {
+                            op_end -=1;
+                        }
 
                         while &html[idx..idx + 1] != " " {
                             idx += 1;
@@ -65,8 +72,9 @@ pub fn scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                                     init += 1
                                 }
 
-                                let c = &fin[pig-1..pig];
-                                let val = &fin[au+1..vend];
+                                let c = &fin[op_end+1..pig];
+
+                                let val = &fin[au+2..vend];
                                 let id = &html[b + 4..init];
 
                                 let mut changer = String::new();
@@ -89,8 +97,10 @@ pub fn scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                                     ))
                                 }
 
+                                let mut cn = fin.clone();
+
                                 cn.replace_range(
-                                    pig-2..zig,
+                                    pig+1..vend+1,
                                     changer.as_str()
                                 );
 
@@ -116,8 +126,6 @@ pub fn scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
             None => panic!("Ram fucked up ! "),
         }
     }
-
-
 
     Pair(js, html)
 }

@@ -23,7 +23,7 @@ fn main() {
 
     match args[1].as_str() {
         "new" => new(args.get(2).expect("Project name not provided")),
-        "build" => compile(args.get(2).expect("Project name not prvided"), state_base),
+        "build" => compile(args.get(2).expect("Project name not prvided"),state_base),
         "start" => {
             //compile(args.get(2).expect("Project name not provided"), state_base, );
             let mut comm = Command::new("./main");

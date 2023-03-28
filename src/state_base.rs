@@ -34,10 +34,10 @@ impl _StateBase {
             if l.0 == key {
                 let mut p = format!("function update{}(v) ", l.0);
                 p.push_str("{\n   ");
-                p.push_str(format!("{}=v\n{}", l.0, ext).as_str());
+                p.push_str(format!("{}=v{}\n", l.0, ext).as_str());
 
                 for vls in &l.1 {
-                    p.push_str(format!("   {}=v\n{}", vls, ext).as_str())
+                    p.push_str(format!("   {}=v{}\n", vls, ext).as_str())
                 }
                 p.push_str("}");
 

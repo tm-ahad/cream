@@ -1,7 +1,10 @@
-use crate::collect_gen::concat_lines_exponent0;
+use rusty_v8::{ContextScope, HandleScope, Script, self as v8};
 use crate::scope::Pair;
+use crate::state_base::_StateBase;
 
-pub fn template(mut html: String, js: String) -> Pair {
+pub fn template(mut html: String, js: String, scope:
+    &mut ContextScope<HandleScope>, base: &mut _StateBase) -> Pair {
+
     let mut test_js = js.clone();
 
     while html.contains("$") {
@@ -31,52 +34,37 @@ pub fn template(mut html: String, js: String) -> Pair {
                 }
 
 
-
-                match html[fall..up].find("id=") {
+                match html[fall..up].find("id=\"") {
                     Some(au) => {
-                        let mut init = au + 5;
+                        let mut init = au + 4;
 
                         while &html[init..init + 1] != "\"" {
                             init += 1
                         }
 
-                        let mut fall_ = html[pig..a]
-                            .split(" ")
-                            .collect::<Vec<&str>>()
-                            .iter()
-                            .map(|a| a.to_string())
-                            .collect::<Vec<String>>();
+                        let val = &html[pig+2..idx];
 
-                        fall_ = fall_[..fall_.len() - 1].to_vec();
+                        let code = v8::String::new(scope, val)
+                            .expect("Variable can't be founded");
 
-                        let id = &html[au + 4..init];
+                        let script = Script::compile(scope, code, None)
+                            .unwrap();
 
-                        let mut up_ = html[a..idx]
-                            .split(" ")
-                            .collect::<Vec<&str>>()
-                            .iter()
-                            .map(|a| a.to_string())
-                            .collect::<Vec<String>>();
+                        let result = &script.run(scope)
+                            .unwrap()
+                            .to_string(scope)
+                            .unwrap()
+                            .to_rust_string_lossy(scope)
+                            [..];
 
-                        up_ = up_[1..].to_vec();
+                        base._set(val.to_string(),
+                            format!("document.getElementById({:?}).innerText", &html[au+4..init]));
+                        //
+                        base.parse(val.to_string(), String::from(".single()"));
+                        println!("{}", base.parse);
+                        test_js = format!("{test_js}\n{}", base.parse);
 
-                        let a_ = concat_lines_exponent0(fall_);
-                        let b: &str = &html[a + 1..idx];
-                        let c: String = concat_lines_exponent0(up_);
-
-                        if a_ != "".to_string() && c != "".to_string() {
-                            test_js = format!("{test_js}\ndocument.getElementById({:?}).innerText={:?}\ndocument.getElementById({id}).innerText+={b}\nndocument.getElementById({id}).innerText+={:?}"
-                                              ,id, a_, c)
-                        } else if a_ != "".to_string() {
-                            test_js = format!("{test_js}\ndocument.getElementById({:?}).innerText={:?}\ndocument.getElementById({id}).innerText+={b}", id, a_)
-                        } else if c != "".to_string() {
-                            test_js = format!("{test_js}\ndocument.getElementById({:?}).innerText={b}\ndocument.getElementById({:?}).innerText+={:?}", id, id, c)
-                        } else {
-                            test_js =
-                                format!("{test_js}\ndocument.getElementById({:?}).innerText={b}", id)
-                        }
-
-                        html.replace_range(pig+1..idx, "");
+                        html.replace_range(pig+1..idx, result);
 
                         return Pair(html, test_js);
                     }

@@ -1,7 +1,7 @@
 use crate::collect_gen::collect_gen;
 use crate::component::Component;
 use crate::component::{component, parse};
-use crate::scope::scope;
+use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::SyntaxError;
@@ -10,6 +10,7 @@ use crate::template::template;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{self, read_to_string};
+use rusty_v8 as v8;
 use crate::at_html::at_html;
 
 pub fn compile(name: &String, mut state: _StateBase) {
@@ -24,36 +25,6 @@ pub fn compile(name: &String, mut state: _StateBase) {
 
     let mut js = String::new();
     let split = main_app.split("\n");
-
-    while app.contains("import component") {
-        match app.find("import component") {
-            None => {}
-            Some(e) => {
-                let mut namei = e + 17;
-                let mut ci = e + 30;
-                let mut cn: String = String::new();
-                let mut fnm: String = String::new();
-
-                while &app[namei..namei + 4] != "from" {
-                    cn.push(app.chars().nth(namei).unwrap());
-                    namei += 1;
-                }
-
-                while &app[ci..ci + 1] != "\n" {
-                    fnm.push(app.chars().nth(ci).unwrap());
-                    ci += 1
-                }
-
-                names.push(app[e + 16..namei].trim().to_string());
-                imports.push(component(name, fnm.to_string(), cn.trim().to_string(),
-                                       &mut state));
-
-
-                app.replace_range(e..ci+1, "")
-            }
-        }
-    }
-
 
     for s in split {
         if s != "<html>" {
@@ -118,21 +89,65 @@ pub fn compile(name: &String, mut state: _StateBase) {
         }
     }
 
+    let platform = v8::new_default_platform(0, false).make_shared();
+    v8::V8::initialize_platform(platform);
+    v8::V8::initialize();
+
+    let isolate = &mut v8::Isolate::new(Default::default());
+
+    let scope = &mut v8::HandleScope::new(isolate);
+    let context = v8::Context::new(scope);
+    let scope = &mut v8::ContextScope::new(scope, context);
+
+    let code = v8::String::new(scope, js.as_str()).unwrap();
+    let script = v8::Script::compile(scope, code, None).unwrap();
+
+    let _ = script.run(scope).unwrap();
+
+    while app.contains("import component") {
+        match app.find("import component") {
+            None => {}
+            Some(e) => {
+                let mut namei = e + 17;
+                let mut ci = e + 30;
+                let mut cn: String = String::new();
+                let mut fnm: String = String::new();
+
+                while &app[namei..namei + 4] != "from" {
+                    cn.push(app.chars().nth(namei).unwrap());
+                    namei += 1;
+                }
+
+                while &app[ci..ci + 1] != "\n" {
+                    fnm.push(app.chars().nth(ci).unwrap());
+                    ci += 1
+                }
+
+                names.push(app[e + 16..namei].trim().to_string());
+                imports.push(component(name, fnm.to_string(), cn.trim().to_string(),
+                                       script, scope, &mut state));
+
+
+                app.replace_range(e..ci+1, "")
+            }
+        }
+    }
+
     let ht = at_html(comp_html.clone(), js.clone());
 
     comp_html = ht.0;
     js = ht.1;
 
-    let caught = template(comp_html, js.clone());
-
-    js = caught.1;
-    comp_html = caught.0;
-
     js = _state(js.clone(), &mut state);
-    let scoope = scope(comp_html.clone(), js.clone(), &mut state);
+    let scoope = _scope(comp_html.clone(), js.clone(), &mut state);
 
     js = scoope.0;
     comp_html = scoope.1;
+
+    let caught = template(comp_html, js.clone(), scope, &mut state);
+
+    js = caught.1;
+    comp_html = caught.0;
 
     js = js.replace(".single()", "");
 
@@ -162,6 +177,8 @@ pub fn compile(name: &String, mut state: _StateBase) {
                                     name,
                                     s.to_string(),
                                     "Render".to_string(),
+                                    script,
+                                    scope,
                                     &mut state
                                 ))),
                             );
@@ -222,6 +239,8 @@ pub fn compile(name: &String, mut state: _StateBase) {
                                     name,
                                     s.to_string(),
                                     "Render".to_string(),
+                                    script,
+                                    scope,
                                     &mut state
                                 ))),
                             );
