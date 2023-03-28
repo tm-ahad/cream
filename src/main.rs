@@ -1,14 +1,15 @@
+mod at_html;
 mod browser_;
 mod collect_gen;
 mod compiler;
 mod component;
+mod gen_id;
 mod new;
 mod scope;
 mod state;
 mod state_base;
 mod std_err;
 mod template;
-mod at_html;
 
 use crate::state_base::_StateBase;
 use compiler::compile;
@@ -23,7 +24,7 @@ fn main() {
 
     match args[1].as_str() {
         "new" => new(args.get(2).expect("Project name not provided")),
-        "build" => compile(args.get(2).expect("Project name not prvided"),state_base),
+        "build" => compile(args.get(2).expect("Project name not prvided"), state_base),
         "start" => {
             //compile(args.get(2).expect("Project name not provided"), state_base, );
             let mut comm = Command::new("./main");

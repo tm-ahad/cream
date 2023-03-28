@@ -3,8 +3,8 @@ use crate::collect_gen::concat_lines_exponent0;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::SyntaxError;
 use crate::std_err::StdErr;
-use std::string::String;
 use serde_json::Value;
+use std::string::String;
 
 pub fn _state(js: String, b: &mut _StateBase) -> String {
     let spl = js.split("\n").collect::<Vec<&str>>();
@@ -26,7 +26,6 @@ pub fn _state(js: String, b: &mut _StateBase) -> String {
 
                     match serde_json::from_str::<Value>(c) {
                         Err(_) if !(c.starts_with("`") && c.ends_with("`")) => {
-
                             let mut bored: bool = true;
 
                             let mut l = li.to_string();

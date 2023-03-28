@@ -1,3 +1,4 @@
+use crate::at_html::at_html;
 use crate::collect_gen::collect_gen;
 use crate::component::Component;
 use crate::component::{component, parse};
@@ -7,11 +8,10 @@ use crate::state_base::_StateBase;
 use crate::std_err::ErrType::SyntaxError;
 use crate::std_err::StdErr;
 use crate::template::template;
+use rusty_v8 as v8;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{self, read_to_string};
-use rusty_v8 as v8;
-use crate::at_html::at_html;
 
 pub fn compile(name: &String, mut state: _StateBase) {
     let mut app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
@@ -34,7 +34,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
         }
     }
 
-    let mut comp_html = collect_gen(main_app, "<html>".to_string(), 0, "</html>");
+    let mut comp_html = format!("{}\n", collect_gen(main_app, "<html>".to_string(), 0, "</html>"));
 
     while app.contains("import lib:") {
         match app.find("import lib:") {
@@ -46,10 +46,12 @@ pub fn compile(name: &String, mut state: _StateBase) {
                     ci += 1
                 }
 
-                comp_html = format!("{comp_html}\n<script type=\"modules\" src=\"./lib/{}\"></script>",
-                    &app[e+9..ci+1]);
+                comp_html = format!(
+                    "{comp_html}\n<script type=\"modules\" src=\"./lib/{}\"></script>",
+                    &app[e + 9..ci + 1]
+                );
 
-                app.replace_range(e..ci+1, "")
+                app.replace_range(e..ci + 1, "")
             }
         }
     }
@@ -77,11 +79,11 @@ pub fn compile(name: &String, mut state: _StateBase) {
                         );
                         js.replace_range(start - 7..val + 1, "");
                     }
-                    Err(e) => {
+                    Err(b) => {
                         let err = StdErr::new(SyntaxError, "Invalid Object Router");
 
                         err.exec();
-                        panic!("{e}")
+                        panic!("{}", b)
                     }
                 }
             }
@@ -124,11 +126,16 @@ pub fn compile(name: &String, mut state: _StateBase) {
                 }
 
                 names.push(app[e + 16..namei].trim().to_string());
-                imports.push(component(name, fnm.to_string(), cn.trim().to_string(),
-                                       script, scope, &mut state));
+                imports.push(component(
+                    name,
+                    fnm.to_string(),
+                    cn.trim().to_string(),
+                    script,
+                    scope,
+                    &mut state,
+                ));
 
-
-                app.replace_range(e..ci+1, "")
+                app.replace_range(e..ci + 1, "")
             }
         }
     }
@@ -179,7 +186,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                                     "Render".to_string(),
                                     script,
                                     scope,
-                                    &mut state
+                                    &mut state,
                                 ))),
                             );
                         }
@@ -241,7 +248,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                                     "Render".to_string(),
                                     script,
                                     scope,
-                                    &mut state
+                                    &mut state,
                                 ))),
                             );
                         }
@@ -289,7 +296,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                         Some(e) => {
                             comp_html.replace_range(e..m.len() + 1, &*i.html);
                             js = format!("{js}\n{}", i.js);
-                        },
+                        }
                         _ => {}
                     }
                 }

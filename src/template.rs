@@ -1,14 +1,18 @@
-use rusty_v8::{ContextScope, HandleScope, Script, self as v8};
+use crate::gen_id::gen_id;
 use crate::scope::Pair;
 use crate::state_base::_StateBase;
+use rusty_v8::{self as v8, ContextScope, HandleScope, Script};
 
-pub fn template(mut html: String, js: String, scope:
-    &mut ContextScope<HandleScope>, base: &mut _StateBase) -> Pair {
-
+pub fn template(
+    mut html: String,
+    js: String,
+    scope: &mut ContextScope<HandleScope>,
+    base: &mut _StateBase,
+) -> Pair {
     let mut test_js = js.clone();
 
     while html.contains("$") {
-        match html.find("$") {
+        return match html.find("$") {
             Some(a) => {
                 let mut idx = a;
 
@@ -33,8 +37,11 @@ pub fn template(mut html: String, js: String, scope:
                     pig -= 1
                 }
 
+                let sh = &html[fall..up];
+                let val = &html.clone()[pig + 2..idx];
+                let mut len = 0 as usize;
 
-                match html[fall..up].find("id=\"") {
+                let id = match sh.find("id=\"") {
                     Some(au) => {
                         let mut init = au + 4;
 
@@ -42,37 +49,42 @@ pub fn template(mut html: String, js: String, scope:
                             init += 1
                         }
 
-                        let val = &html[pig+2..idx];
-
-                        let code = v8::String::new(scope, val)
-                            .expect("Variable can't be founded");
-
-                        let script = Script::compile(scope, code, None)
-                            .unwrap();
-
-                        let result = &script.run(scope)
-                            .unwrap()
-                            .to_string(scope)
-                            .unwrap()
-                            .to_rust_string_lossy(scope)
-                            [..];
-
-                        base._set(val.to_string(),
-                            format!("document.getElementById({:?}).innerText", &html[au+4..init]));
-                        //
-                        base.parse(val.to_string(), String::from(".single()"));
-                        println!("{}", base.parse);
-                        test_js = format!("{test_js}\n{}", base.parse);
-
-                        html.replace_range(pig+1..idx, result);
-
-                        return Pair(html, test_js);
+                        html[au + 4..init].to_string()
                     }
-                    None => panic!("id not found on templating element"),
-                }
+                    None => {
+                        let r = gen_id();
+
+                        len = r.len()+6;
+                        html.insert_str(pig, &*format!(" id=\"{}\"", r));
+                        r
+                    }
+                };
+
+                let code = v8::String::new(scope, val).expect("Variable can't be founded");
+
+                let script = Script::compile(scope, code, None).unwrap();
+
+                let result = &script
+                    .run(scope)
+                    .unwrap()
+                    .to_string(scope)
+                    .unwrap()
+                    .to_rust_string_lossy(scope)[..];
+
+                base._set(
+                    val.to_string(),
+                    format!("document.getElementById({:?}).innerText", id),
+                );
+
+                base.parse(val.to_string(), String::from(".single()"));
+                test_js = format!("{test_js}\n{}", base.parse);
+
+                html.replace_range(pig + 1+len..idx+len, result);
+
+                Pair(html, test_js)
             }
-            None => return Pair(html, js),
-        }
+            None => Pair(html, js),
+        };
     }
 
     Pair(html, js)

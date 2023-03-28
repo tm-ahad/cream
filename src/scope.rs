@@ -1,10 +1,9 @@
-use std::string::String;
 use crate::state_base::_StateBase;
+use std::string::String;
 
 pub struct Pair(pub String, pub String);
 
 pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
-
     while html.contains("{") && html.contains("}") {
         match html.find("{") {
             Some(a) => {
@@ -17,7 +16,7 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
 
                 let mut fin = format!("{}", &html[a..f + 1]);
 
-                match fin.find("$") {
+                return match fin.find("$") {
                     Some(au) => {
                         let mut pig = au;
 
@@ -27,8 +26,8 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
 
                         fin.insert(pig, ' ');
 
-                        let mut zig = au+1;
-                        let mut vend = au+1;
+                        let mut zig = au + 1;
+                        let mut vend = au + 1;
 
                         let mut idx = au;
 
@@ -36,17 +35,17 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                             zig += 1
                         }
 
-                        while &fin[vend..vend+1] != " " && &fin[vend..vend+1] != "`" {
+                        while &fin[vend..vend + 1] != " " && &fin[vend..vend + 1] != "`" {
                             vend += 1
                         }
 
-                        let start = &fin[pig+1..au];
-                        let  end = &fin[vend..zig];
+                        let start = &fin[pig + 1..au];
+                        let end = &fin[vend..zig];
 
                         let mut op_end = pig;
 
-                        while &fin[op_end..op_end+1] != "{" {
-                            op_end -=1;
+                        while &fin[op_end..op_end + 1] != "{" {
+                            op_end -= 1;
                         }
 
                         while &html[idx..idx + 1] != " " {
@@ -64,7 +63,7 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                             up += 1
                         }
 
-                        return match html[fall..up].find("id=") {
+                        match html[fall..up].find("id=") {
                             Some(b) => {
                                 let mut init = b + 5;
 
@@ -72,9 +71,9 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                                     init += 1
                                 }
 
-                                let c = &fin[op_end+1..pig];
+                                let c = &fin[op_end + 1..pig];
 
-                                let val = &fin[au+2..vend];
+                                let val = &fin[au + 2..vend];
                                 let id = &html[b + 4..init];
 
                                 let mut changer = String::new();
@@ -99,28 +98,28 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
 
                                 let mut cn = fin.clone();
 
-                                cn.replace_range(
-                                    pig+1..vend+1,
-                                    changer.as_str()
-                                );
+                                cn.replace_range(pig + 1..vend + 1, changer.as_str());
 
                                 js = format!("{js}\n{cn}");
                                 let mut yu = html.clone();
 
-                                st._set(val.to_string(), format!(
-                                    "document.getElementById({:?}).innerHTML{}={:?};",
-                                    id, c, end
-                                ));
+                                st._set(
+                                    val.to_string(),
+                                    format!(
+                                        "document.getElementById({:?}).innerHTML{}={:?};",
+                                        id, c, end
+                                    ),
+                                );
 
-                                yu.replace_range(a..f+2, "");
+                                yu.replace_range(a..f + 2, "");
 
                                 Pair(js, yu)
                             }
-                            None =>  return Pair(js, html)
+                            None => return Pair(js, html),
                         }
                     }
-                    None => return Pair(js, html)
-                }
+                    None => Pair(js, html),
+                };
             }
 
             None => panic!("Ram fucked up ! "),

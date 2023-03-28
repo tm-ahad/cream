@@ -1,11 +1,11 @@
-use crate::collect_gen::collect_gen;
-use std::fs::read_to_string;
-use rusty_v8::{ContextScope, HandleScope, Local, Script};
 use crate::at_html::at_html;
+use crate::collect_gen::collect_gen;
 use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
+use rusty_v8::{ContextScope, HandleScope, Local, Script};
+use std::fs::read_to_string;
 
 #[derive(Debug)]
 pub struct Component {
@@ -14,10 +14,14 @@ pub struct Component {
     pub name: String,
 }
 
-pub fn component(p_name: &String, f_name: String, c_name: String, script: Local<Script>,
+pub fn component(
+    p_name: &String,
+    f_name: String,
+    c_name: String,
+    script: Local<Script>,
     scope: &mut ContextScope<HandleScope>,
-    st: &mut _StateBase) -> Component {
-
+    st: &mut _StateBase,
+) -> Component {
     let path = format!("./{}/src/{}", p_name, f_name).replace("\"", "");
 
     let app = read_to_string(path).expect("file not found");
@@ -78,8 +82,14 @@ pub fn component(p_name: &String, f_name: String, c_name: String, script: Local<
             }
 
             _names.push(app[e + 16..namei].trim().to_string());
-            _imports.push(component(p_name, fnm.to_string(), cn.trim().to_string(),
-                script, scope, st));
+            _imports.push(component(
+                p_name,
+                fnm.to_string(),
+                cn.trim().to_string(),
+                script,
+                scope,
+                st,
+            ));
         }
     }
 
@@ -95,7 +105,7 @@ pub fn component(p_name: &String, f_name: String, c_name: String, script: Local<
                         Some(e) => {
                             html.replace_range(e..m.len() + 1, &*i.html);
                             js = format!("{js}\n{}", i.js)
-                        },
+                        }
                         _ => {}
                     }
                 }

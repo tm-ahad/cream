@@ -1,4 +1,3 @@
-
 pub fn collect_gen(toks: String, keyword: String, found_id: usize, end: &str) -> String {
     let splited_v = toks.split("\n").collect::<Vec<&str>>();
     let mut lines: Vec<String> = vec![];
