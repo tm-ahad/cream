@@ -4,6 +4,7 @@ use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
+use crate::pass::pass;
 use rusty_v8::{ContextScope, HandleScope, Local, Script};
 use std::fs::read_to_string;
 
@@ -13,9 +14,6 @@ pub struct Component {
     pub html: String,
     pub name: String,
 }
-
-pub fn pass() {}
-
 pub fn component(
     p_name: &String,
     f_name: String,

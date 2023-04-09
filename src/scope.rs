@@ -1,4 +1,5 @@
 use crate::state_base::_StateBase;
+use crate::cpu_error::cpu_error;
 use std::string::String;
 
 pub struct Pair(pub String, pub String);
@@ -124,7 +125,7 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                 };
             }
 
-            None => panic!("Ram fucked up ! "),
+            None => cpu_error(),
         }
     }
 

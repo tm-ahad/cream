@@ -2,6 +2,7 @@ use crate::gen_id::gen_id;
 use crate::scope::Pair;
 use crate::state_base::_StateBase;
 use crate::v8_parse::v8_parse;
+use crate::pass::pass;
 use rusty_v8::{ContextScope, HandleScope};
 use std::string::String;
 
@@ -87,7 +88,7 @@ pub fn at_html(
 
                 html.replace_range(a + len..idx + len, result);
             },
-            None => {}
+            None => pass()
         }
     }
 

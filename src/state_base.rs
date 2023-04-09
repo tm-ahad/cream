@@ -1,6 +1,7 @@
+use crate::v8_parse::v8_parse;
 use std::collections::HashMap;
 use rusty_v8::{ContextScope, HandleScope, Script};
-use crate::v8_parse::v8_parse;
+use crate::pass::pass;
 
 #[derive(Debug)]
 pub struct _StateBase {
@@ -41,43 +42,84 @@ impl _StateBase {
     }
     
     pub fn parse(
-                &mut self,
-                key: String,
-                ext: String,
-                v: String,
-                scope: &mut ContextScope<HandleScope>
-            ) {
-                let val = self.map.get_mut(&*key);
+        &mut self,
+        key: String,
+        ext: String,
+        v: String,
+        scope: &mut ContextScope<HandleScope>
+    ) {
+        let val = self.map.get_mut(&*key);
 
-                match val {
-                    Some(l) => {
-                        if l.1 == String::new() {
-                            let mut p = String::new();
+        match val {
+            Some(l) => {
+                if l.1 == String::new() {
+                    let mut p = String::new();
 
-                            for (k, vl) in &l.0 {
-                                let result = v8_parse(scope, vl);
-                                let check = v8_parse(scope, k);
+                    for (k, vl) in &l.0 {
+                        let result = v8_parse(scope, vl);
+                        let check = v8_parse(scope, k);
 
-                                if result != check {
-                                    let fmt = &*format!("{}={}{}\n", k, result, ext);
-                                    let v8_str = rusty_v8::String::new(scope, fmt).unwrap();
+                        if result != check {
+                            let fmt = &*format!("{}={}{}\n", k, result, ext);
+                            let v8_str = rusty_v8::String::new(scope, fmt).unwrap();
 
-                                    p.push_str(fmt);
+                            p.push_str(fmt);
 
-                                    let s = Script::compile(scope, v8_str, None);
-                                    let _ = s
-                                        .unwrap()
-                                        .run(scope);
-                                }
-                            }
-
-                            self.parse = p.clone();
-                            l.1 = p.clone();
-                        } else {
-                            l.1 = format!("   {}={}{}\n", key, v, ext)
+                            let s = Script::compile(scope, v8_str, None);
+                            let _ = s
+                                .unwrap()
+                                .run(scope);
                         }
                     }
-                    None => {}
+
+                    self.parse = p.clone();
+                    l.1 = p.clone();
+                } else {
+                    l.1 = format!("   {}={}{}\n", key, v, ext)
                 }
             }
+            None => pass()
+        }
+    }
+
+    pub fn catch_parse(
+        &mut self,
+        key: String,
+        ext: String,
+        v: String,
+       scope: &mut ContextScope<HandleScope>
+    ) {
+        let val = self.map.get_mut(&*key);
+
+        match val {
+            Some(l) => {
+                if l.1 == String::new() {
+                    let mut p = String::new();
+
+                    for (k, vl) in &l.0 {
+                        let result = v8_parse(scope, vl);
+                        let check = v8_parse(scope, k);
+
+                        if result != check {
+                            let fmt = &*format!("{}={}{}\n", k, vl, ext);
+                            let v8_str = rusty_v8::String::new(scope, fmt).unwrap();
+
+                            p.push_str(fmt);
+
+                            let s = Script::compile(scope, v8_str, None);
+                            let _ = s
+                                .unwrap()
+                                .run(scope);
+                        }
+                    }
+
+                    self.parse = p.clone();
+                    l.1 = p.clone();
+                } else {
+                    l.1 = format!("   {}={}{}\n", key, v, ext)
+                }
+            }
+            None => pass()
+        }
+    }
 }

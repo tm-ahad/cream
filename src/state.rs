@@ -3,8 +3,9 @@ use crate::state_base::_StateBase;
 use crate::std_err::ErrType::SyntaxError;
 use crate::std_err::StdErr;
 use crate::react_op::react_op;
-use serde_json::Value;
 use crate::var_not_allowed::var_not_allowed;
+use crate::pass::pass;
+use serde_json::Value;
 use rusty_v8::{ContextScope, HandleScope};
 
 pub fn _state(
@@ -66,8 +67,6 @@ pub fn _state(
                     let mut idx = 0;
                     let mut refs: Vec<&str> = Vec::new();
 
-                    pub fn pass() {}
-
                     match serde_json::from_str::<Value>(&*c.clone()) {
                         Err(_) => {
                             for ch in c.chars() {
@@ -119,7 +118,11 @@ pub fn _state(
 
                     let rw = li[..a].trim().to_string();
 
-                    b.parse(rw, String::new(), c.clone(), scope);
+                    if !li.ends_with(".cam()") {
+                        b.parse(rw, String::new(), c.clone(), scope);
+                    } else {
+                        b.catch_parse(rw, String::new(), c.clone(), scope);
+                    }
 
                     lines.push(li.to_string());
                     lines.push(b.parse.clone());

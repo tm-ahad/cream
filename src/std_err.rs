@@ -4,6 +4,7 @@ use colored::Colorize;
 pub enum ErrType {
     SyntaxError,
     NotFound,
+    CpuError
 }
 
 impl ErrType {
@@ -11,6 +12,7 @@ impl ErrType {
         match self {
             ErrType::SyntaxError => "Syntax Error".to_string(),
             ErrType::NotFound => "Not Found".to_string(),
+            ErrType::RamError => "CpuError".to_string()
         }
     }
 }

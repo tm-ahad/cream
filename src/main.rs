@@ -7,15 +7,18 @@ mod new;
 mod scope;
 mod state;
 mod state_base;
-mod std_err;
 mod template;
+mod std_err;
 mod var_not_allowed;
 mod react_op;
 mod v8_parse;
+mod pass;
+mod cpu_error;
 
 use crate::state_base::_StateBase;
-use compiler::compile;
-use new::new;
+use crate::compiler::compile;
+use crate::new::new;
+use crate::pass::pass;
 use std::env;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
@@ -28,7 +31,7 @@ fn main() {
         "new" => new(args.get(2).expect("Project name not provided")),
         "build" => compile(args.get(2).expect("Project name not prvided"), state_base),
         "start" => {
-            //compile(args.get(2).expect("Project name not provided"), state_base, );
+            compile(args.get(2).expect("Project name not provided"), state_base);
             let mut comm = Command::new("./main");
 
             comm.arg(format!(
@@ -37,6 +40,6 @@ fn main() {
             ))
             .exec();
         }
-        _ => {}
+        _ => pass()
     }
 }

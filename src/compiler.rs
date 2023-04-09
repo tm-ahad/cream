@@ -12,6 +12,7 @@ use rusty_v8 as v8;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{self, read_to_string};
+use crate::pass::pass;
 
 pub fn compile(name: &String, mut state: _StateBase) {
     let mut app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
@@ -91,7 +92,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                     }
                 }
             }
-            _ => {}
+            None => pass()
         }
     }
 
@@ -267,7 +268,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                             )
                         );
                     }
-                    _ => {}
+                    None => pass()
                 }
 
                 js = format!(
@@ -302,7 +303,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                             comp_html.replace_range(e..m.len() + 1, &*i.html);
                             js = format!("{js}\n{}", i.js);
                         }
-                        _ => {}
+                        _ => pass()
                     }
                 }
             }
