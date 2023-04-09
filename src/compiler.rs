@@ -33,8 +33,12 @@ pub fn compile(name: &String, mut state: _StateBase) {
             break;
         }
     }
-
-    let mut comp_html = format!("{}\n", collect_gen(main_app, "<html>".to_string(), 0, "</html>"));
+    
+    
+    let mut comp_html = format!(
+        "{}\n",
+        collect_gen(main_app.clone(), "<html>".to_string(), 0, "</html>")
+    );
 
     while app.contains("import lib:") {
         match app.find("import lib:") {
@@ -100,7 +104,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
     let scope = &mut v8::HandleScope::new(isolate);
     let context = v8::Context::new(scope);
     let scope = &mut v8::ContextScope::new(scope, context);
-
+    
     let code = v8::String::new(scope, js.as_str()).unwrap();
     let script = v8::Script::compile(scope, code, None).unwrap();
 
@@ -139,13 +143,14 @@ pub fn compile(name: &String, mut state: _StateBase) {
             }
         }
     }
-
-    let ht = at_html(comp_html.clone(), js.clone());
+    
+    let ht = at_html(comp_html.clone(), js.clone(), scope, &mut state);
 
     comp_html = ht.0;
     js = ht.1;
 
-    js = _state(js.clone(), &mut state);
+    js = _state(js.clone(), &mut state, scope);
+    
     let scoope = _scope(comp_html.clone(), js.clone(), &mut state);
 
     js = scoope.0;

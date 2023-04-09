@@ -14,6 +14,8 @@ pub struct Component {
     pub name: String,
 }
 
+pub fn pass() {}
+
 pub fn component(
     p_name: &String,
     f_name: String,
@@ -50,12 +52,13 @@ pub fn component(
     js = caught.1;
     html = caught.0;
 
-    let ht = at_html(html.clone(), js.clone());
+    let ht = at_html(html.clone(), js.clone(), scope, st);
 
     html = ht.0;
     js = ht.1;
 
-    js = _state(js.clone(), st);
+    js = _state(js.clone(), st, scope);
+    
     let catch = _scope(html.clone(), js.clone(), st);
 
     js = catch.0;
@@ -64,7 +67,6 @@ pub fn component(
     js = js.replace(".single()", "");
 
     match app.find("import component") {
-        None => {}
         Some(e) => {
             let mut namei = e + 17;
             let mut ci = e + 30;
@@ -90,7 +92,8 @@ pub fn component(
                 scope,
                 st,
             ));
-        }
+        },
+        None => pass()
     }
 
     let mut fail = String::new();

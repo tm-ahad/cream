@@ -17,7 +17,7 @@ pub fn new(name: &String) {
         "
 app {
     <html>
-        <h1></h1>
+        <h1>Hello World</h1>
     </html>
 }"
         .as_bytes(),

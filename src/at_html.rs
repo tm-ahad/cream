@@ -1,10 +1,21 @@
+use crate::gen_id::gen_id;
 use crate::scope::Pair;
+use crate::state_base::_StateBase;
+use crate::v8_parse::v8_parse;
+use rusty_v8::{ContextScope, HandleScope};
+use std::string::String;
 
-pub fn at_html(mut html: String, mut js: String) -> Pair {
+pub fn at_html(
+    mut html: String,
+    js: String,
+    scope: &mut ContextScope<HandleScope>,
+    base: &mut _StateBase,
+) -> Pair {
     while html.contains("@html") {
         match html.find("@html") {
             Some(a) => {
-                let mut idx = a + 7;
+                let mut idx = a + 6;
+                let mut pig = a;
 
                 while &html[idx..idx + 1] != "\""
                     && &html[idx..idx + 1] != "<"
@@ -14,6 +25,7 @@ pub fn at_html(mut html: String, mut js: String) -> Pair {
                 }
 
                 let mut id_x = a;
+                let mut js = String::new();
 
                 while &html[id_x..id_x + 1] != "\"" {
                     if id_x == 1 {
@@ -41,12 +53,41 @@ pub fn at_html(mut html: String, mut js: String) -> Pair {
                     &html[is_x..id_x],
                     val
                 );
+                
 
-                html.replace_range(a..idx + 1, "")
-            }
-            None => {
-                panic!("Yout computer messsed up the thing as well")
-            }
+                while &html[pig..pig + 1] != ">" {
+                    pig -= 1
+                }
+
+                let id = match html.find("id=\"") {
+                    Some(a) => {
+                        let mut end = a;
+
+                        while &html[end..end + 1] != "\"" {
+                            end += 1;
+                        }
+
+                        html[a + 4..end].to_string()
+                    }
+                    None => gen_id(),
+                };
+
+                let val = html[a + 5..idx].to_string();
+
+                let result = &*v8_parse(scope, &*val);
+                
+                base._set(
+                    val.clone(),
+                    format!("{js}\ndocument.getElementById({:?}).innerHTML", id,),
+                    val.clone(),
+                );
+
+                html.insert_str(pig, &*format!(" id=\"{}\"", id));
+                let len = id.len() + 6;
+
+                html.replace_range(a + len..idx + len, result);
+            },
+            None => {}
         }
     }
 

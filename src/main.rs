@@ -1,5 +1,4 @@
 mod at_html;
-mod browser_;
 mod collect_gen;
 mod compiler;
 mod component;
@@ -10,6 +9,9 @@ mod state;
 mod state_base;
 mod std_err;
 mod template;
+mod var_not_allowed;
+mod react_op;
+mod v8_parse;
 
 use crate::state_base::_StateBase;
 use compiler::compile;

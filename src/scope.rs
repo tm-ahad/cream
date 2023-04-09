@@ -109,6 +109,8 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                                         "document.getElementById({:?}).innerHTML{}={:?};",
                                         id, c, end
                                     ),
+
+                                    val.to_string()
                                 );
 
                                 yu.replace_range(a..f + 2, "");
