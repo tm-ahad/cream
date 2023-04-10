@@ -1,15 +1,32 @@
-use std::fs::{self, File};
+use crate::copy_dir::copy;
+use crate::pass::pass;
+use crate::std_err::ErrType::OSError;
+use crate::std_err::StdErr;
+use std::fs::{File, create_dir};
 use std::io::Write;
 
+pub fn moving_denied() {
+    let err = StdErr::new(OSError,
+                          "Permission denied to move dir");
+
+    err.exec();
+}
+
 pub fn new(name: &String) {
-    fs::create_dir(format!("./{}", name)).expect("Creating dir not allowed");
-    fs::create_dir(format!("./{}/src", name)).expect("Creating dir not allowed");
+    create_dir(format!("./{}", name)).expect("Creating dir not allowed");
+    create_dir(format!("./{}/src", name)).expect("Creating dir not allowed");
+    create_dir(format!("./{}/build", name)).expect("Creating dir not allowed");
+    create_dir(format!("./{}/lib", name)).expect("Creating dir not allowed");
 
-    fs::rename("./build/node", format!("./{}/build", name)).expect("Cannot create dir!");
-    fs::rename(format!("./{}/build", name), "./build/node").expect("Cannot create dir!");
+    match copy("./build/node", format!("./{}/build", name)) {
+        Ok(_) => pass(),
+        Err(_) => moving_denied()
+    };
 
-    fs::rename("./lib", format!("./{}/lib", name)).expect("Can't even move dir in ohio");
-    fs::rename(format!("./{}/lib", name), "./lib").expect("Can't even move dir in ohio");
+    match copy("./lib", format!("./{}/lib", name)) {
+        Ok(_) => pass(),
+        Err(_) => moving_denied()
+    }
 
     let mut f = File::create(format!("./{}/src/app.js", name)).expect("Cannot create file");
 

@@ -1,9 +1,9 @@
 use crate::collect_gen::concat_lines_exponent0;
 use crate::state_base::_StateBase;
-use crate::std_err::ErrType::SyntaxError;
 use crate::std_err::StdErr;
 use crate::react_op::react_op;
 use crate::var_not_allowed::var_not_allowed;
+use crate::std_err::ErrType::SyntaxError;
 use crate::pass::pass;
 use serde_json::Value;
 use rusty_v8::{ContextScope, HandleScope};
@@ -61,7 +61,7 @@ pub fn _state(
                 {
                     let len = li.len();
                     let c = li[a + 1..len].trim().to_string();
-                    
+
                     let a_ = var_not_allowed();
 
                     let mut idx = 0;
@@ -110,7 +110,7 @@ pub fn _state(
                             
                             for k in refs {
                             	b._set(k.to_string(), raw_val.to_string(),
-                                   c.to_string());
+                                   c.replace(".cam()", ""));
                             }
                         }
                         Ok(_) => pass(),
@@ -119,9 +119,11 @@ pub fn _state(
                     let rw = li[..a].trim().to_string();
 
                     if !li.ends_with(".cam()") {
-                        b.parse(rw, String::new(), c.clone(), scope);
+                        b.parse(rw, String::new(), c.clone(),
+                                scope);
                     } else {
-                        b.catch_parse(rw, String::new(), c.clone(), scope);
+                        b.catch_parse(rw, String::new(), c.replace(".cam()", ""),
+                                      scope);
                     }
 
                     lines.push(li.to_string());

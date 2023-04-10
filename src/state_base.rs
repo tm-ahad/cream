@@ -41,7 +41,7 @@ impl _StateBase {
         }
     }
     
-    pub fn parse(
+    pub fn catch_parse(
         &mut self,
         key: String,
         ext: String,
@@ -82,7 +82,7 @@ impl _StateBase {
         }
     }
 
-    pub fn catch_parse(
+    pub fn parse(
         &mut self,
         key: String,
         ext: String,

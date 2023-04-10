@@ -3,16 +3,16 @@ use colored::Colorize;
 #[allow(dead_code)]
 pub enum ErrType {
     SyntaxError,
-    NotFound,
-    CpuError
+    CpuError,
+    OSError
 }
 
 impl ErrType {
     pub fn _to_string(self) -> String {
         match self {
-            ErrType::SyntaxError => "Syntax Error".to_string(),
-            ErrType::NotFound => "Not Found".to_string(),
-            ErrType::RamError => "CpuError".to_string()
+            ErrType::SyntaxError => "SyntaxError".to_string(),
+            ErrType::CpuError => "CpuError".to_string(),
+            ErrType::OSError => "OSError".to_string()
         }
     }
 }

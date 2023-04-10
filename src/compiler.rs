@@ -5,22 +5,18 @@ use crate::component::{component, parse};
 use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
-use crate::std_err::ErrType::SyntaxError;
-use crate::std_err::StdErr;
 use crate::template::template;
+use crate::pass::pass;
+use crate::v8_parse::v8_parse;
 use rusty_v8 as v8;
 use serde_json::{Map, Value};
-use std::collections::HashMap;
 use std::fs::{self, read_to_string};
-use crate::pass::pass;
 
 pub fn compile(name: &String, mut state: _StateBase) {
     let mut app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
     let mut fail = String::new();
-
-    let mut router_hash: HashMap<String, String> = HashMap::new();
 
     let main_app = collect_gen(app.clone(), "app{".to_string(), 0, "}");
 
@@ -61,41 +57,6 @@ pub fn compile(name: &String, mut state: _StateBase) {
         }
     }
 
-    while js.find("Router") != None {
-        match js.find("Router") {
-            Some(a) => {
-                let start = a + 7;
-                let mut idx = 0;
-                let mut val = 0;
-
-                while &js[idx..idx + 1] != "=" && &js[idx..idx + 1] != "}" {
-                    idx += 1
-                }
-
-                while &js[val..val + 1] != "}" {
-                    val += 1
-                }
-
-                match serde_json::from_str::<Value>(&js[idx + 1..val + 1]) {
-                    Ok(_) => {
-                        router_hash.insert(
-                            js[start..idx].trim().to_string(),
-                            js[idx + 1..val + 1].to_string(),
-                        );
-                        js.replace_range(start - 7..val + 1, "");
-                    }
-                    Err(b) => {
-                        let err = StdErr::new(SyntaxError, "Invalid Object Router");
-
-                        err.exec();
-                        panic!("{}", b)
-                    }
-                }
-            }
-            None => pass()
-        }
-    }
-
     let platform = v8::new_default_platform(0, false).make_shared();
     v8::V8::initialize_platform(platform);
     v8::V8::initialize();
@@ -105,8 +66,12 @@ pub fn compile(name: &String, mut state: _StateBase) {
     let scope = &mut v8::HandleScope::new(isolate);
     let context = v8::Context::new(scope);
     let scope = &mut v8::ContextScope::new(scope, context);
+
+    let ben = &*js.replace(".cam()", "");
     
-    let code = v8::String::new(scope, js.as_str()).unwrap();
+    let code = v8::String::new(scope, ben)
+        .unwrap();
+
     let script = v8::Script::compile(scope, code, None).unwrap();
 
     let _ = script.run(scope).unwrap();
@@ -163,6 +128,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
     comp_html = caught.0;
 
     js = js.replace(".single()", "");
+    js = ben.to_string();
 
     match comp_html.find("<Router route=") {
         None => {}
@@ -206,7 +172,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                             )
                         );
                     }
-                    Err(_) => panic!("Can't evern parse njsion in ohio"),
+                    Err(_) => panic!("Can't even parse json in ohio"),
                 }
 
                 js = format!(
@@ -236,40 +202,37 @@ pub fn compile(name: &String, mut state: _StateBase) {
                 let name_ = comp_html[a + 14..idx].trim();
                 let binding: Value;
 
-                match router_hash.get(name_) {
-                    Some(a) => {
-                        binding = serde_json::from_str::<Value>(a).unwrap();
+                let router = &*v8_parse(scope, name_);
 
-                        let obj = binding.as_object().unwrap();
+                binding = serde_json::from_str::<Value>(router).unwrap();
 
-                        let mut map = Map::new();
+                let obj = binding.as_object().unwrap();
 
-                        for (key, val) in obj {
-                            let s = val.as_str().unwrap();
-                            map.insert(
-                                key.clone(),
-                                Value::String(parse(&component(
-                                    name,
-                                    s.to_string(),
-                                    "Render".to_string(),
+                let mut map = Map::new();
+
+                for (key, val) in obj {
+                    let s = val.as_str().unwrap();
+                    let _ = map.insert(
+                       key.clone(),
+                       Value::String(parse(&component(
+                                name,
+                                s.to_string(),
+                                "Render".to_string(),
                                     script,
                                     scope,
                                     &mut state,
-                                ))),
-                            );
-                        }
-
-                        js = format!(
-                            "{}\n{}",
-                            js,
-                            format!(
-                                "var Route = {}",
-                                serde_json::to_string::<Value>(&Value::Object(map)).unwrap()
-                            )
-                        );
-                    }
-                    None => pass()
+                                    )))
+                    );
                 }
+
+                js = format!(
+                    "{}\n{}",
+                    js,
+                    format!(
+                        "var Route = {}",
+                        serde_json::to_string::<Value>(&Value::Object(map)).unwrap()
+                    )
+                );
 
                 js = format!(
                     "{js}\n{}",
