@@ -7,10 +7,11 @@ use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::pass::pass;
-use crate::v8_parse::v8_parse;
 use rusty_v8 as v8;
 use serde_json::{Map, Value};
 use std::fs::{self, read_to_string};
+use rusty_v8::json::stringify;
+use rusty_v8::Script;
 
 pub fn compile(name: &String, mut state: _StateBase) {
     let mut app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
@@ -72,7 +73,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
     let code = v8::String::new(scope, ben)
         .unwrap();
 
-    let script = v8::Script::compile(scope, code, None).unwrap();
+    let mut script = v8::Script::compile(scope, code, None).unwrap();
 
     let _ = script.run(scope).unwrap();
 
@@ -202,9 +203,21 @@ pub fn compile(name: &String, mut state: _StateBase) {
                 let name_ = comp_html[a + 14..idx].trim();
                 let binding: Value;
 
-                let router = &*v8_parse(scope, name_);
+                let v8_str = v8::String::new(scope, name_)
+                    .unwrap();
 
-                binding = serde_json::from_str::<Value>(router).unwrap();
+                script = Script::compile(scope, v8_str, None)
+                    .unwrap();
+
+                let res = script
+                    .run(scope)
+                    .unwrap();
+
+                let router = stringify(scope, res)
+                    .unwrap()
+                    .to_rust_string_lossy(scope);
+
+                binding = serde_json::from_str::<Value>(&*router).unwrap();
 
                 let obj = binding.as_object().unwrap();
 
