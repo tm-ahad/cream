@@ -88,10 +88,8 @@ pub fn template(
                 pub fn push_s(s: String, mut ps: &str) -> String {
                     let mut ls = s;
 
-                    ps = if ps == "" {"\"\""} else {ps};
-
                     ls.push_str("${");
-                    ls.push_str(ps);
+                    ls.push_str(&*format!("\"{ps}\""));
                     ls.push_str("}");
 
                     ls
