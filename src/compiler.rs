@@ -14,9 +14,13 @@ use rusty_v8::json::stringify;
 use rusty_v8::Script;
 
 pub fn compile(name: &String, mut state: _StateBase) {
-    let mut app = read_to_string(format!("./{}/src/app.js", name)).expect("app.js not found");
+    let mut app = read_to_string(format!("./{}/src/app.nts", name))
+        .expect("Project or app.nts not found");
+
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
+
+    #[allow(unused_assignments)]
     let mut fail = String::new();
 
     let main_app = collect_gen(app.clone(), "app{".to_string(), 0, "}");

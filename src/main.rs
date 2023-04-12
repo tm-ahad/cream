@@ -16,6 +16,7 @@ mod pass;
 mod cpu_error;
 mod copy_dir;
 mod std_out;
+mod input;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;

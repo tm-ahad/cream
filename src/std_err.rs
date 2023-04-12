@@ -1,3 +1,4 @@
+use std::process::exit;
 use colored::Colorize;
 
 #[allow(dead_code)]
@@ -35,6 +36,8 @@ impl StdErr {
             "{}: {}",
             self.type_._to_string(),
             self.err.truecolor(242, 53, 19)
-        )
+        );
+
+        exit(400)
     }
 }

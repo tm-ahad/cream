@@ -10,31 +10,48 @@ pub fn template(
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
 ) -> Pair {
-    let test_js = js.clone();
 
     while html.contains("$") {
         return match html.find("$") {
             Some(a) => {
+                let mut ch = (">", "<");
+                let le = html.clone();
+
+                let prop = if &html[a-1..a] == "=" {
+                    ch = ("=", ">");
+                    let mut s = a;
+
+                    while &html[s-1..s] != " " {
+                        s -= 1;
+                    }
+
+                    &le[s..a]
+                } else {""};
+
                 let mut idx = a;
 
-                while &html[idx..idx + 1] != "<" {
-                    idx += 1;
-                }
-
+                let mut pig = a;
                 let mut zig = a;
 
-                while &html[idx..idx + 1] != "<" && &html[idx..idx + 1] != " " {
+                while &html[idx..idx + 1] != ch.1 && &html[idx..idx + 1] != " " {
                     idx += 1;
                 }
 
-                while &html[zig..zig + 1] != "<" {
+                while &html[zig..zig + 1] != ch.1 {
                     zig += 1;
                 }
 
+                while &html[pig..pig + 1] != ch.0 {
+                    pig -= 1
+                }
+
+                let mut len: usize = 0;
+                let val = &html.clone()[a + 1..idx];
+                let start = &html.clone()[pig + 1..a];
+                let end = &html.clone()[idx..zig];
+
                 let mut fall = a;
                 let mut up = a;
-
-                let mut pig = a;
 
                 while &html[fall..fall + 1] != "\n" {
                     fall -= 1
@@ -44,16 +61,8 @@ pub fn template(
                     up += 1
                 }
 
-                while &html[pig..pig + 1] != ">" {
-                    pig -= 1
-                }
 
                 let sh = &html[fall..up];
-                let val = &html.clone()[a + 1..idx];
-                let start = &html.clone()[pig + 1..a];
-                let end = &html.clone()[idx + 1..zig];
-
-                let mut len = 0 as usize;
 
                 let id = match sh.find("id=\"") {
                     Some(au) => {
@@ -67,23 +76,43 @@ pub fn template(
                     }
                     None => {
                         let r = gen_id();
-                        
+
                         len = r.len() + 6;
-                        html.insert_str(pig, &*format!(" id=\"{}\"", r));
+                        html.insert_str(zig, &*format!(" id=\"{}\"", r));
                         r
                     }
                 };
-                
-                let result = &*v8_parse(scope, &*format!("`${start}${val}${end}`"));
+
+                let mut s = String::from("`");
+
+                pub fn push_s(s: String, mut ps: &str) -> String {
+                    let mut ls = s;
+
+                    ps = if ps == "" {"\"\""} else {ps};
+
+                    ls.push_str("${");
+                    ls.push_str(ps);
+                    ls.push_str("}");
+
+                    ls
+                }
+
+                s=push_s(s, start);
+                s=push_s(s, val);
+                s=push_s(s, end);
+                s.push_str("`");
+
+                let result = &*v8_parse(scope, &*s);
+
                 base._set(
                     val.to_string(),
-                    format!("document.getElementById({:?}).innerText", id),
-                    val.to_string(),
+                    format!("document.getElementById({:?}).{prop}", id),
+                    result.to_string(),
                 );
 
-                html.replace_range(pig + 1 + len..idx + len, result);
+                html.replace_range(a..zig, result);
 
-                Pair(html, test_js)
+                Pair(html, js)
             }
             None => Pair(html, js),
         };
