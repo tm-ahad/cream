@@ -1,8 +1,0 @@
-
-app {
-    let a = 88
-
-    <html>
-        <h1>$a 23</h1>
-    </html>
-}
