@@ -3,6 +3,6 @@ app {
     let a = 88
 
     <html>
-        <h1>df $a</h1>
+        <h1>$a 23</h1>
     </html>
 }

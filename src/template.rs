@@ -17,7 +17,7 @@ pub fn template(
                 let mut ch = (">", "<");
                 let le = html.clone();
 
-                let prop = if &html[a-1..a] == "=" {
+                let prop = if html[..a].contains("=") {
                     ch = ("=", ">");
                     let mut s = a;
 
@@ -26,7 +26,7 @@ pub fn template(
                     }
 
                     &le[s..a]
-                } else {""};
+                } else {"innerText"};
 
                 let mut idx = a;
 
@@ -78,29 +78,36 @@ pub fn template(
                         let r = gen_id();
 
                         len = r.len() + 6;
-                        html.insert_str(zig, &*format!(" id=\"{}\"", r));
+                        html.insert_str(match prop {
+                            "innerText" => pig,
+                            _ => zig
+                        }, &*format!(" id=\"{}\"", r));
                         r
                     }
                 };
 
                 let mut s = String::from("`");
 
-                pub fn push_s(s: String, mut ps: &str) -> String {
+                pub fn push_s(s: String, ps: &str, b: bool) -> String {
                     let mut ls = s;
+                    let d = if b {
+                        format!("\"{ps}\"")
+                    } else {ps.to_string()};
 
                     ls.push_str("${");
-                    ls.push_str(&*format!("\"{ps}\""));
+                    ls.push_str(&*d);
+
                     ls.push_str("}");
 
                     ls
                 }
 
-                s=push_s(s, start);
-                s=push_s(s, val);
-                s=push_s(s, end);
+                s=push_s(s, start, true);
+                s=push_s(s, val, false);
+                s=push_s(s, end, true);
                 s.push_str("`");
 
-                let result = &*v8_parse(scope, &*s);
+                let mut result = v8_parse(scope, &*s);
 
                 base._set(
                     val.to_string(),
@@ -108,7 +115,17 @@ pub fn template(
                     result.to_string(),
                 );
 
-                html.replace_range(a..zig, result);
+                result = if (end != "" || start != "")
+                    && prop != "innerText" {
+
+                    let wed=format!("\"{}\"", result);
+                    wed
+                } else {result};
+
+                html.replace_range( match prop {
+                    "innerText" => pig+len+1..zig+len,
+                    _ => pig+1..zig
+                }, &*result);
 
                 Pair(html, js)
             }
