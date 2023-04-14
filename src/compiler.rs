@@ -9,25 +9,30 @@ use crate::template::template;
 use crate::pass::pass;
 use crate::dsp_parser::dsp_parser;
 use crate::std_err::StdErr;
+use crate::std_err::ErrType::ConfigError;
 use rusty_v8 as v8;
 use serde_json::{Map, Value};
 use std::fs::{read_to_string, write};
 use rusty_v8::json::stringify;
 use rusty_v8::Script;
-use crate::std_err::ErrType::ConfigError;
+use std::collections::HashMap;
 
-pub fn compile(mut state: _StateBase) {
-    let map = dsp_parser("./config.dsp");
-    let ext = match map
-        .get("lang") {
-        Some(v) => v,
+pub fn get_prop(h: HashMap<String, String>, key: &str) -> String {
+    return match h.get(key) {
+        Some(a) => a.clone(),
         None => {
-            let err = StdErr::new(ConfigError, "Invalid config");
+            let err = StdErr::new(ConfigError,
+                &*format!("{key} not found on config"));
             err.exec();
 
             todo!()
         }
-    };
+    }
+}
+
+pub fn compile(mut state: _StateBase) {
+    let map = dsp_parser("./config.dsp");
+    let ext = get_prop(map.clone(), "lang");
 
     let mut app = read_to_string(format!("./src/app.{ext}"))
         .expect("Project or app.nts not found");
@@ -69,7 +74,7 @@ pub fn compile(mut state: _StateBase) {
 
                 comp_html = format!(
                     "{comp_html}\n<script type=\"modules\" src=\"https://raw.githubusercontent.com/tm-ahad/nature.js/master/lib/{}.js\"></script>",
-                    &app[e + 9..ci + 1]
+                    &app[e + 11..ci + 1]
                 );
 
                 app.replace_range(e..ci + 1, "")
@@ -305,20 +310,20 @@ pub fn compile(mut state: _StateBase) {
     write(
         "./build/index.html",
         format!(
-            "<!DOCTYPE html>
-<html lang=\"en\">
+            "
 <head>
-    <meta charset=\"UTF-8\">
-    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-    <title>Document</title>
-</head>
-<body>
-    {comp_html}
-    <script type=\"module\" src=\"./{}\">
-</body>
-</html>
-", map.get("_app").unwrap()
+    <meta name=\"description\" content=\"{}\">
+    <meta name=\"keywords\" content=\"{}\">
+    <meta name=\"author\" content=\"{}\">
+<head>
+<title>{}<title>
+{comp_html}
+<script type=\"module\" src=\"./{}\">
+", get_prop(map.clone(), "description"),
+   get_prop(map.clone(), "keywords"),
+   get_prop(map.clone(), "author"),
+   get_prop(map.clone(), "title"),
+   get_prop(map.clone(), "_app")
         ),
     )
     .expect("File not found or writing not supported");

@@ -4,6 +4,10 @@ use std::io::Write;
 
 pub fn new(name: &String) {
     let input = std_input("Language for your project (ts): ", "ts");
+    let k = std_input("keywords: ", "ts");
+    let a = std_input("description: ", "ts");
+    let t = std_input("author: ", "ts");
+    let d = std_input("title: ", "ts");
     let n = std_input("name (ex): ", "ex");
 
     create_dir(format!("./{}", name)).expect("Creating dir not allowed");
@@ -22,11 +26,13 @@ name${n}
 lang${input}
 pre_build$
 pre_start$
+keywords${k}
+author${a}
+description${d}
+title${t}
 port$8871
 host$127.0.0.1
-app$app.{input}
-
-    ").as_bytes())
+app$app.{input}").as_bytes())
         .expect("Cannot write file");
 
     f.write(

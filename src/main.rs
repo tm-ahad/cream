@@ -50,9 +50,13 @@ fn main() {
                     Some(c) => {
                         let com = c.split(" ").collect::<Vec<&str>>();
 
-                        let _  = Command::new(com[0])
+                        let a  = Command::new(com[0])
                             .args(com[1..].to_vec())
-                            .exec();
+                            .output()
+                            .unwrap()
+                            .stdout;
+
+                        std_out(&String::from_utf8_lossy(&a));
                     }
                     None => pass()
                 }
