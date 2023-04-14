@@ -7,14 +7,29 @@ use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::pass::pass;
+use crate::dsp_parser::dsp_parser;
+use crate::std_err::StdErr;
 use rusty_v8 as v8;
 use serde_json::{Map, Value};
-use std::fs::{self, read_to_string};
+use std::fs::{read_to_string, write};
 use rusty_v8::json::stringify;
 use rusty_v8::Script;
+use crate::std_err::ErrType::ConfigError;
 
-pub fn compile(name: &String, mut state: _StateBase) {
-    let mut app = read_to_string(format!("./{}/src/app.nts", name))
+pub fn compile(mut state: _StateBase) {
+    let map = dsp_parser("./config.dsp");
+    let ext = match map
+        .get("lang") {
+        Some(v) => v,
+        None => {
+            let err = StdErr::new(ConfigError, "Invalid config");
+            err.exec();
+
+            todo!()
+        }
+    };
+
+    let mut app = read_to_string(format!("./src/app.{ext}"))
         .expect("Project or app.nts not found");
 
     let mut imports: Vec<Component> = vec![];
@@ -53,7 +68,7 @@ pub fn compile(name: &String, mut state: _StateBase) {
                 }
 
                 comp_html = format!(
-                    "{comp_html}\n<script type=\"modules\" src=\"./lib/{}\"></script>",
+                    "{comp_html}\n<script type=\"modules\" src=\"https://raw.githubusercontent.com/tm-ahad/nature.js/master/lib/{}.js\"></script>",
                     &app[e + 9..ci + 1]
                 );
 
@@ -102,7 +117,6 @@ pub fn compile(name: &String, mut state: _StateBase) {
 
                 names.push(app[e + 16..namei].trim().to_string());
                 imports.push(component(
-                    name,
                     fnm.to_string(),
                     cn.trim().to_string(),
                     script,
@@ -158,7 +172,6 @@ pub fn compile(name: &String, mut state: _StateBase) {
                             map.insert(
                                 key.clone(),
                                 Value::String(parse(&component(
-                                    name,
                                     s.to_string(),
                                     "Render".to_string(),
                                     script,
@@ -232,7 +245,6 @@ pub fn compile(name: &String, mut state: _StateBase) {
                     let _ = map.insert(
                        key.clone(),
                        Value::String(parse(&component(
-                                name,
                                 s.to_string(),
                                 "Render".to_string(),
                                     script,
@@ -290,8 +302,8 @@ pub fn compile(name: &String, mut state: _StateBase) {
         }
     }
 
-    fs::write(
-        format!("./{}/build/index.html", name),
+    write(
+        "./build/index.html",
         format!(
             "<!DOCTYPE html>
 <html lang=\"en\">
@@ -303,13 +315,16 @@ pub fn compile(name: &String, mut state: _StateBase) {
 </head>
 <body>
     {comp_html}
-    <script type=\"module\">
-    {js}
-    </script>
+    <script type=\"module\" src=\"./{}\">
 </body>
 </html>
-",
+", map.get("_app").unwrap()
         ),
     )
     .expect("File not found or writing not supported");
+
+    write(
+        format!("./build/app.{ext}"),
+        js)
+        .expect("File not found or writing not supported");
 }

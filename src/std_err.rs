@@ -5,7 +5,8 @@ use colored::Colorize;
 pub enum ErrType {
     SyntaxError,
     CpuError,
-    OSError
+    OSError,
+    ConfigError
 }
 
 impl ErrType {
@@ -13,7 +14,8 @@ impl ErrType {
         match self {
             ErrType::SyntaxError => "SyntaxError".to_string(),
             ErrType::CpuError => "CpuError".to_string(),
-            ErrType::OSError => "OSError".to_string()
+            ErrType::OSError => "OSError".to_string(),
+            _ => "ConfigError".to_string()
         }
     }
 }

@@ -15,14 +15,13 @@ pub struct Component {
     pub name: String,
 }
 pub fn component(
-    p_name: &String,
     f_name: String,
     c_name: String,
     script: Local<Script>,
     scope: &mut ContextScope<HandleScope>,
     st: &mut _StateBase,
 ) -> Component {
-    let path = format!("./{}/src/{}", p_name, f_name).replace("\"", "");
+    let path = format!("./src/{f_name}").replace("\"", "");
 
     let app = read_to_string(path).expect("file not found");
     let mut _imports: Vec<Component> = vec![];
@@ -83,7 +82,6 @@ pub fn component(
 
             _names.push(app[e + 16..namei].trim().to_string());
             _imports.push(component(
-                p_name,
                 fnm.to_string(),
                 cn.trim().to_string(),
                 script,

@@ -14,8 +14,9 @@ mod react_op;
 mod v8_parse;
 mod pass;
 mod cpu_error;
-mod copy_dir;
 mod std_out;
+mod input;
+mod dsp_parser;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
@@ -25,6 +26,7 @@ use crate::std_out::std_out;
 use std::env;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
+use crate::dsp_parser::dsp_parser;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -41,9 +43,38 @@ fn main() {
     } else {
         match args[1].as_str() {
             "new" => new(args.get(2).expect("Project name not provided")),
-            "build" => compile(args.get(2).expect("Project name not prvided"), state_base),
+            "build" => {
+                let map = dsp_parser("./config.dsp");
+
+                match map.get("pre_build") {
+                    Some(c) => {
+                        let com = c.split(" ").collect::<Vec<&str>>();
+
+                        let _  = Command::new(com[0])
+                            .args(com[1..].to_vec())
+                            .exec();
+                    }
+                    None => pass()
+                }
+
+                compile(state_base);
+            },
             "start" => {
-                compile(args.get(2).expect("Project name not provided"), state_base);
+                compile(state_base);
+
+                let map = dsp_parser("./config.dsp");
+
+                match map.get("pre_start") {
+                    Some(c) => {
+                        let com = c.split(" ").collect::<Vec<&str>>();
+
+                        let _  = Command::new(com[0])
+                            .args(com[1..].to_vec())
+                            .exec();
+                    }
+                    None => pass()
+                }
+
                 let mut comm = Command::new("./main");
 
                 comm.arg(format!(
