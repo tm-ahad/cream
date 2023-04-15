@@ -1,5 +1,5 @@
-use std::io;
 use crate::std_out::std_out;
+use std::io;
 
 pub fn std_input(p: &str, def: &str) -> String {
     std_out(p);

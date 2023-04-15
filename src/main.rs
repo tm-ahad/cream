@@ -17,16 +17,20 @@ mod cpu_error;
 mod std_out;
 mod input;
 mod dsp_parser;
+mod get_prop;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
 use crate::new::new;
 use crate::pass::pass;
 use crate::std_out::std_out;
+use crate::dsp_parser::dsp_parser;
+use crate::get_prop::get_prop;
 use std::env;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
-use crate::dsp_parser::dsp_parser;
+use crate::std_err::ErrType::OSError;
+use crate::std_err::StdErr;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -48,15 +52,27 @@ fn main() {
 
                 match map.get("pre_build") {
                     Some(c) => {
-                        let com = c.split(" ").collect::<Vec<&str>>();
+                        let mut com = c.split(" ").collect::<Vec<&str>>();
 
-                        let a  = Command::new(com[0])
-                            .args(com[1..].to_vec())
-                            .output()
-                            .unwrap()
-                            .stdout;
+                        com.retain(|x| *x != "");
 
-                        std_out(&String::from_utf8_lossy(&a));
+                        if !com.is_empty() {
+                            let a  = match Command::new(com[0])
+                                .args(com[1..].to_vec())
+                                .output() {
+                                Ok(e) => e.stdout,
+                                Err(e) => {
+                                    let err = StdErr::new(OSError, &*e.to_string());
+                                    err.exec();
+
+                                    Vec::new()
+                                }
+                            };
+
+                            std_out(&String::from_utf8_lossy(&a));
+                        }
+
+
                     }
                     None => pass()
                 }
@@ -64,7 +80,17 @@ fn main() {
                 compile(state_base);
             },
             "start" => {
-                compile(state_base);
+                let _ = match Command::new("nts")
+                    .arg("build")
+                    .output() {
+                    Ok(s) => std_out(&*
+                        String::from_utf8_lossy(&*s.stdout)),
+                    Err(e) => {
+
+                        let err = StdErr::new(OSError, &*e.to_string());
+                        err.exec()
+                    }
+                };
 
                 let map = dsp_parser("./config.dsp");
 
@@ -78,14 +104,6 @@ fn main() {
                     }
                     None => pass()
                 }
-
-                let mut comm = Command::new("./main");
-
-                comm.arg(format!(
-                    "./{}/build/index.html",
-                    args.get(2).expect("Project name not provided")
-                ))
-                    .exec();
             }
             _ => pass()
         }

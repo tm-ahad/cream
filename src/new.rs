@@ -32,7 +32,8 @@ description${d}
 title${t}
 port$8871
 host$127.0.0.1
-app$app.{input}").as_bytes())
+_app_js$build/app.js
+_app_html$build/index.html").as_bytes())
         .expect("Cannot write file");
 
     f.write(

@@ -27,7 +27,7 @@ pub fn _state(
                 let v;
                 let name = big_brain.last().unwrap();
 
-                if arth.contains(&&li[a - 1..a + 1]) && !li.ends_with(".single()") {
+                if arth.contains(&&li[a - 1..a + 1]) && !li.ends_with(".sin()") {
                     let c = &li[a + 1..].split(";").collect::<Vec<&str>>()[0];
 
                     match serde_json::from_str::<Value>(c) {
@@ -57,7 +57,7 @@ pub fn _state(
                     }
                 } else if &li[a..a + 1] == "="
                     && !(li.starts_with("const") || li.starts_with("let") || li.starts_with("var"))
-                    && !li.ends_with(".single()")
+                    && !li.ends_with(".sin()")
                 {
                     let len = li.len();
                     let c = li[a + 1..len].trim().to_string();

@@ -5,6 +5,7 @@ pub fn collect_gen(toks: String, keyword: String, found_id: usize, end: &str) ->
 
     for (si, spl) in splited_v.clone().into_iter().enumerate() {
         let t = spl.replace(" ", "");
+
         if t.len() >= found_id + keyword.len() &&
            &t[found_id..found_id + keyword.len()] == keyword.as_str()  {
 

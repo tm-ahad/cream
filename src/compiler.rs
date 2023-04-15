@@ -8,27 +8,12 @@ use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::pass::pass;
 use crate::dsp_parser::dsp_parser;
-use crate::std_err::StdErr;
-use crate::std_err::ErrType::ConfigError;
+use crate::get_prop::get_prop;
 use rusty_v8 as v8;
 use serde_json::{Map, Value};
 use std::fs::{read_to_string, write};
 use rusty_v8::json::stringify;
 use rusty_v8::Script;
-use std::collections::HashMap;
-
-pub fn get_prop(h: HashMap<String, String>, key: &str) -> String {
-    return match h.get(key) {
-        Some(a) => a.clone(),
-        None => {
-            let err = StdErr::new(ConfigError,
-                &*format!("{key} not found on config"));
-            err.exec();
-
-            todo!()
-        }
-    }
-}
 
 pub fn compile(mut state: _StateBase) {
     let map = dsp_parser("./config.dsp");
@@ -49,7 +34,7 @@ pub fn compile(mut state: _StateBase) {
     let split = main_app.split("\n");
 
     for s in split {
-        if s != "<html>" {
+        if s != "<temp>" {
             js = format!("{}\n{}", js, s);
         } else {
             break;
@@ -59,7 +44,7 @@ pub fn compile(mut state: _StateBase) {
     
     let mut comp_html = format!(
         "{}\n",
-        collect_gen(main_app.clone(), "<html>".to_string(), 0, "</html>")
+        collect_gen(main_app.clone(), "<temp>".to_string(), 0, "<temp/>")
     );
 
     while app.contains("import lib:") {
@@ -97,7 +82,9 @@ pub fn compile(mut state: _StateBase) {
     let code = v8::String::new(scope, ben)
         .unwrap();
 
-    let mut script = v8::Script::compile(scope, code, None).unwrap();
+    println!("{}", ben);
+
+    let mut script = Script::compile(scope, code, None).unwrap();
 
     let _ = script.run(scope).unwrap();
 
@@ -151,7 +138,7 @@ pub fn compile(mut state: _StateBase) {
     js = caught.1;
     comp_html = caught.0;
 
-    js = js.replace(".single()", "");
+    js = js.replace(".sin()", "");
     js = ben.to_string();
 
     match comp_html.find("<Router route=") {
@@ -323,7 +310,7 @@ pub fn compile(mut state: _StateBase) {
    get_prop(map.clone(), "keywords"),
    get_prop(map.clone(), "author"),
    get_prop(map.clone(), "title"),
-   get_prop(map.clone(), "_app")
+   get_prop(map.clone(), "_app_js")
         ),
     )
     .expect("File not found or writing not supported");
