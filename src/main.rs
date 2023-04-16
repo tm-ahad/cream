@@ -10,7 +10,6 @@ mod state_base;
 mod template;
 mod std_err;
 mod var_not_allowed;
-mod react_op;
 mod v8_parse;
 mod pass;
 mod cpu_error;
