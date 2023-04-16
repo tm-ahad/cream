@@ -36,14 +36,14 @@ pub fn component(
     let split = main_app.split("\n").collect::<Vec<&str>>();
 
     for s in split {
-        if s != "<html>" {
+        if s != "<temp>" {
             js = format!("{}\n{}", js, s);
         } else {
             break;
         }
     }
 
-    let mut html = collect_gen(main_app, "<html>".to_string(), 0, "<html/>");
+    let mut html = collect_gen(main_app, "<temp>".to_string(), 0, "<temp/>");
     let caught = template(html, js.clone(), scope, st);
 
     js = caught.1;

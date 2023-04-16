@@ -18,6 +18,7 @@ mod std_out;
 mod input;
 mod dsp_parser;
 mod get_prop;
+mod merge_js;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
@@ -25,12 +26,11 @@ use crate::new::new;
 use crate::pass::pass;
 use crate::std_out::std_out;
 use crate::dsp_parser::dsp_parser;
-use crate::get_prop::get_prop;
-use std::env;
-use std::os::unix::process::CommandExt;
-use std::process::Command;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
+use std::env;
+use std::process::Command;
+use crate::merge_js::merge_js;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -45,10 +45,14 @@ fn main() {
 
         std_out(inst.as_str())
     } else {
+        let map;
+
         match args[1].as_str() {
             "new" => new(args.get(2).expect("Project name not provided")),
             "build" => {
-                let map = dsp_parser("./config.dsp");
+                map = dsp_parser("./config.dsp");
+
+                compile(state_base, map.clone());
 
                 match map.get("pre_build") {
                     Some(c) => {
@@ -71,41 +75,13 @@ fn main() {
 
                             std_out(&String::from_utf8_lossy(&a));
                         }
-
-
                     }
                     None => pass()
                 }
 
-                compile(state_base);
+                merge_js(map.clone());
             },
-            "start" => {
-                let _ = match Command::new("nts")
-                    .arg("build")
-                    .output() {
-                    Ok(s) => std_out(&*
-                        String::from_utf8_lossy(&*s.stdout)),
-                    Err(e) => {
-
-                        let err = StdErr::new(OSError, &*e.to_string());
-                        err.exec()
-                    }
-                };
-
-                let map = dsp_parser("./config.dsp");
-
-                match map.get("pre_start") {
-                    Some(c) => {
-                        let com = c.split(" ").collect::<Vec<&str>>();
-
-                        let _  = Command::new(com[0])
-                            .args(com[1..].to_vec())
-                            .exec();
-                    }
-                    None => pass()
-                }
-            }
-            _ => pass()
+            &_ => {}
         }
     }
 

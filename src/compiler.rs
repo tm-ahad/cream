@@ -7,16 +7,15 @@ use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::pass::pass;
-use crate::dsp_parser::dsp_parser;
 use crate::get_prop::get_prop;
 use rusty_v8 as v8;
 use serde_json::{Map, Value};
 use std::fs::{read_to_string, write};
 use rusty_v8::json::stringify;
 use rusty_v8::Script;
+use std::collections::HashMap;
 
-pub fn compile(mut state: _StateBase) {
-    let map = dsp_parser("./config.dsp");
+pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
 
     let mut app = read_to_string(format!("./src/app.{ext}"))
@@ -81,8 +80,6 @@ pub fn compile(mut state: _StateBase) {
     
     let code = v8::String::new(scope, ben)
         .unwrap();
-
-    println!("{}", ben);
 
     let mut script = Script::compile(scope, code, None).unwrap();
 
@@ -294,23 +291,29 @@ pub fn compile(mut state: _StateBase) {
         }
     }
 
+    let head = get_prop(map.clone(), "head");
+
     write(
         "./build/index.html",
         format!(
             "
+<!DOCTYPE html>
+<html lang=\"en\">
 <head>
     <meta name=\"description\" content=\"{}\">
     <meta name=\"keywords\" content=\"{}\">
     <meta name=\"author\" content=\"{}\">
-<head>
-<title>{}<title>
-{comp_html}
-<script type=\"module\" src=\"./{}\">
+    <title>{}</title>
+    {head}
+</head>
+<body>
+    {comp_html}
+<body>
+</html>
 ", get_prop(map.clone(), "description"),
    get_prop(map.clone(), "keywords"),
    get_prop(map.clone(), "author"),
-   get_prop(map.clone(), "title"),
-   get_prop(map.clone(), "_app_js")
+   get_prop(map.clone(), "title")
         ),
     )
     .expect("File not found or writing not supported");
