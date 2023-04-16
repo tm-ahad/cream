@@ -32,7 +32,7 @@ pub fn new(name: &String) {
 
     shell.write("\
 nts build
-serve ./build/index.html 127.0.0.1:8871\n"
+serve"
         .as_bytes()).expect("Cannot write file");
 
     config.write(format!("\
