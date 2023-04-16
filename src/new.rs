@@ -36,6 +36,9 @@ serve ./build/index.html 127.0.0.1:8871\n"
         .as_bytes()).expect("Cannot write file");
 
     config.write(format!("\
+home$/
+static_dir$
+static_dir_render$
 name${n}
 lang${input}
 head$
