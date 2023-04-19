@@ -122,8 +122,6 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
 
     comp_html = ht.0;
     js = ht.1;
-
-    js = _state(js.clone(), &mut state, scope);
     
     let scoope = _scope(comp_html.clone(), js.clone(), &mut state);
 
@@ -135,8 +133,10 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
     js = caught.1;
     comp_html = caught.0;
 
+    js = _state(js.clone(), &mut state, scope);
+
     js = js.replace(".sin()", "");
-    js = ben.to_string();
+    js = js.replace(".cam()", "");
 
     match comp_html.find("<Router route=") {
         None => {}

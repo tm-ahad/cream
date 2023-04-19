@@ -38,7 +38,7 @@ fn main() {
     if args.len() == 1 {
         let ne = "ntc new {project_name} - Create a new project";
         let build = "ntc build {project_name} - Build your project";
-        let start = "ntc start {project_name} - Start and build your project\n";
+        let start = "serve (not nts serve) - serve your project\n";
 
         let inst = format!("{ne}\n{build}\n{start}");
 

@@ -46,6 +46,6 @@ func main() {
 
     http.HandleFunc(entry, app)
 
-    fmt.Printf("Serving App on http://%s", addr)
+    fmt.Printf("Serving App on http://%s\n", addr)
     http.ListenAndServe(addr, nil)
 }

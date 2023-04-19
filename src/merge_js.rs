@@ -1,6 +1,6 @@
 use crate::get_prop::get_prop;
 use std::collections::HashMap;
-use std::fs::{File, read_to_string, write};
+use std::fs::{File, read_to_string, remove_file, write};
 use std::io::Read;
 
 pub fn merge_js(map: HashMap<String, String>) {
@@ -8,8 +8,8 @@ pub fn merge_js(map: HashMap<String, String>) {
     let mut file = File::open(path)
                               .expect("File not found");
 
-    let js = read_to_string(format!("./build/{}", get_prop(map.clone(), "_app_js"))
-        ).expect("File not found");
+    let js = read_to_string(format!("./build/{}", get_prop(map.clone(), "_app_js")))
+        .expect("File not found");
 
     let mut content: String = String::new();
     file.read_to_string(&mut content)
@@ -18,7 +18,11 @@ pub fn merge_js(map: HashMap<String, String>) {
     let id = content.len() - 17;
 
     content.insert_str(id, &*format!("\n<script>\n{js}\n</script>"));
+    content.replace_range(id+22..id+85, "");
 
     write(path, content.as_bytes())
         .expect("Cannot write file");
+
+    remove_file(format!("./build/{}", get_prop(map, "_app_js")))
+        .expect("File cannot be removed");
 }

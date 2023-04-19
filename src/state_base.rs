@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use rusty_v8::{ContextScope, HandleScope, Script};
 
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct _StateBase {
     pub map: HashMap<String, (HashMap<String, String>, String)>,
     pub parse: String,
@@ -48,7 +49,8 @@ impl _StateBase {
         v: String,
         scope: &mut ContextScope<HandleScope>
     ) {
-        let val = self.map.get_mut(&*key);
+        let mut binding = self.map.clone();
+        let val = binding.get_mut(&*key);
 
         match val {
             Some(l) => {
@@ -60,10 +62,19 @@ impl _StateBase {
                         let check = v8_parse(scope, k);
 
                         if result != check {
+
+                            if k.trim() == &key {
+                                continue
+                            }
+
                             let fmt = &*format!("{}={}{}\n", k, result, ext);
                             let v8_str = rusty_v8::String::new(scope, fmt).unwrap();
 
+                            self.catch_parse(k.clone(), ext.clone(), v.clone(),
+                                scope);
+
                             p.push_str(fmt);
+                            p.push_str(&*self.parse);
 
                             let s = Script::compile(scope, v8_str, None);
                             let _ = s
@@ -86,10 +97,10 @@ impl _StateBase {
         &mut self,
         key: String,
         ext: String,
-        v: String,
-       scope: &mut ContextScope<HandleScope>
+        v: String
     ) {
-        let val = self.map.get_mut(&*key);
+        let mut binding = self.map.clone();
+        let val = binding.get_mut(&*key);
 
         match val {
             Some(l) => {
@@ -97,20 +108,16 @@ impl _StateBase {
                     let mut p = String::new();
 
                     for (k, vl) in &l.0 {
-                        let result = v8_parse(scope, vl);
-                        let check = v8_parse(scope, k);
-
-                        if result != check {
-                            let fmt = &*format!("{}={}{}\n", k, vl, ext);
-                            let v8_str = rusty_v8::String::new(scope, fmt).unwrap();
-
-                            p.push_str(fmt);
-
-                            let s = Script::compile(scope, v8_str, None);
-                            let _ = s
-                                .unwrap()
-                                .run(scope);
+                        if k.trim() == &key {
+                            continue
                         }
+
+                        let fmt = &*format!("{}={}{}\n", k, vl, ext.clone());
+                        p.push_str(fmt);
+
+                        self.parse(k.clone(), ext.clone(), v.clone());
+
+                        p.push_str(&*self.parse);
                     }
 
                     self.parse = p.clone();

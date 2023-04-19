@@ -6,19 +6,19 @@ use rusty_v8::{ContextScope, HandleScope};
 
 pub fn template(
     mut html: String,
-    js: String,
+    mut js: String,
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
 ) -> Pair {
 
     while html.contains("$") {
-        return match html.find("$") {
+        match html.find("$") {
             Some(a) => {
-                let mut ch = (">", "<");
+                let mut ch = (">", "<", "<");
                 let le = html.clone();
 
                 let prop = if html[..a].contains("=") {
-                    ch = ("=", ">");
+                    ch = ("=", ">", " ");
                     let mut s = a;
 
                     while &html[s-1..s] != " " {
@@ -37,7 +37,8 @@ pub fn template(
                     idx += 1;
                 }
 
-                while &html[zig..zig + 1] != ch.1 {
+                while &html[zig..zig + 1] != ch.1 && &html[zig..zig + 1] != ch.2
+                {
                     zig += 1;
                 }
 
@@ -46,9 +47,16 @@ pub fn template(
                 }
 
                 let mut len: usize = 0;
-                let val = &html.clone()[a + 1..idx];
-                let start = &html.clone()[pig + 1..a];
-                let end = &html.clone()[idx..zig];
+                let cloned = html.clone();
+
+                let val = &cloned[a + 1..idx];
+                let start = &cloned[pig + 1..a];
+
+                let end = if prop == "innerText" {
+                    &cloned[idx..zig]
+                } else {
+                    &cloned[idx..zig]
+                };
 
                 let mut fall = a;
                 let mut up = a;
@@ -88,31 +96,45 @@ pub fn template(
 
                 let mut s = String::from("`");
 
-                pub fn push_s(s: String, ps: &str, b: bool) -> String {
-                    let mut ls = s;
-                    let d = if b {
-                        format!("\"{ps}\"")
-                    } else {ps.to_string()};
+                if prop == "innerText" {
+                    pub fn push_s(s: String, ps: &str, b: bool) -> String {
+                        let mut ls = s;
+                        let d = if b {
+                            format!("\"{ps}\"")
+                        } else {ps.to_string()};
 
-                    ls.push_str("${");
-                    ls.push_str(&*d);
+                        ls.push_str("${");
+                        ls.push_str(&*d);
 
-                    ls.push_str("}");
+                        ls.push_str("}");
 
-                    ls
+                        ls
+                    }
+
+                    if !start.is_empty() {
+                        s=push_s(s, start, true);
+                    }
+                    s=push_s(s, val, false);
+
+                    if !end.is_empty() {
+                        s=push_s(s, end, true);
+                    }
+                    s.push_str("`");
                 }
 
-                s=push_s(s, start, true);
-                s=push_s(s, val, false);
-                s=push_s(s, end, true);
-                s.push_str("`");
+                let fin = &*if prop == "innerText" {s.replace(".dyn()", "")} else {
+                    val.replace(".dyn()", "")
+                };
 
-                let mut result = v8_parse(scope, &*s);
+                let mut result = v8_parse(scope, fin);
+
+                let p_val = val.replace(".dyn()", "");
 
                 base._set(
-                    val.to_string(),
+                    p_val.clone(),
                     format!("document.getElementById({:?}).{prop}", id),
-                    result.to_string(),
+                    if prop == "innerText" {s.replace(".dyn()", "")}
+                        else {p_val.clone()}
                 );
 
                 result = if (end != "" || start != "")
@@ -122,14 +144,24 @@ pub fn template(
                     wed
                 } else {result};
 
-                html.replace_range( match prop {
-                    "innerText" => pig+len+1..zig+len,
-                    _ => pig+1..zig
-                }, &*result);
+                if !val.ends_with(".dyn()") {
 
-                Pair(html, js)
+                    html.replace_range( match prop {
+                        "innerText" => pig+len+1..zig+len,
+                        _ => pig+1..zig
+                    }, &*result);
+                } else {
+
+                    html.replace_range( match prop {
+                        "innerText" => pig+len+1..zig+len,
+                        _ => pig+1-prop.len()..zig
+                    }, "");
+
+                    js.push_str(&*
+                        format!("\ndocument.getElementById({:?}).{prop}{}.sin()", id, fin));
+                }
             }
-            None => Pair(html, js),
+            None => return Pair(html, js),
         };
     }
 
