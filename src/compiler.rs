@@ -68,8 +68,6 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                     .expect("Cannot parse response to string");
 
                 js = format!("{resp}{js}");
-
-                println!("{}", js)
             }
         }
     }
