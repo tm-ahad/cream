@@ -18,6 +18,7 @@ mod dsp_parser;
 mod get_prop;
 mod merge_js;
 mod id_gen;
+mod js_lib;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;

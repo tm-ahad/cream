@@ -8,13 +8,13 @@ use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::pass::pass;
 use crate::get_prop::get_prop;
+use crate::js_lib::libs;
 use rusty_v8 as v8;
 use serde_json::{Map, Value};
 use std::fs::{read_to_string, write};
 use rusty_v8::json::stringify;
 use rusty_v8::Script;
 use std::collections::HashMap;
-use ureq::get;
 
 pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
@@ -57,15 +57,11 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                     ci += 1
                 }
 
-                let name = &app.clone()[e + 11..ci+1];
+                let name = &app.clone()[e + 11..ci];
 
                 app.replace_range(e..ci + 1, "");
 
-                let resp = get(&*format!("https://raw.githubusercontent.com/tm-ahad/nature.js/master/lib/{}.js", name))
-                    .call()
-                    .expect(&*format!("Library {name} not found!"))
-                    .into_string()
-                    .expect("Cannot parse response to string");
+                let resp = libs(name);
 
                 js = format!("{resp}{js}");
             }
