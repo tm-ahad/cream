@@ -175,8 +175,7 @@ pub fn _state(
                     lines.push(li.to_string())
                 }
                 else {
-                    let err = StdErr::new(SyntaxError, "Invalid Operator");
-                    err.exec()
+                    StdErr::exec(SyntaxError, "Invalid Operator");
                 }
 
                 continue;

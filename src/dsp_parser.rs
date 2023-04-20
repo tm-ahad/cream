@@ -9,9 +9,7 @@ pub fn dsp_parser(path: &str) -> HashMap<String, String> {
     let s = match read_to_string(path) {
         Ok(a) => a,
         Err(e) => {
-            let err = StdErr::new(OSError, &*e.to_string());
-            err.exec();
-
+            StdErr::exec(OSError, &*e.to_string());
             todo!()
         }
     };

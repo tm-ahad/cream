@@ -68,10 +68,9 @@ fn main() {
                                 .output() {
                                 Ok(e) => e.stdout,
                                 Err(e) => {
-                                    let err = StdErr::new(OSError, &*e.to_string());
-                                    err.exec();
-
+                                    StdErr::exec(OSError, &*e.to_string());
                                     Vec::new()
+
                                 }
                             };
 

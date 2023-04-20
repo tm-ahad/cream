@@ -62,8 +62,7 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                 app.replace_range(e..ci + 1, "");
 
                 let resp = libs(name);
-
-                js = format!("{resp}{js}");
+                js = format!("{resp}{js}")
             }
         }
     }
@@ -211,6 +210,19 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                 let name_ = comp_html[a + 14..idx].trim();
                 let binding: Value;
 
+                let not_found = match map.get("404") {
+                    Some(&ref e) => parse(&component(
+                        e.clone(),
+                        "Render".to_string(),
+                        script,
+                        scope,
+                        &mut state,
+                    )),
+                    None => "\
+                        <pre style=\"word-wrap: break-word; white-space: pre-wrap;\">404 page not found</pre>
+                    ".to_string()
+                };
+
                 let v8_str = v8::String::new(scope, name_)
                     .unwrap();
 
@@ -230,6 +242,7 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                 let obj = binding.as_object().unwrap();
 
                 let mut map = Map::new();
+                map.insert("404".to_string(), Value::String(not_found));
 
                 for (key, val) in obj {
                     let s = val.as_str().unwrap();
@@ -258,14 +271,20 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                     "{js}\n{}",
                     "\
     function main() {
+        var path = window.location.pathname
+        let not_found = true
         for (let k in Route) {
-            if (window.location.pathname == k) {
+            if (path == k) {
+                not_found = false
                 document.body.innerHTML = Route[k]
                 window.history.pushState({}, \"\", k)
             }
         }
+        if (not_found) {
+            document.body.innerHTML = Route[\"404\"]
+            window.history.pushState({}, \"\", path)
+        }
     }
-
     main()
                 "
                 );
