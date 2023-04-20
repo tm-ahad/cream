@@ -18,7 +18,6 @@ pub fn _state(
 
     for li in spl.iter() {
 
-        println!("{}", li);
         match li.find("=") {
             Some(a) => {
 

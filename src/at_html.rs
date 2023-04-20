@@ -1,8 +1,8 @@
-use crate::gen_id::gen_id;
 use crate::scope::Pair;
 use crate::state_base::_StateBase;
 use crate::v8_parse::v8_parse;
 use crate::pass::pass;
+use crate::id_gen::IdGen;
 use rusty_v8::{ContextScope, HandleScope};
 use std::string::String;
 
@@ -70,7 +70,7 @@ pub fn at_html(
 
                         html[a + 4..end].to_string()
                     }
-                    None => gen_id(),
+                    None => IdGen::get_and_update(),
                 };
 
                 let val = html[a + 5..idx].to_string();

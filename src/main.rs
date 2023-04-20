@@ -2,7 +2,6 @@ mod at_html;
 mod collect_gen;
 mod compiler;
 mod component;
-mod gen_id;
 mod new;
 mod scope;
 mod state;
@@ -18,6 +17,7 @@ mod input;
 mod dsp_parser;
 mod get_prop;
 mod merge_js;
+mod id_gen;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
@@ -27,9 +27,10 @@ use crate::std_out::std_out;
 use crate::dsp_parser::dsp_parser;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
+use crate::id_gen::IdGen;
+use crate::merge_js::merge_js;
 use std::env;
 use std::process::Command;
-use crate::merge_js::merge_js;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -45,6 +46,7 @@ fn main() {
         std_out(inst.as_str())
     } else {
         let map;
+        IdGen::init();
 
         match args[1].as_str() {
             "new" => new(args.get(2).expect("Project name not provided")),

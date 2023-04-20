@@ -1,5 +1,5 @@
-use crate::gen_id::gen_id;
 use crate::scope::Pair;
+use crate::IdGen;
 use crate::v8_parse::v8_parse;
 use crate::state_base::_StateBase;
 use rusty_v8::{ContextScope, HandleScope};
@@ -83,7 +83,7 @@ pub fn template(
                         html[au + 4..init].to_string()
                     }
                     None => {
-                        let r = gen_id();
+                        let r = IdGen::get_and_update();
 
                         len = r.len() + 6;
                         html.insert_str(match prop {
@@ -154,7 +154,7 @@ pub fn template(
 
                     html.replace_range( match prop {
                         "innerText" => pig+len+1..zig+len,
-                        _ => pig+1-prop.len()..zig
+                        _ => pig-prop.len()..zig
                     }, "");
 
                     js.push_str(&*
