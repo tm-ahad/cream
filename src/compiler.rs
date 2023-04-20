@@ -14,6 +14,7 @@ use std::fs::{read_to_string, write};
 use rusty_v8::json::stringify;
 use rusty_v8::Script;
 use std::collections::HashMap;
+use ureq::get;
 
 pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
@@ -56,12 +57,19 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                     ci += 1
                 }
 
-                comp_html = format!(
-                    "{comp_html}\n<script type=\"modules\" src=\"https://raw.githubusercontent.com/tm-ahad/nature.js/master/lib/{}.js\"></script>",
-                    &app[e + 11..ci + 1]
-                );
+                let name = &app.clone()[e + 11..ci+1];
 
-                app.replace_range(e..ci + 1, "")
+                app.replace_range(e..ci + 1, "");
+
+                let resp = get(&*format!("https://raw.githubusercontent.com/tm-ahad/nature.js/master/lib/{}.js", name))
+                    .call()
+                    .expect(&*format!("Library {name} not found!"))
+                    .into_string()
+                    .expect("Cannot parse response to string");
+
+                js = format!("{resp}{js}");
+
+                println!("{}", js)
             }
         }
     }
