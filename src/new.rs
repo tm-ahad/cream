@@ -6,10 +6,11 @@ use std::io::Write;
 use colored::Colorize;
 
 pub fn new(name: &String) {
-    let input = std_input("Language for your project (ts): ", "ts");
+    let input = std_input("Language for your project (nts): ", "nts");
     let k = std_input("keywords: ", "");
     let a = std_input("description: ", "");
     let t = std_input("author: ", "");
+    let is_mod = std_input("Project type (common/module): ", "common");
     let d = std_input("title: ", "");
     let n = std_input(&*format!("name ({name}): "), name);
 
@@ -26,7 +27,9 @@ pub fn new(name: &String) {
         create_dir(format!("./{}/src", name)).expect("Directory Exists");
         create_dir(format!("./{}/build", name)).expect("Directory Exists");
 
-        let mut f = File::create(format!("./{}/src/app.{input}", name))
+        let mut f = File::create(format!("./{}/src/app.{input}{}", name, if is_mod == "mod" {
+            ".mod"
+        } else {""}))
             .expect("File exists");
 
         let mut config = File::create(format!("./{}/config.dsp", name))

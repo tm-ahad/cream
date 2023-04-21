@@ -5,6 +5,7 @@ use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::pass::pass;
+use crate::import_lib::import_lib;
 use rusty_v8::{ContextScope, HandleScope, Local, Script};
 use std::fs::read_to_string;
 
@@ -14,6 +15,7 @@ pub struct Component {
     pub html: String,
     pub name: String,
 }
+
 pub fn component(
     f_name: String,
     c_name: String,
@@ -23,7 +25,7 @@ pub fn component(
 ) -> Component {
     let path = format!("./src/{f_name}").replace("\"", "");
 
-    let app = read_to_string(path).expect("file not found");
+    let mut app = read_to_string(path).expect("file not found");
     let mut _imports: Vec<Component> = vec![];
     let mut _names: Vec<String> = vec![];
 
@@ -33,6 +35,12 @@ pub fn component(
     let main_app = collect_gen(app.clone(), macher, 0, "}");
 
     let mut js = String::new();
+
+    let libs = import_lib(app, js, false);
+
+    app = libs.0;
+    js = libs.1;
+
     let split = main_app.split("\n").collect::<Vec<&str>>();
 
     for s in split {

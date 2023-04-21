@@ -19,6 +19,8 @@ mod get_prop;
 mod merge_js;
 mod id_gen;
 mod js_lib;
+mod js_module;
+mod import_lib;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;

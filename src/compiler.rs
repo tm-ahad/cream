@@ -8,7 +8,8 @@ use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::pass::pass;
 use crate::get_prop::get_prop;
-use crate::js_lib::libs;
+use crate::import_lib::import_lib;
+use crate::js_module::module;
 use rusty_v8 as v8;
 use serde_json::{Map, Value};
 use std::fs::{read_to_string, write};
@@ -47,25 +48,10 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
         collect_gen(main_app.clone(), "<temp>".to_string(), 0, "<temp/>")
     );
 
-    while app.contains("import lib:") {
-        match app.find("import lib:") {
-            None => {}
-            Some(e) => {
-                let mut ci = e + 9;
+    let libs = import_lib(app, js, false);
 
-                while &app[ci..ci + 1] != "\n" {
-                    ci += 1
-                }
-
-                let name = &app.clone()[e + 11..ci];
-
-                app.replace_range(e..ci + 1, "");
-
-                let resp = libs(name);
-                js = format!("{resp}{js}")
-            }
-        }
-    }
+    app = libs.0;
+    js = libs.1;
 
     let platform = v8::new_default_platform(0, false).make_shared();
     v8::V8::initialize_platform(platform);
@@ -85,6 +71,11 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
     let mut script = Script::compile(scope, code, None).unwrap();
 
     let _ = script.run(scope).unwrap();
+
+    let mods = module(app, js);
+
+    app = mods.0;
+    js = mods.1;
 
     while app.contains("import component") {
         match app.find("import component") {
@@ -128,7 +119,6 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
 
     js = scoope.0;
     comp_html = scoope.1;
-
     let caught = template(comp_html, js.clone(), scope, &mut state);
 
     js = caught.1;
