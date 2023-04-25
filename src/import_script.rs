@@ -1,15 +1,10 @@
-use crate::import_lib::import_lib;
 use std::fs::read_to_string;
 
-pub fn module(
-    mut app: String,
-    js: String
-) -> (String, String) {
-
+pub fn import_script(mut app: String, js: String) -> (String, String) {
     let mut js_ = js;
 
-    while app.contains("import mod:") {
-        match app.find("import mod:") {
+    while app.contains("import script:") {
+        match app.find("import script:") {
             None => {}
             Some(e) => {
                 let mut ci = e + 9;
@@ -22,11 +17,11 @@ pub fn module(
                 app.replace_range(e..ci + 1, "");
 
                 for name in names {
-                    let module = read_to_string(format!("./src/{name}"))
-                        .unwrap_or_else(|_| panic!("Module {name} not found"));
-
-                    js_ = import_lib(module.clone(), module.clone(), true).0;
+                    let resp = read_to_string(name)
+                        .unwrap_or_else(|_| panic!("Script {name} not found"));
+                    js_ = format!("{resp}{js_}")
                 }
+
 
             }
         }

@@ -1,7 +1,6 @@
 use crate::scope::Pair;
 use crate::state_base::_StateBase;
 use crate::v8_parse::v8_parse;
-use crate::pass::pass;
 use crate::id_gen::IdGen;
 use rusty_v8::{ContextScope, HandleScope};
 use std::string::String;
@@ -12,7 +11,7 @@ pub fn at_html(
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
 ) -> Pair {
-    while html.contains("@html") {
+    loop {
         match html.find("@html") {
             Some(a) => {
                 let mut idx = a + 6;
@@ -75,7 +74,7 @@ pub fn at_html(
 
                 let val = html[a + 5..idx].to_string();
 
-                let result = &*v8_parse(scope, &*val);
+                let result = &v8_parse(scope, &val);
                 
                 base._set(
                     val.clone(),
@@ -83,12 +82,12 @@ pub fn at_html(
                     val.clone(),
                 );
 
-                html.insert_str(pig, &*format!(" id=\"{}\"", id));
+                html.insert_str(pig, &format!(" id=\"{}\"", id));
                 let len = id.len() + 6;
 
                 html.replace_range(a + len..idx + len, result);
             },
-            None => pass()
+            None => break
         }
     }
 

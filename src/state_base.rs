@@ -50,7 +50,7 @@ impl _StateBase {
         scope: &mut ContextScope<HandleScope>
     ) {
         let mut binding = self.map.clone();
-        let val = binding.get_mut(&*key);
+        let val = binding.get_mut(&key);
 
         match val {
             Some(l) => {
@@ -63,18 +63,18 @@ impl _StateBase {
 
                         if result != check {
 
-                            if k.trim() == &key {
+                            if k.trim() == key {
                                 continue
                             }
 
-                            let fmt = &*format!("{}={}{}\n", k, result, ext);
+                            let fmt = &format!("{}={}{}\n", k, result, ext);
                             let v8_str = rusty_v8::String::new(scope, fmt).unwrap();
 
                             self.catch_parse(k.clone(), ext.clone(), v.clone(),
                                 scope);
 
                             p.push_str(fmt);
-                            p.push_str(&*self.parse);
+                            p.push_str(&self.parse);
 
                             let s = Script::compile(scope, v8_str, None);
                             let _ = s
@@ -100,7 +100,7 @@ impl _StateBase {
         v: String
     ) {
         let mut binding = self.map.clone();
-        let val = binding.get_mut(&*key);
+        let val = binding.get_mut(&key);
 
         match val {
             Some(l) => {
@@ -108,16 +108,16 @@ impl _StateBase {
                     let mut p = String::new();
 
                     for (k, vl) in &l.0 {
-                        if k.trim() == &key {
+                        if k.trim() == key {
                             continue
                         }
 
-                        let fmt = &*format!("{}={}{}\n", k, vl, ext.clone());
+                        let fmt = &format!("{}={}{}\n", k, vl, ext.clone());
                         p.push_str(fmt);
 
                         self.parse(k.clone(), ext.clone(), v.clone());
 
-                        p.push_str(&*self.parse);
+                        p.push_str(&self.parse);
                     }
 
                     self.parse = p.clone();

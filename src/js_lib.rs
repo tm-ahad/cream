@@ -2,22 +2,22 @@ use crate::std_err::ErrType::NotFound;
 use crate::std_err::StdErr;
 
 pub fn libs(key: &str) -> String {
-    return match key {
-        "store" => "\
-class Store {
-   map = new Map()
-   set(k, v, autoClean) {
-      this.map.set(k, {
+    match key {
+        "context" => "\
+class Context {
+   static map = new Map()
+   static set(k, v, autoClean=true) {
+      Context.map.set(k, {
          autoClean,
          val: v
       })
    }
-   at(k) {
-      let s = this.map.get(k)
+   static get(k) {
+      let s = Context.map.get(k)
       if (!s.autoClean) {
          return s
       } else {
-         this.map.delete(k)
+         Context.map.delete(k)
          return s.val
       }
    }
@@ -87,7 +87,7 @@ class Camel {
 
         ",
         "utilQuery" => "\
-const utilQuery = () => {
+function utilQuery {
     return new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop) => searchParams.get(prop),
     })
@@ -95,7 +95,7 @@ const utilQuery = () => {
 
         ",
         "utilRandomNumber" => "\
-const utilRandomNumber = (n) => {
+function utilRandomNumber(n) {
    let frs = Math.round(Math.random() * n);
    for (let i = 0; i < n; i++) {
       let curr = Math.round(Math.random() * n)
@@ -194,8 +194,16 @@ class HashGen {
     }
 }
         ",
+        "enum" => "\
+function Enum(fields) {
+    var len = fields.length
+    for (let i = 0; i < fields.length; i++) {
+        this[fields[i]] = Symbol()
+    }
+}
+        ",
         _ => {
-            StdErr::exec(NotFound, &*format!("Library {key} not found"));
+            StdErr::exec(NotFound, &format!("Library {key} not found"));
             ""
         }
 

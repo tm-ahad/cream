@@ -4,7 +4,7 @@ use std::fs::{File, read_to_string, remove_file, write};
 use std::io::Read;
 
 pub fn merge_js(map: HashMap<String, String>) {
-    let path = &*get_prop(map.clone(), "_app_html");
+    let path = &get_prop(map.clone(), "_app_html");
     let mut file = File::open(path)
                               .expect("File not found");
 
@@ -17,7 +17,7 @@ pub fn merge_js(map: HashMap<String, String>) {
 
     let id = content.len() - 17;
 
-    content.insert_str(id, &*format!("\n<script>\n{js}\n</script>"));
+    content.insert_str(id, &format!("\n<script>\n{js}\n</script>"));
     content.replace_range(id+22..id+85, "");
 
     write(path, content.as_bytes())

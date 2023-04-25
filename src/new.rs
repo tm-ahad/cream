@@ -12,7 +12,7 @@ pub fn new(name: &String) {
     let t = std_input("author: ", "");
     let is_mod = std_input("Project type (common/module): ", "common");
     let d = std_input("title: ", "");
-    let n = std_input(&*format!("name ({name}): "), name);
+    let n = std_input(&format!("name ({name}): "), name);
 
     let ok = std_input("Ok to processed (y)?", "y");
 
@@ -38,12 +38,12 @@ pub fn new(name: &String) {
         let mut shell = File::create(format!("./{}/start{sh}", name))
             .expect("File exists");
 
-        shell.write("\
+        shell.write_all("\
 nts build
 serve"
             .as_bytes()).expect("Cannot write file");
 
-        config.write(format!("\
+        config.write_all(format!("\
 home$/
 static_dir$
 static_dir_render$
@@ -62,7 +62,7 @@ _app_js$build/app.js
 _app_html$build/index.html").as_bytes())
             .expect("Cannot write file");
 
-        f.write(
+        f.write_all(
             "
 app {
     <html>
@@ -73,7 +73,7 @@ app {
         )
             .expect("Cannot write file");
 
-        std_out(&*format!("{} ✨\n", "Done".green().bold()));
+        std_out(&format!("{} ✨\n", "Done".green().bold()));
     }
 
 }

@@ -11,13 +11,13 @@ pub fn template(
     base: &mut _StateBase,
 ) -> Pair {
 
-    while html.contains("$") {
-        match html.find("$") {
+    while html.contains('$') {
+        match html.find('$') {
             Some(a) => {
                 let mut ch = (">", "<", "<");
                 let le = html.clone();
 
-                let prop = if html[..a].contains("=") {
+                let prop = if html[..a].contains('=') {
                     ch = ("=", ">", " ");
                     let mut s = a;
 
@@ -52,11 +52,7 @@ pub fn template(
                 let val = &cloned[a + 1..idx];
                 let start = &cloned[pig + 1..a];
 
-                let end = if prop == "innerText" {
-                    &cloned[idx..zig]
-                } else {
-                    &cloned[idx..zig]
-                };
+                let end = &cloned[idx..zig];
 
                 let mut fall = a;
                 let mut up = a;
@@ -89,7 +85,7 @@ pub fn template(
                         html.insert_str(match prop {
                             "innerText" => pig,
                             _ => zig
-                        }, &*format!(" id=\"{}\"", r));
+                        }, &format!(" id=\"{}\"", r));
                         r
                     }
                 };
@@ -104,9 +100,9 @@ pub fn template(
                         } else {ps.to_string()};
 
                         ls.push_str("${");
-                        ls.push_str(&*d);
+                        ls.push_str(&d);
 
-                        ls.push_str("}");
+                        ls.push('}');
 
                         ls
                     }
@@ -119,10 +115,10 @@ pub fn template(
                     if !end.is_empty() {
                         s=push_s(s, end, true);
                     }
-                    s.push_str("`");
+                    s.push('`')
                 }
 
-                let fin = &*if prop == "innerText" {s.replace(".dyn()", "")} else {
+                let fin = &if prop == "innerText" {s.replace(".dyn()", "")} else {
                     val.replace(".dyn()", "")
                 };
 
@@ -137,7 +133,7 @@ pub fn template(
                         else {p_val.clone()}
                 );
 
-                result = if (end != "" || start != "")
+                result = if (!end.is_empty() || !start.is_empty())
                     && prop != "innerText" {
 
                     let wed=format!("\"{}\"", result);
@@ -149,7 +145,7 @@ pub fn template(
                     html.replace_range( match prop {
                         "innerText" => pig+len+1..zig+len,
                         _ => pig+1..zig
-                    }, &*result);
+                    }, &result);
                 } else {
 
                     html.replace_range( match prop {
@@ -157,7 +153,7 @@ pub fn template(
                         _ => pig-prop.len()..zig
                     }, "");
 
-                    js.push_str(&*
+                    js.push_str(&
                         format!("\ndocument.getElementById({:?}).{prop}{}.sin()", id, fin));
                 }
             }

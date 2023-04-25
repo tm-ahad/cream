@@ -14,7 +14,7 @@ pub enum ErrType {
 
 impl ErrType {
     pub fn _to_string(self) -> String {
-        return match self {
+        match self {
             ErrType::SyntaxError => "SyntaxError",
             ErrType::CpuError => "CpuError",
             ErrType::OSError => "OSError",

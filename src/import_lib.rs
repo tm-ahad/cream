@@ -13,7 +13,7 @@ pub fn import_lib(mut app: String, js: String, bind: bool) -> (String, String) {
                     ci += 1
                 }
 
-                let name = &app.clone()[e + 11..ci];
+                let names = &app.clone()[e + 11..ci].split(",").collect::<Vec<&str>>();
 
                 if !bind {
                     app.replace_range(e..ci + 1, "");
@@ -21,8 +21,11 @@ pub fn import_lib(mut app: String, js: String, bind: bool) -> (String, String) {
                     js_.replace_range(e..ci + 1, "")
                 }
 
-                let resp = libs(name);
-                js_ = format!("{resp}{js_}")
+                for name in names {
+                    let resp = libs(name);
+
+                    js_.insert_str(0, &resp)
+                }
             }
         }
     }

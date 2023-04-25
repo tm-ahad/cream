@@ -6,7 +6,7 @@ use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::pass::pass;
 use crate::import_lib::import_lib;
-use rusty_v8::{ContextScope, HandleScope, Local, Script};
+use rusty_v8::{ContextScope, HandleScope};
 use std::fs::read_to_string;
 
 #[derive(Debug)]
@@ -19,20 +19,19 @@ pub struct Component {
 pub fn component(
     f_name: String,
     c_name: String,
-    script: Local<Script>,
     scope: &mut ContextScope<HandleScope>,
     st: &mut _StateBase,
 ) -> Component {
-    let path = format!("./src/{f_name}").replace("\"", "");
+    let path = format!("./src/{f_name}").replace('\"', "");
 
     let mut app = read_to_string(path).expect("file not found");
     let mut _imports: Vec<Component> = vec![];
     let mut _names: Vec<String> = vec![];
 
     let mut macher = c_name.clone();
-    macher.push_str("{");
+    macher.push('{');
 
-    let main_app = collect_gen(app.clone(), macher, 0, "}");
+    let main_app = collect_gen(app.clone(), macher, "}", 0);
 
     let mut js = String::new();
 
@@ -41,7 +40,7 @@ pub fn component(
     app = libs.0;
     js = libs.1;
 
-    let split = main_app.split("\n").collect::<Vec<&str>>();
+    let split = main_app.split('\n').collect::<Vec<&str>>();
 
     for s in split {
         if s != "<temp>" {
@@ -51,7 +50,7 @@ pub fn component(
         }
     }
 
-    let mut html = collect_gen(main_app, "<temp>".to_string(), 0, "<temp/>");
+    let mut html = collect_gen(main_app, "<temp>".to_string(), "<temp/>", 0);
     let caught = template(html, js.clone(), scope, st);
 
     js = caught.1;
@@ -92,7 +91,6 @@ pub fn component(
             _imports.push(component(
                 fnm.to_string(),
                 cn.trim().to_string(),
-                script,
                 scope,
                 st,
             ));
@@ -105,30 +103,29 @@ pub fn component(
     for n in _names {
         fail = format!("<{}/>", n);
         let m = fail.as_str();
-        if html.contains(m.clone()) {
+
+        if html.contains(<&str>::clone(&m)) {
             for i in &_imports {
                 if i.name == n {
-                    match html.find(m.clone()) {
-                        Some(e) => {
-                            html.replace_range(e..m.len() + 1, &*i.html);
-                            js = format!("{js}\n{}", i.js)
-                        }
-                        _ => {}
-                    }
+
+                     if let Some(e) = html.find(<&str>::clone(&m)) {
+                         html.replace_range(e..m.len() + 1, &i.html);
+                         js = format!("{js}\n{}", i.js)
+                     }
                 }
             }
         }
     }
 
-    return Component {
+    Component {
         js,
         html,
         name: c_name,
-    };
+    }
 }
 
 pub fn parse(s: &Component) -> String {
-    let result = format!(
+    format!(
         "
 {}
 <script>
@@ -136,7 +133,5 @@ pub fn parse(s: &Component) -> String {
 <script>
     ",
         s.html, s.js
-    );
-
-    return result;
+    )
 }

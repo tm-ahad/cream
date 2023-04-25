@@ -21,6 +21,7 @@ mod id_gen;
 mod js_lib;
 mod js_module;
 mod import_lib;
+mod import_script;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
@@ -60,9 +61,9 @@ fn main() {
 
                 match map.get("pre_build") {
                     Some(c) => {
-                        let mut com = c.split(" ").collect::<Vec<&str>>();
+                        let mut com = c.split(' ').collect::<Vec<&str>>();
 
-                        com.retain(|x| *x != "");
+                        com.retain(|x| !x.is_empty());
 
                         if !com.is_empty() {
                             let a  = match Command::new(com[0])
@@ -70,7 +71,7 @@ fn main() {
                                 .output() {
                                 Ok(e) => e.stdout,
                                 Err(e) => {
-                                    StdErr::exec(OSError, &*e.to_string());
+                                    StdErr::exec(OSError, &e.to_string());
                                     Vec::new()
 
                                 }
@@ -82,7 +83,7 @@ fn main() {
                     None => pass()
                 }
 
-                merge_js(map.clone());
+                merge_js(map);
             },
             &_ => {}
         }

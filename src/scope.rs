@@ -5,8 +5,8 @@ use std::string::String;
 pub struct Pair(pub String, pub String);
 
 pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
-    while html.contains("{") && html.contains("}") {
-        match html.find("{") {
+    while html.contains('{') && html.contains('}') {
+        match html.find('{') {
             Some(a) => {
                 html.replace_range(a..a + 1, "");
                 let mut f = a;
@@ -15,9 +15,9 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                     f += 1
                 }
 
-                let mut fin = format!("{}", &html[a..f + 1]);
+                let mut fin = html[a..f + 1].to_string();
 
-                return match fin.find("$") {
+                return match fin.find('$') {
                     Some(au) => {
                         let mut pig = au;
 
@@ -80,18 +80,18 @@ pub fn _scope(mut html: String, mut js: String, st: &mut _StateBase) -> Pair {
                                 let mut changer = String::new();
 
                                 if !start.is_empty() {
-                                    changer.push_str(&*format!(
+                                    changer.push_str(&format!(
                                         "document.getElementById({:?}){}={:?};",
                                         id, c, start
                                     ))
                                 }
-                                changer.push_str(&*format!(
+                                changer.push_str(&format!(
                                     "document.getElementById({:?}).innerHTML{}={};",
                                     id, c, val
                                 ));
 
                                 if !end.is_empty() {
-                                    changer.push_str(&*format!(
+                                    changer.push_str(&format!(
                                         "document.getElementById({:?}).innerHTML{}={:?};",
                                         id, c, end
                                     ))

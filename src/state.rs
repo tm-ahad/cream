@@ -1,4 +1,3 @@
-use crate::collect_gen::concat_lines_exponent0;
 use crate::state_base::_StateBase;
 use crate::std_err::StdErr;
 use crate::var_not_allowed::var_not_allowed;
@@ -13,12 +12,13 @@ pub fn _state(
     scope: &mut ContextScope<HandleScope>
 ) -> String {
 
-    let spl = js.split("\n").collect::<Vec<&str>>();
+
+    let spl = js.split('\n').collect::<Vec<&str>>();
     let mut lines: Vec<String> = vec![];
 
     for li in spl.iter() {
 
-        match li.find("=") {
+        match li.find('=') {
             Some(a) => {
 
                 if &li[a..a + 1] == "="
@@ -33,7 +33,7 @@ pub fn _state(
                     let mut idx = 0;
                     let mut refs: Vec<&str> = Vec::new();
 
-                    match serde_json::from_str::<Value>(&*c.clone()) {
+                    match serde_json::from_str::<Value>(&c.clone()) {
                         Err(_) => {
                             for ch in c.chars() {
                                 let mut is_in_str = false;
@@ -104,7 +104,7 @@ pub fn _state(
                     let mut idx = 0;
                     let mut refs: Vec<&str> = Vec::new();
 
-                    match serde_json::from_str::<Value>(&*c.clone()) {
+                    match serde_json::from_str::<Value>(&c.clone()) {
                         Err(_) => {
                             for ch in c.chars() {
                                 let mut is_in_str = false;
@@ -185,5 +185,5 @@ pub fn _state(
         }
     }
 
-    concat_lines_exponent0(lines)
+    lines.join("\n")
 }

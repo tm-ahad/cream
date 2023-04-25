@@ -9,13 +9,13 @@ pub fn dsp_parser(path: &str) -> HashMap<String, String> {
     let s = match read_to_string(path) {
         Ok(a) => a,
         Err(e) => {
-            StdErr::exec(OSError, &*e.to_string());
+            StdErr::exec(OSError, &e.to_string());
             todo!()
         }
     };
 
-    for ln in s.clone().lines() {
-        let pair = ln.split("$")
+    for ln in s.lines() {
+        let pair = ln.split('$')
             .collect::<Vec<&str>>();
 
         map.insert(pair[0].to_string(),
