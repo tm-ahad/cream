@@ -26,15 +26,12 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
 
-    #[allow(unused_assignments)]
     let mut fail = String::new();
 
-    let main_app = collect_gen(app.clone(), "app{".to_string(), "}", 0);
-
-    println!("{}", main_app);
+    let main_app = collect_gen(app.clone(), "app{".to_string(), "}", Some(0), false);
+    let split = main_app.split("\n");
 
     let mut js = String::new();
-    let split = main_app.split('\n');
 
     for s in split {
         if s != "<temp>" {
@@ -47,7 +44,7 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
 
     let mut comp_html = format!(
         "{}\n",
-        collect_gen(main_app.clone(), "<temp>".to_string(), "<temp/>", 0)
+        collect_gen(main_app.clone(), "<temp>".to_string(), "<temp/>", None, true)
     );
 
     let libs = import_lib(app, js, false);
@@ -88,7 +85,7 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
             None => {}
             Some(e) => {
                 let mut namei = e + 17;
-                let mut ci = e + 30;
+                let mut ci = e + 28;
                 let mut cn: String = String::new();
                 let mut fnm: String = String::new();
 

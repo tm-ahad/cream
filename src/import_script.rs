@@ -13,7 +13,9 @@ pub fn import_script(mut app: String, js: String) -> (String, String) {
                     ci += 1
                 }
 
-                let names = &app.clone()[e + 11..ci].split(",").collect::<Vec<&str>>();
+                let cloned = app.clone();
+
+                let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();
                 app.replace_range(e..ci + 1, "");
 
                 for name in names {

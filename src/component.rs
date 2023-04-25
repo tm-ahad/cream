@@ -31,7 +31,8 @@ pub fn component(
     let mut macher = c_name.clone();
     macher.push('{');
 
-    let main_app = collect_gen(app.clone(), macher, "}", 0);
+    let main_app = collect_gen(app.clone(), macher, "}", Some(0), false);
+    let split = main_app.split("\n");
 
     let mut js = String::new();
 
@@ -39,8 +40,6 @@ pub fn component(
 
     app = libs.0;
     js = libs.1;
-
-    let split = main_app.split('\n').collect::<Vec<&str>>();
 
     for s in split {
         if s != "<temp>" {
@@ -50,7 +49,7 @@ pub fn component(
         }
     }
 
-    let mut html = collect_gen(main_app, "<temp>".to_string(), "<temp/>", 0);
+    let mut html = collect_gen(main_app, "<temp>".to_string(), "<temp/>", None, true);
     let caught = template(html, js.clone(), scope, st);
 
     js = caught.1;

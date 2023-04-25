@@ -13,7 +13,8 @@ pub fn import_lib(mut app: String, js: String, bind: bool) -> (String, String) {
                     ci += 1
                 }
 
-                let names = &app.clone()[e + 11..ci].split(",").collect::<Vec<&str>>();
+                let cloned = app.clone();
+                let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();
 
                 if !bind {
                     app.replace_range(e..ci + 1, "");
