@@ -128,8 +128,8 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
 
     js = _state(js.clone(), &mut state, scope);
 
-    js = js.replace(".sin()", "");
-    js = js.replace(".cam()", "");
+    js = js.replace(".sin()", "")
+           .replace(".cam()", "");
 
     match comp_html.find("<Router route=") {
         None => {}
