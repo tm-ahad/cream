@@ -5,21 +5,26 @@ pub fn libs(key: &str) -> String {
     match key {
         "context" => "\
 class Context {
-   static map = new Map()
-   static set(k, v, autoClean=true) {
-      Context.map.set(k, {
+   map = new Map()
+   set(k, v, autoClean=true) {
+      this.map.set(k, {
          autoClean,
          val: v
       })
    }
-   static get(k) {
-      let s = Context.map.get(k)
-      if (!s.autoClean) {
-         return s
+   get(k) {
+      let s = this.map.get(k)
+      if (s) {
+        if (!s.autoClean) {
+            return s
+        } else {
+            this.map.delete(k)
+            return s.val
+        }
       } else {
-         Context.map.delete(k)
-         return s.val
+          throw Error(\"Property not found\")
       }
+
    }
 }
 

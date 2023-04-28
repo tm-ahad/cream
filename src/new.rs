@@ -38,10 +38,9 @@ pub fn new(name: &String) {
         let mut shell = File::create(format!("./{}/start{sh}", name))
             .expect("File exists");
 
-        shell.write_all("\
+        shell.write_all(b"
 nts build
-serve"
-            .as_bytes()).expect("Cannot write file");
+serve").expect("Cannot write file");
 
         config.write_all(format!("\
 home$/

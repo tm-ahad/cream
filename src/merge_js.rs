@@ -8,21 +8,27 @@ pub fn merge_js(map: HashMap<String, String>) {
     let mut file = File::open(path)
                               .expect("File not found");
 
-    let js = read_to_string(format!("./build/{}", get_prop(map.clone(), "_app_js")))
+    let mut js = read_to_string(format!("./build/{}", get_prop(map.clone(), "_app_js")))
         .expect("File not found");
 
     let mut content: String = String::new();
     file.read_to_string(&mut content)
         .expect("Cannot read file");
 
-    let id = content.len() - 17;
+    let id = content.len() - 16;
+
+    js = js.replace("Object.defineProperty(exports, \"__esModule\", { value: true });", "");
 
     content.insert_str(id, &format!("\n<script>\n{js}\n</script>"));
-    content.replace_range(id+22..id+85, "");
 
     write(path, content.as_bytes())
         .expect("Cannot write file");
 
-    remove_file(format!("./build/{}", get_prop(map, "_app_js")))
+    let _app_js = get_prop(map, "_app_js");
+
+    remove_file(format!("./build/{}", _app_js))
         .expect("File cannot be removed");
+
+    remove_file(format!("./build/{}.map", _app_js))
+        .unwrap_or(());
 }

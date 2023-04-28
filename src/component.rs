@@ -4,12 +4,13 @@ use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
-use crate::pass::pass;
+use crate::import_base::ImportBase;
+use crate::import_script::import_script;
+use crate::js_module::module;
 use crate::import_lib::import_lib;
-use rusty_v8::{ContextScope, HandleScope};
+use rusty_v8::{ContextScope, HandleScope, self as v8, Script};
 use std::fs::read_to_string;
 
-#[derive(Debug)]
 pub struct Component {
     pub js: String,
     pub html: String,
@@ -21,7 +22,9 @@ pub fn component(
     c_name: String,
     scope: &mut ContextScope<HandleScope>,
     st: &mut _StateBase,
+    import_base: &mut ImportBase
 ) -> Component {
+
     let path = format!("./src/{f_name}").replace('\"', "");
 
     let mut app = read_to_string(path).expect("file not found");
@@ -33,11 +36,11 @@ pub fn component(
 
     let main_app = collect_gen(app.clone(), macher, "}", Some(0), false);
     let binding = main_app.clone();
-    let split = binding.split("\n");
+    let split = binding.split('\n');
 
     let mut js = String::new();
 
-    let libs = import_lib(app, js, false);
+    let libs = import_lib(app, import_base, js, false);
 
     app = libs.0;
     js = libs.1;
@@ -46,11 +49,31 @@ pub fn component(
 
     for s in split {
         if s != "<temp>" {
-            js = format!("{}\n{}", js, s);
+            js.push('\n');
+            js.push_str(s)
         } else {
-            break;
+            break
         }
     }
+
+    let res = module(app.clone(), import_base, js);
+
+    app = res.0;
+    js = res.1;
+
+    let scr = import_script(app.clone(), import_base, js);
+
+    app = scr.0;
+    js = scr.1;
+
+    let string = v8::String::new(scope, &*js)
+        .unwrap();
+
+    let script = Script::compile(scope, string, None)
+        .unwrap();
+
+    let _ = script
+        .run(scope);
 
     let caught = template(html, js.clone(), scope, st);
 
@@ -69,34 +92,36 @@ pub fn component(
     js = catch.0;
     html = catch.1;
 
-    js = js.replace(".single()", "");
+    js = js.replace(".sin()", "")
+        .replace(".cam()", "");
 
-    match app.find("import component") {
-        Some(e) => {
-            let mut namei = e + 17;
-            let mut ci = e + 30;
-            let mut cn: String = String::new();
-            let mut fnm: String = String::new();
+    while let Some(e) = app.find("import component") {
+        let mut namei = e + 17;
+        let mut ci = e + 30;
+        let mut cn: String = String::new();
+        let mut fnm: String = String::new();
 
-            while &app[namei..namei + 4] != "from" {
-                cn.push(app.chars().nth(namei).unwrap());
-                namei += 1;
-            }
+        while &app[namei..namei + 4] != "from" {
+            cn.push(app.chars().nth(namei).unwrap());
+            namei += 1;
+        }
 
-            while &app[ci..ci + 1] != "\n" {
-                fnm.push(app.chars().nth(ci).unwrap());
-                ci += 1
-            }
+        while &app[ci..ci + 1] != "\n" {
+            fnm.push(app.chars().nth(ci).unwrap());
+            ci += 1
+        }
 
-            _names.push(app[e + 16..namei].trim().to_string());
-            _imports.push(component(
-                fnm.to_string(),
-                cn.trim().to_string(),
-                scope,
-                st,
-            ));
-        },
-        None => pass()
+        app.replace_range(e..namei,
+                          "");
+
+        _names.push(app[e + 16..namei].trim().to_string());
+        _imports.push(component(
+            fnm.to_string(),
+            cn.trim().to_string(),
+            scope,
+            st,
+            import_base
+        ))
     }
 
     let mut fail = String::new();

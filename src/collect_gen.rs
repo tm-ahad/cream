@@ -1,10 +1,12 @@
 
 pub fn collect_gen(toks: String, keyword: String, end: &str, found_id: Option<usize>, temp: bool) -> String {
-    let spls = toks.split("\n")
-        .collect::<Vec<&str>>()
-        .into_iter()
-        .filter(|a| a.trim() != "")
+    let binding = toks.split('\n')
         .collect::<Vec<&str>>();
+
+    let spls = binding
+        .iter()
+        .filter(|a| a.trim() != "")
+        .collect::<Vec<&&str>>();
 
     let len = end.len();
     let spl_len = spls.len();
@@ -22,7 +24,7 @@ pub fn collect_gen(toks: String, keyword: String, end: &str, found_id: Option<us
             }
 
             let res = spls[idx+1..check]
-                .into_iter()
+                .iter()
                 .map(|a| a.trim())
                 .collect::<Vec<&str>>()
                 .join("\n");

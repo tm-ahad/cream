@@ -22,6 +22,7 @@ mod js_lib;
 mod js_module;
 mod import_lib;
 mod import_script;
+mod import_base;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
@@ -33,12 +34,15 @@ use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
 use crate::id_gen::IdGen;
 use crate::merge_js::merge_js;
+use crate::import_base::ImportBase;
 use std::env;
 use std::process::Command;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
     let state_base = _StateBase::new();
+
+    let import_base = ImportBase::new();
 
     if args.len() == 1 {
         let ne = "ntc new {project_name} - Create a new project";
@@ -57,7 +61,7 @@ fn main() {
             "build" => {
                 map = dsp_parser("./config.dsp");
 
-                compile(state_base, map.clone());
+                compile(state_base, import_base, map.clone());
 
                 match map.get("pre_build") {
                     Some(c) => {

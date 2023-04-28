@@ -6,10 +6,10 @@ use crate::get_prop::get_prop;
 use crate::import_lib::import_lib;
 use crate::import_script::import_script;
 use crate::js_module::module;
-use crate::pass::pass;
 use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
+use crate::import_base::ImportBase;
 use crate::template::template;
 use rusty_v8 as v8;
 use rusty_v8::json::stringify;
@@ -18,7 +18,7 @@ use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{read_to_string, write};
 
-pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
+pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
 
     let mut app = read_to_string(format!("./src/app.{ext}")).expect("Project or app.nts not found");
@@ -29,7 +29,7 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
     let mut fail = String::new();
 
     let main_app = collect_gen(app.clone(), "app{".to_string(), "}", Some(0), false);
-    let split = main_app.split("\n");
+    let split = main_app.split('\n');
 
     let mut js = String::new();
 
@@ -47,10 +47,11 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
         collect_gen(main_app.clone(), "<temp>".to_string(), "<temp/>", None, true)
     );
 
-    let libs = import_lib(app, js, false);
+    let libs = import_lib(app, &mut import_base, js, false);
 
     app = libs.0;
     js = libs.1;
+
 
     let platform = v8::new_default_platform(0, false).make_shared();
     v8::V8::initialize_platform(platform);
@@ -63,53 +64,48 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
     let scope = &mut v8::ContextScope::new(scope, context);
 
     let ben = &js.replace(".cam()", "");
-
     let code = v8::String::new(scope, ben).unwrap();
 
     let mut script = Script::compile(scope, code, None).unwrap();
 
     let _ = script.run(scope).unwrap();
 
-    let mods = module(app, js);
+    let mods = module(app, &mut import_base, js);
 
     app = mods.0;
     js = mods.1;
 
-    let script_js = import_script(app, js);
+    let script_js = import_script(app, &mut import_base, js);
 
     app = script_js.0;
     js = script_js.1;
 
-    while app.contains("import component") {
-        match app.find("import component") {
-            None => {}
-            Some(e) => {
-                let mut namei = e + 17;
-                let mut ci = e + 28;
-                let mut cn: String = String::new();
-                let mut fnm: String = String::new();
+    while let Some(e) = app.find("import component") {
+        let mut namei = e + 17;
+        let mut ci = e + 28;
+        let mut cn: String = String::new();
+        let mut fnm: String = String::new();
 
-                while &app[namei..namei + 4] != "from" {
-                    cn.push(app.chars().nth(namei).unwrap());
-                    namei += 1;
-                }
-
-                while &app[ci..ci + 1] != "\n" {
-                    fnm.push(app.chars().nth(ci).unwrap());
-                    ci += 1
-                }
-
-                names.push(app[e + 16..namei].trim().to_string());
-                imports.push(component(
-                    fnm.to_string(),
-                    cn.trim().to_string(),
-                    scope,
-                    &mut state,
-                ));
-
-                app.replace_range(e..ci + 1, "")
-            }
+        while &app[namei..namei + 4] != "from" {
+            cn.push(app.chars().nth(namei).unwrap());
+            namei += 1;
         }
+
+        while &app[ci..ci + 1] != "\n" {
+            fnm.push(app.chars().nth(ci).unwrap());
+            ci += 1
+        }
+
+        names.push(app[e + 16..namei].trim().to_string());
+        imports.push(component(
+            fnm.to_string(),
+            cn.trim().to_string(),
+            scope,
+            &mut state,
+            &mut import_base
+        ));
+
+        app.replace_range(e..ci + 1, "")
     }
 
     let ht = at_html(comp_html.clone(), js.clone(), scope, &mut state);
@@ -158,6 +154,7 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                                     "Render".to_string(),
                                     scope,
                                     &mut state,
+                                    &mut import_base
                                 ))),
                             );
                         }
@@ -202,6 +199,7 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                         "Render".to_string(),
                         scope,
                         &mut state,
+                        &mut import_base
                     )),
                     None => "\
                         <pre style=\"word-wrap: break-word; white-space: pre-wrap;\">404 page not found</pre>
@@ -232,6 +230,7 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
                             "Render".to_string(),
                             scope,
                             &mut state,
+                            &mut import_base
                         ))),
                     );
                 }
@@ -275,12 +274,9 @@ pub fn compile(mut state: _StateBase, map: HashMap<String, String>) {
         if comp_html.contains(<&str>::clone(&m)) {
             for i in &imports {
                 if i.name == n {
-                    match comp_html.find(<&str>::clone(&m)) {
-                        Some(e) => {
-                            comp_html.replace_range(e..m.len() + 1, &i.html);
-                            js = format!("{js}\n{}", i.js);
-                        }
-                        _ => pass(),
+                    if let Some(e) = comp_html.find(<&str>::clone(&m)) {
+                        comp_html.replace_range(e..m.len() + 1, &i.html);
+                        js = format!("{js}\n{}", i.js);
                     }
                 }
             }

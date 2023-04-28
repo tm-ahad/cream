@@ -57,11 +57,13 @@ pub fn template(
                 let mut fall = a;
                 let mut up = a;
 
-                while &html[fall..fall + 1] != "\n" {
+                let html_len = html.len() - 1;
+
+                while &html[fall..fall + 1] != "\n" && fall > 0 {
                     fall -= 1
                 }
 
-                while &html[up..up + 1] != "\n" {
+                while &html[up..up + 1] != "\n" && up < html_len {
                     up += 1
                 }
 
@@ -122,7 +124,10 @@ pub fn template(
                     val.replace(".dyn()", "")
                 };
 
-                let mut result = v8_parse(scope, fin);
+
+                let mut result = if !val.ends_with(".dyn()") {
+                    v8_parse(scope, fin)
+                } else {String::new()};
 
                 let p_val = val.replace(".dyn()", "");
 
@@ -154,7 +159,7 @@ pub fn template(
                     }, "");
 
                     js.push_str(&
-                        format!("\ndocument.getElementById({:?}).{prop}{}.sin()", id, fin));
+                        format!("\ndocument.getElementById({:?}).{prop}={}.sin()", id, fin));
                 }
             }
             None => return Pair(html, js),
