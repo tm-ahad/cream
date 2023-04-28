@@ -1,6 +1,5 @@
 use crate::at_html::at_html;
 use crate::collect_gen::collect_gen;
-use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
@@ -86,11 +85,6 @@ pub fn component(
     js = ht.1;
 
     js = _state(js.clone(), st, scope);
-    
-    let catch = _scope(html.clone(), js.clone(), st);
-
-    js = catch.0;
-    html = catch.1;
 
     js = js.replace(".sin()", "")
         .replace(".cam()", "");
@@ -98,30 +92,31 @@ pub fn component(
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
         let mut ci = e + 30;
-        let mut cn: String = String::new();
-        let mut fnm: String = String::new();
 
         while &app[namei..namei + 4] != "from" {
-            cn.push(app.chars().nth(namei).unwrap());
             namei += 1;
         }
 
         while &app[ci..ci + 1] != "\n" {
-            fnm.push(app.chars().nth(ci).unwrap());
             ci += 1
         }
 
-        app.replace_range(e..namei,
-                          "");
+        app.replace_range(e..namei, "");
 
-        _names.push(app[e + 16..namei].trim().to_string());
-        _imports.push(component(
-            fnm.to_string(),
-            cn.trim().to_string(),
-            scope,
-            st,
-            import_base
-        ))
+        let fnm = &app[namei+5..ci];
+
+        let cns = app[e+17..ci].split(",");
+
+        for cn in cns {
+            _names.push(app[e + 16..namei].trim().to_string());
+            _imports.push(component(
+                fnm.to_string(),
+                cn.trim().to_string(),
+                scope,
+                st,
+                import_base
+            ))
+        }
     }
 
     let mut fail = String::new();

@@ -4,11 +4,10 @@ pub enum ImportType {
     Scripts
 }
 
-#[derive(Debug)]
 pub struct ImportBase {
-    pub mods: Vec<String>,
-    pub libs: Vec<String>,
-    pub scripts: Vec<String>
+    mods: Vec<String>,
+    libs: Vec<String>,
+    scripts: Vec<String>
 }
 
 impl ImportBase {

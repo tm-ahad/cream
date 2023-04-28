@@ -1,4 +1,3 @@
-use crate::scope::Pair;
 use crate::state_base::_StateBase;
 use crate::v8_parse::v8_parse;
 use crate::id_gen::IdGen;
@@ -10,7 +9,7 @@ pub fn at_html(
     js: String,
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
-) -> Pair {
+) -> (String, String) {
     while let Some(a) = html.find("@html") {
         let mut idx = a + 6;
         let mut pig = a;
@@ -86,5 +85,5 @@ pub fn at_html(
         html.replace_range(a + len..idx + len, result);
     }
 
-    Pair(html, js)
+    (html, js)
 }

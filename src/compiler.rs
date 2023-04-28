@@ -6,7 +6,6 @@ use crate::get_prop::get_prop;
 use crate::import_lib::import_lib;
 use crate::import_script::import_script;
 use crate::js_module::module;
-use crate::scope::_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::import_base::ImportBase;
@@ -92,17 +91,19 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
             ci += 1
         }
 
-        let cn = &app[e+16..namei];
+        let cns = app[e+16..namei].split(',');
         let fnm = &app[namei+5..ci];
 
-        names.push(app[e + 16..namei].trim().to_string());
-        imports.push(component(
-            fnm.to_string(),
-            cn.trim().to_string(),
-            scope,
-            &mut state,
-            &mut import_base
-        ));
+        for cn in cns {
+            names.push(cn.trim().to_string());
+            imports.push(component(
+                fnm.to_string(),
+                cn.trim().to_string(),
+                scope,
+                &mut state,
+                &mut import_base
+            ));
+        }
 
         app.replace_range(e..ci + 1, "")
     }
@@ -112,10 +113,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
     comp_html = ht.0;
     js = ht.1;
 
-    let scoope = _scope(comp_html.clone(), js.clone(), &mut state);
-
-    js = scoope.0;
-    comp_html = scoope.1;
     let caught = template(comp_html, js.clone(), scope, &mut state);
 
     js = caught.1;

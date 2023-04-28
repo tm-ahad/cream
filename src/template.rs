@@ -1,4 +1,3 @@
-use crate::scope::Pair;
 use crate::IdGen;
 use crate::v8_parse::v8_parse;
 use crate::state_base::_StateBase;
@@ -9,7 +8,7 @@ pub fn template(
     mut js: String,
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
-) -> Pair {
+) -> (String, String) {
 
     while html.contains('$') {
         match html.find('$') {
@@ -161,9 +160,9 @@ pub fn template(
                         format!("\ndocument.getElementById({:?}).{prop}={}.sin()", id, fin));
                 }
             }
-            None => return Pair(html, js),
+            None => return (html, js),
         };
     }
 
-    Pair(html, js)
+    (html, js)
 }
