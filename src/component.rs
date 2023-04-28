@@ -25,7 +25,7 @@ pub fn component(
     import_base: &mut ImportBase
 ) -> Component {
 
-    let path = format!("./src/{f_name}").replace('\"', "");
+    let path = format!("./{f_name}").replace('\"', "");
 
     let mut app = read_to_string(path).expect("file not found");
     let mut _imports: Vec<Component> = vec![];
@@ -142,6 +142,7 @@ pub fn component(
             }
         }
     }
+
 
     Component {
         js,

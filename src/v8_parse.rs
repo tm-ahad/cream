@@ -8,6 +8,8 @@ pub fn v8_parse(
     let v8_str = String::new(scope, s)
         .unwrap();
 
+    println!("{s}");
+
     let script = Script::compile(scope, v8_str, None);
     let res = script
         .unwrap()

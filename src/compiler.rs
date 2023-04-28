@@ -52,7 +52,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
     app = libs.0;
     js = libs.1;
 
-
     let platform = v8::new_default_platform(0, false).make_shared();
     v8::V8::initialize_platform(platform);
     v8::V8::initialize();
@@ -82,19 +81,19 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
-        let mut ci = e + 28;
-        let mut cn: String = String::new();
-        let mut fnm: String = String::new();
 
         while &app[namei..namei + 4] != "from" {
-            cn.push(app.chars().nth(namei).unwrap());
             namei += 1;
         }
 
+        let mut ci = namei+5;
+
         while &app[ci..ci + 1] != "\n" {
-            fnm.push(app.chars().nth(ci).unwrap());
             ci += 1
         }
+
+        let cn = &app[e+16..namei];
+        let fnm = &app[namei+5..ci];
 
         names.push(app[e + 16..namei].trim().to_string());
         imports.push(component(
@@ -126,6 +125,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
     js = js.replace(".sin()", "")
            .replace(".cam()", "");
+
 
     match comp_html.find("<Router route=") {
         None => {}
@@ -268,16 +268,16 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
         }
     }
 
+
     for n in names {
         fail = format!("<{}/>", n);
         let m = fail.as_str();
-        if comp_html.contains(<&str>::clone(&m)) {
+
+        if let Some(e) = comp_html.find(<&str>::clone(&m)) {
             for i in &imports {
                 if i.name == n {
-                    if let Some(e) = comp_html.find(<&str>::clone(&m)) {
-                        comp_html.replace_range(e..m.len() + 1, &i.html);
-                        js = format!("{js}\n{}", i.js);
-                    }
+                    comp_html.replace_range(e..e+m.len()+1, &i.html);
+                    js = format!("{js}\n{}", i.js);
                 }
             }
         }
