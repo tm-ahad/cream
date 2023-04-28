@@ -66,7 +66,7 @@ pub fn template(
                 while &html[up..up + 1] != "\n" && up < html_len {
                     up += 1
                 }
-                
+
                 let sh = &html[fall..up];
 
                 let id = match sh.find("id=\"") {
