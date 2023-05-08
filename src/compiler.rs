@@ -6,9 +6,11 @@ use crate::get_prop::get_prop;
 use crate::import_lib::import_lib;
 use crate::import_script::import_script;
 use crate::js_module::module;
+use crate::IdGen;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::import_base::ImportBase;
+use crate::std_err::{StdErr, ErrType::OSError};
 use crate::template::template;
 use rusty_v8 as v8;
 use rusty_v8::json::stringify;
@@ -16,6 +18,7 @@ use rusty_v8::Script;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{read_to_string, write};
+
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
@@ -46,10 +49,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
         collect_gen(main_app.clone(), "<temp>".to_string(), "<temp/>", None, true)
     );
 
-    let libs = import_lib(app, &mut import_base, js, false);
-
-    app = libs.0;
-    js = libs.1;
+    import_lib(&mut app, &mut import_base, &mut js);
 
     let platform = v8::new_default_platform(0, false).make_shared();
     v8::V8::initialize_platform(platform);
@@ -68,15 +68,8 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
     let _ = script.run(scope).unwrap();
 
-    let mods = module(app, &mut import_base, js);
-
-    app = mods.0;
-    js = mods.1;
-
-    let script_js = import_script(app, &mut import_base, js);
-
-    app = script_js.0;
-    js = script_js.1;
+    module(&mut app, &mut import_base, &mut js);
+    import_script(&mut app, &mut import_base, &mut js);
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
@@ -108,17 +101,14 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
         app.replace_range(e..ci + 1, "")
     }
 
-    let ht = at_html(comp_html.clone(), js.clone(), scope, &mut state);
-
-    comp_html = ht.0;
-    js = ht.1;
+    at_html(&mut comp_html, &mut js, scope, &mut state);
 
     let caught = template(comp_html, js.clone(), scope, &mut state);
 
     js = caught.1;
     comp_html = caught.0;
 
-    js = _state(js.clone(), &mut state, scope);
+    _state(&mut js, &mut state, scope);
 
     js = js.replace(".sin()", "")
            .replace(".cam()", "");
@@ -280,6 +270,118 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
         }
     }
 
+    let first = true;
+
+    while let Some(e) = comp_html.find("<Until ") {
+        let mut fall = e;
+
+        while &comp_html[fall..fall+1] != "\n" && fall > 0 {
+            fall -= 1;
+        }
+
+        let mut up = e + 7;
+        let len = comp_html.len();
+
+        while &comp_html[up..up+1] != ">" && up < len {
+            up += 1;
+        }
+
+        let li = &comp_html[fall..up+1];
+        let mut th = String::new();
+        let mut do_ = String::new();
+
+        match li.find("that=") {
+            None => {}
+            Some(e) => {
+                let mut init = e + 5;
+
+                while &li[init..init+1] != " " &&
+                      &li[init..init+1] != "/" &&
+                      &li[init..init+1] != "\n" {
+                    init += 1
+                }
+
+                th = li[e+5..init].to_string()
+            }
+        }
+
+        match li.find("do=") {
+            None => {}
+            Some(e) => {
+                let mut init = e + 3;
+
+                while &li[init..init+1] != " " &&
+                      &li[init..init+1] != "/" &&
+                      &li[init..init+1] != "\n" {
+                    init += 1
+                }
+
+                do_ = li[e+3..init].to_string()
+            }
+        }
+
+        let mut th_comp = &Component::NEW;
+        let mut do_comp = &Component::NEW;
+
+        for i in &imports {
+            if i.name == th {
+                th_comp = i
+            }
+        }
+
+        for i in &imports {
+            if i.name == do_ {
+                do_comp = i
+            }
+        }
+
+        let id = IdGen::get_and_update();
+
+        let cb1 = "{";
+        let cb2 = "}";
+
+        comp_html.replace_range(fall..up, &format!("<div id={}>{}</div>", id , do_comp.html));
+
+        if first {
+            js.push_str("
+class Work {
+
+    #value;
+
+    constructor(init) {
+        this.#value = init;
+    }
+
+    do(args, then) {
+        try {
+            let _res = this.#value(...args);
+
+            let res = then({
+                state: \"done\",
+                error: null,
+                value: _res
+            });
+
+            return res;
+        } catch (e) {
+           throw e;
+        }
+    }
+}\n")
+        }
+        js.push_str(&format!("\
+let work = new Work(function() {cb1}
+    {}
+{cb2})
+
+work.do([], function() {cb1}
+    let ptr = document.getElementById(\"{id}\")
+
+    ptr.innerHTML = \"{}\"
+{cb2})
+        ", th_comp.js, th_comp.html));
+    }
+
     let head = get_prop(map.clone(), "head");
 
     write(
@@ -297,16 +399,18 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 </head>
 <body>
     {comp_html}
+    <script src=\"{}\"></script>
 <body>
 </html>
 ",
             get_prop(map.clone(), "description"),
             get_prop(map.clone(), "keywords"),
             get_prop(map.clone(), "author"),
-            get_prop(map, "title")
+            get_prop(map.clone(), "title"),
+            get_prop(map, "_app_script")
         ),
     )
-    .expect("File not found or writing not supported");
+        .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
     write(format!("./build/app.{ext}"), js).expect("File not found or writing not supported");
 }

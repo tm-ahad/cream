@@ -3,6 +3,7 @@ use crate::collect_gen::collect_gen;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
+use crate::IdGen;
 use crate::import_base::ImportBase;
 use crate::import_script::import_script;
 use crate::js_module::module;
@@ -14,6 +15,14 @@ pub struct Component {
     pub js: String,
     pub html: String,
     pub name: String,
+}
+
+impl Component {
+    pub const NEW: Self = Self {
+        js: String::new(),
+        html: String::new(),
+        name: String::new(),
+    };
 }
 
 pub fn component(
@@ -39,12 +48,8 @@ pub fn component(
 
     let mut js = String::new();
 
-    let libs = import_lib(app, import_base, js, false);
+    let mut html = collect_gen(main_app.clone(), "<temp>".to_string(), "</temp>", None, false);
 
-    app = libs.0;
-    js = libs.1;
-
-    let mut html = collect_gen(main_app, "<temp>".to_string(), "</temp>", None, false);
 
     for s in split {
         if s != "<temp>" {
@@ -55,17 +60,11 @@ pub fn component(
         }
     }
 
-    let res = module(app.clone(), import_base, js);
+    import_lib(&mut app, import_base, &mut js);
+    module(&mut app, import_base, &mut js);
+    import_script(&mut app, import_base, &mut js);
 
-    app = res.0;
-    js = res.1;
-
-    let scr = import_script(app.clone(), import_base, js);
-
-    app = scr.0;
-    js = scr.1;
-
-    let string = v8::String::new(scope, &*js)
+    let string = v8::String::new(scope, &js)
         .unwrap();
 
     let script = Script::compile(scope, string, None)
@@ -79,12 +78,8 @@ pub fn component(
     js = caught.1;
     html = caught.0;
 
-    let ht = at_html(html.clone(), js.clone(), scope, st);
-
-    html = ht.0;
-    js = ht.1;
-
-    js = _state(js.clone(), st, scope);
+    at_html(&mut html, &mut js, scope, st);
+    _state(&mut js, st, scope);
 
     js = js.replace(".sin()", "")
         .replace(".cam()", "");
@@ -105,7 +100,7 @@ pub fn component(
 
         let fnm = &app[namei+5..ci];
 
-        let cns = app[e+17..ci].split(",");
+        let cns = app[e+17..ci].split(',');
 
         for cn in cns {
             _names.push(app[e + 16..namei].trim().to_string());
@@ -138,6 +133,113 @@ pub fn component(
         }
     }
 
+    let first = true;
+
+    while let Some(e) = html.find("<Until ") {
+        let mut fall = e;
+
+        while &html[fall..fall+1] == "\n" {
+            fall -= 1;
+        }
+
+        let mut up = e + 7;
+
+        while &html[up..up+1] == "\n" {
+            up += 1;
+        }
+
+        let li = &html[fall..up];
+        let mut th = String::new();
+        let mut do_ = String::new();
+
+        match li.find("that=") {
+            None => {}
+            Some(e) => {
+                let mut init = e + 5;
+
+                while &li[init..init+1] != " " && &li[init..init+1] != "/" {
+                    init += 1
+                }
+
+                th = li[e+5..init].to_string()
+            }
+        }
+
+        match li.find("do=") {
+            None => {}
+            Some(e) => {
+                let mut init = e + 3;
+
+                while &li[init..init+1] != " " && &li[init..init+1] != "/" {
+                    init += 1
+                }
+
+                do_ = li[e+3..init].to_string()
+            }
+        }
+
+        let mut th_comp = &Component::NEW;
+        let mut do_comp = &Component::NEW;
+
+        for i in &_imports {
+            if i.name == th {
+                th_comp = i
+            }
+        }
+
+        for i in &_imports {
+            if i.name == do_ {
+                do_comp = i
+            }
+        }
+
+        let id = IdGen::get_and_update();
+
+        let cb1 = "{";
+        let cb2 = "}";
+
+        html.replace_range(fall..up, &format!("<div id={}>{}</div>",id , do_comp.html));
+
+        if first {
+            js.push_str("
+class Work {
+
+    #value;
+
+    constructor(init, args = []) {
+        this.#value = init;
+    }
+
+    do(then) {
+        try {
+            let _res = this.#value();
+
+            let res = then({
+                state: \"done\",
+                error: null,
+                value: _res
+            });
+
+            return res;
+        }
+        } catch (e) {
+           throw e;
+        }
+    }
+}")
+        }
+        js.push_str(&format!("\
+let work = new Work(function() {cb1}
+    {}
+{cb2})
+
+work.do(function() {cb1}
+    let ptr = document.getElementById({id})
+
+    ptr.innerHTML = {}
+{cb2})
+        ", th_comp.js, th_comp.html));
+    }
 
     Component {
         js,

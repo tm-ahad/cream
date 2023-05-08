@@ -2,6 +2,360 @@ use crate::std_err::ErrType::NotFound;
 use crate::std_err::StdErr;
 
 pub fn libs(key: &str) -> String {
+    let r = "\r";
+    let ob = "{";
+    let cb = "}";
+
+    let http_client_js = &format!("
+    class Status {ob}
+       code
+       text
+    
+        constructor(data) {ob}
+            for (let key in data) {ob}
+                this[key] = data[key]
+            {cb}
+        {cb}
+    {cb}
+    
+    class HttpResponse {ob}
+       type
+       request
+       error
+       ok
+       url
+       headers
+       response
+       status
+    
+        constructor(data) {ob}
+            for (let key in data) {ob}
+                this[key] = data[key]
+            {cb}
+        {cb}
+    {cb}
+    
+    class HttpClient {ob}
+       #point
+       #config
+    
+       static methods = [
+          'GET',
+          'POST',
+          'PUT',
+          'DELETE',
+          'TRACE',
+          'PATCH',
+          'OPTIONS',
+          'HEAD',
+          'CONNECT'
+       ]
+    
+       constructor(url, config = {ob}{cb}) {ob}
+          this.#point = url;
+          this.#config = config
+       {cb}
+    
+       #fetch(data) {ob}
+          let xhr = new XMLHttpRequest();
+          let {ob} config {cb} = data
+    
+          config = {ob}...config, ...this.#config{cb}
+          let headers = config['headers']
+    
+          for (let key in config) {ob}
+             xhr[key] = config[key]
+          {cb}
+          for (let key in headers) {ob}
+             xhr.setRequestHeader(key, headers[key])
+          {cb}
+    
+          xhr.open(data.method, `${ob}this.#point{cb}${ob}data.url{cb}`, false)
+          xhr.send(data.body)
+    
+          let status = xhr.status;
+    
+          let header = xhr.getAllResponseHeaders();
+          let parsed_header = {ob}{cb};
+    
+          let split = header.split({:?});
+    
+          for (let v of split) {ob}
+             let pair = v.split(\"\");
+    
+             parsed_header[pair[0]] = pair[1].substring(1)
+          {cb}
+    
+          return new HttpResponse({ob}
+             headers: parsed_header,
+             type: xhr.responseType,
+             response: data.config[\"parseResponse\"](xhr.response),
+             url: xhr.responseURL,
+             request: xhr,
+             error: status === 404,
+             ok: status === 200,
+             status: new Status(status, xhr.statusText)
+          {cb})
+       {cb}
+    
+       get(url = \"\", config = {ob}{cb}) {ob}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: null,
+             method: 'GET'
+          {cb})
+       {cb}
+    
+       post(url = \"\", body = \"\", config = {ob}{cb}) {ob}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: body,
+             method: 'POST'
+          {cb})
+       {cb}
+    
+       patch(url = \"\", body = '', config = {ob}{cb}) {ob}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: body,
+             method: 'PATCH'
+          {cb})
+       {cb}
+    
+       delete(url = '', body = '', config = {ob}{cb}) {ob}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: body,
+             method: 'DELETE'
+          {cb})
+       {cb}
+    
+       connect(url = \"\", body = '', config = {ob}{cb}) {ob}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: body,
+             method: 'CONNECT'
+          {cb})
+       {cb}
+    
+       head(url = \"\", config = {ob}{cb}) {cb}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: null,
+             method: 'HEAD'
+          {cb})
+       {cb}
+    
+       options(url = '', config = {ob}{cb}) {ob}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: null,
+             method: 'HEAD'
+          {cb})
+       {cb}
+    
+       put(url = \"\", body = '', config = {ob}{cb}) {ob}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: body,
+             method: 'PUT'
+          {cb})
+       {cb}
+    
+       trace(url = \"\", config = {ob}{cb}) {ob}
+          return this.#fetch({ob}
+             config,
+             url: url,
+             body: null,
+             method: 'TRACE'
+          {cb})
+       {cb}
+    {cb}", r);
+
+
+       let http_cleint_ts = &format!("
+       interface Status {ob}
+          code: number
+          text: string
+       {cb}
+       
+       interface HttpResponse {ob}
+          type: XMLHttpRequestResponseType,
+          request: XMLHttpRequest,
+          error: boolean
+          ok: boolean,
+          url: string,
+          headers: object
+          response: string
+          status: Status
+       {cb}
+       
+       class HttpClient {ob}
+          #point: string | URL;
+          #config: object;
+       
+          static methods = [
+             'GET',
+             'POST',
+             'PUT',
+             'DELETE',
+             'TRACE',
+             'PATCH',
+             'OPTIONS',
+             'HEAD',
+             'CONNECT'
+          ]
+       
+          constructor(url: string | URL, config = {ob}{cb}) {ob}
+             this.#point = url;
+             this.#config = config
+          {cb}
+       
+          #fetch(data: {ob}
+             config: object,
+             url: string | URL,
+             body: string | null,
+             method:
+             'GET' |
+             'POST' |
+             'PUT' |
+             'DELETE' |
+             'TRACE' |
+             'PATCH' |
+             'OPTIONS' |
+             'HEAD' |
+             'CONNECT'
+          {cb}): HttpResponse {ob}
+             let xhr = new XMLHttpRequest();
+             let {ob} config {cb} = data
+       
+             config = {ob}...config, ...this.#config{cb}
+             let headers = config['headers']
+       
+             for (let key in config) {ob}
+                xhr[key] = config[key]
+             {cb}
+             for (let key in headers) {ob}
+                xhr.setRequestHeader(key, headers[key])
+             {cb}
+       
+             xhr.open(data.method, `${ob}this.#point{cb}${ob}data.url{cb}`, false)
+             xhr.send(data.body)
+       
+             let status = xhr.status;
+       
+             let header = xhr.getAllResponseHeaders();
+             let parsed_header = {ob}{cb};
+       
+             let split = header.split({:?});
+       
+             for (let v of split) {ob}
+                let pair = v.split(\"\");
+       
+                parsed_header[pair[0]] = pair[1].substring(1)
+             {cb}
+       
+             return {ob}
+                headers: parsed_header,
+                type: xhr.responseType,
+                response: data.config[\"parseResponse\"](xhr.response),
+                url: xhr.responseURL,
+                request: xhr,
+                error: status === 404,
+                ok: status === 200,
+                status: new Status(status, xhr.statusText)
+             {cb}
+          {cb}
+       
+          get(url: string | URL = \"\", config: object = {ob}{cb}) {ob}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: null,
+                method: 'GET'
+             {cb})
+          {cb}
+       
+          post(url: string | URL = \"\", body: string | null = \"\", config: object = {ob}{cb}) {ob}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: body,
+                method: 'POST'
+             {cb})
+          {cb}
+       
+          patch(url: string | URL = \"\", body: string | null = '', config: object = {ob}{cb}) {ob}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: body,
+                method: 'PATCH'
+             {cb})
+          {cb}
+       
+          delete(url: string | URL = '', body: string | null = '', config: object = {ob}{cb}) {ob}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: body,
+                method: 'DELETE'
+             {cb})
+          {cb}
+       
+          connect(url: string | URL = \"\", body: string | null = '', config: object = {ob}{cb}) {ob}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: body,
+                method: 'CONNECT'
+             {cb})
+          {cb}
+       
+          head(url: string | URL = \"\", config: object = {ob}{cb}) {cb}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: null,
+                method: 'HEAD'
+             {cb})
+          {cb}
+       
+          options(url: string | URL = '', config: object = {ob}{cb}) {ob}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: null,
+                method: 'HEAD'
+             {cb})
+          {cb}
+       
+          put(url: string | URL = \"\", body: string | null = '', config: object = {ob}{cb}) {ob}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: body,
+                method: 'PUT'
+             {cb})
+          {cb}
+       
+          trace(url: string | URL = \"\", config: object = {ob}{cb}) {ob}
+             return this.#fetch({ob}
+                config,
+                url: url,
+                body: null,
+                method: 'TRACE'
+             {cb})
+          {cb}", r);
+
     match key {
         "context" => "\
 class Context {
@@ -207,6 +561,68 @@ function Enum(fields) {
     }
 }
         ",
+        "routine_ts" =>
+            "
+class Routine {
+
+    private value: Function;
+    private args: any[];
+
+    constructor(init: Function, args: any[] = []) {
+        this.value = init;
+        this.args = args
+    }
+
+    do(then: Function) {
+        try {
+            let _res = this.value(...this.args);
+            let obj = {
+                state: \"done\",
+                error: null,
+                value: _res
+            }
+
+            let res = then(obj);
+
+            return new Routine(then, [obj]);
+        } catch (e) {
+           throw e;
+        }
+    }
+}
+",
+        "routine_js" =>
+            "
+class Routine {
+
+    #value: Function;
+    #args: any[];
+
+    constructor(init, args = []) {
+        this.value = init;
+        this.args = args
+    }
+
+    do(then) {
+        try {
+            let _res = this.value(...this.args);
+            let obj = {
+                state: \"done\",
+                error: null,
+                value: _res
+            }
+
+            let res = then(obj);
+
+            return new Routine(then, [obj]);
+        } catch (e) {
+           throw e;
+        }
+    }
+}
+",
+        "http_client_js" => http_client_js,
+        "http_client_ts" => http_cleint_ts,
         _ => {
             StdErr::exec(NotFound, &format!("Library {key} not found"));
             ""

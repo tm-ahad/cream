@@ -7,11 +7,10 @@ use serde_json::Value;
 use rusty_v8::{ContextScope, HandleScope};
 
 pub fn _state(
-    js: String,
+    js: &mut String,
     b: &mut _StateBase,
     scope: &mut ContextScope<HandleScope>
-) -> String {
-
+) {
 
     let spl = js.split('\n').collect::<Vec<&str>>();
     let mut lines: Vec<String> = vec![];
@@ -185,5 +184,6 @@ pub fn _state(
         }
     }
 
-    lines.join("\n")
+    js.clear();
+    js.push_str(&lines.join("\n"))
 }

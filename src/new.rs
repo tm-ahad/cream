@@ -44,8 +44,8 @@ serve").expect("Cannot write file");
 
         config.write_all(format!("\
 home$/
-static_dir$
-static_dir_render$
+static_dir$/build
+static_dir_render$/script
 name${n}
 lang${input}
 head$
@@ -57,7 +57,8 @@ description${d}
 title${t}
 port$8871
 host$127.0.0.1
-_app_js$build/app.js
+_app_js$./build/app.js
+_app_script$script/app.js
 _app_html$build/index.html").as_bytes())
             .expect("Cannot write file");
 

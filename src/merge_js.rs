@@ -6,7 +6,7 @@ use std::io::Read;
 pub fn merge_js(map: HashMap<String, String>) {
     let path = &get_prop(map.clone(), "_app_html");
     let mut file = File::open(path)
-                              .expect("File not found");
+        .expect("File not found");
 
     let mut js = read_to_string(format!("./build/{}", get_prop(map.clone(), "_app_js")))
         .expect("File not found");

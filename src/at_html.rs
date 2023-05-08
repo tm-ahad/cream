@@ -4,12 +4,13 @@ use crate::id_gen::IdGen;
 use rusty_v8::{ContextScope, HandleScope};
 use std::string::String;
 
+
 pub fn at_html(
-    mut html: String,
-    js: String,
+    html: &mut String,
+    js: &mut String,
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
-) -> (String, String) {
+) {
     while let Some(a) = html.find("@html") {
         let mut idx = a + 6;
         let mut pig = a;
@@ -22,7 +23,6 @@ pub fn at_html(
         }
 
         let mut id_x = a;
-        let mut js = String::new();
 
         while &html[id_x..id_x + 1] != "\"" {
             if id_x == 1 {
@@ -45,11 +45,11 @@ pub fn at_html(
             val = &val[0..(idx - (a + 6))]
         }
 
-        js = format!(
-            "{js}\ndocument.getElementById({:?}).innerHTML={}",
+        js.push_str(&format!(
+            "document.getElementById({:?}).innerHTML={}",
             &html[is_x..id_x],
             val
-        );
+        ));
 
 
         while &html[pig..pig + 1] != ">" {
@@ -84,6 +84,4 @@ pub fn at_html(
 
         html.replace_range(a + len..idx + len, result);
     }
-
-    (html, js)
 }

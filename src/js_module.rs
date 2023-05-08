@@ -1,14 +1,13 @@
-use std::fs::read_to_string;
 use crate::import_base::ImportBase;
 use crate::import_base::ImportType::Mods;
-use crate::import_lib::import_lib;
+use crate::import_lib::import_lib_bind;
+use std::fs::read_to_string;
 
 pub fn module(
-    mut app: String,
+    app: &mut String,
     import_base: &mut ImportBase,
-    js: String,
-) -> (String, String) {
-    let mut js_ = js;
+    js: &mut String,
+) {
 
     while let Some(e) = app.find("import mod:") {
         let mut ci = e + 9;
@@ -26,15 +25,14 @@ pub fn module(
 
             if import_base.validate(Mods, name.to_string()) {
 
-                let module = read_to_string(format!("./{name}.mod.nts"))
+                let mut module = read_to_string(format!("./{name}.mod.nts"))
                     .unwrap_or_else(|_| panic!("Module {name} not found"));
                 import_base.push(Mods, name.to_string());
 
-                let t = import_lib(module.clone(), import_base, module.clone(), true).0;
-                js_.insert_str(0, &t)
+
+                import_lib_bind(&mut module, import_base);
+                js.insert_str(0, &module.clone())
             }
         }
     }
-
-    (app, js_)
 }

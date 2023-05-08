@@ -14,13 +14,13 @@ mod std_out;
 mod input;
 mod dsp_parser;
 mod get_prop;
-mod merge_js;
 mod id_gen;
 mod js_lib;
 mod js_module;
 mod import_lib;
 mod import_script;
 mod import_base;
+mod merge_js;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
@@ -31,8 +31,8 @@ use crate::dsp_parser::dsp_parser;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
 use crate::id_gen::IdGen;
-use crate::merge_js::merge_js;
 use crate::import_base::ImportBase;
+use crate::merge_js::merge_js;
 use std::env;
 use std::process::Command;
 
@@ -80,6 +80,7 @@ fn main() {
                             };
 
                             std_out(&String::from_utf8_lossy(&a));
+
                         }
                     }
                     None => pass()
