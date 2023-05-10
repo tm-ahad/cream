@@ -52,7 +52,6 @@ fn main() {
         std_out(inst.as_str())
     } else {
         let map;
-        IdGen::init();
 
         match args[1].as_str() {
             "new" => new(args.get(2).expect("Project name not provided")),
@@ -73,9 +72,10 @@ fn main() {
                                 .output() {
                                 Ok(e) => e.stdout,
                                 Err(e) => {
+                                    println!("Some one here");
+
                                     StdErr::exec(OSError, &e.to_string());
                                     Vec::new()
-
                                 }
                             };
 

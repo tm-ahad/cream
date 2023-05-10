@@ -102,11 +102,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
     }
 
     at_html(&mut comp_html, &mut js, scope, &mut state);
-
-    let caught = template(comp_html, js.clone(), scope, &mut state);
-
-    js = caught.1;
-    comp_html = caught.0;
+    template(&mut comp_html, &mut js, scope, &mut state);
 
     _state(&mut js, &mut state, scope);
 
@@ -399,18 +395,17 @@ work.do([], function() {cb1}
 </head>
 <body>
     {comp_html}
-    <script src=\"{}\"></script>
 <body>
 </html>
 ",
             get_prop(map.clone(), "description"),
             get_prop(map.clone(), "keywords"),
             get_prop(map.clone(), "author"),
-            get_prop(map.clone(), "title"),
-            get_prop(map, "_app_script")
+            get_prop(map.clone(), "title")
         ),
     )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
-    write(format!("./build/app.{ext}"), js).expect("File not found or writing not supported");
+    write(format!("./build/app.{ext}"), js)
+        .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 }

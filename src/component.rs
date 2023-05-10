@@ -7,6 +7,7 @@ use crate::IdGen;
 use crate::import_base::ImportBase;
 use crate::import_script::import_script;
 use crate::js_module::module;
+use crate::std_err::{ErrType::OSError, StdErr};
 use crate::import_lib::import_lib;
 use rusty_v8::{ContextScope, HandleScope, self as v8, Script};
 use std::fs::read_to_string;
@@ -18,7 +19,7 @@ pub struct Component {
 }
 
 impl Component {
-    pub const NEW: Self = Self {
+    pub(crate) const NEW: Self = Self {
         js: String::new(),
         html: String::new(),
         name: String::new(),
@@ -35,7 +36,13 @@ pub fn component(
 
     let path = format!("./{f_name}").replace('\"', "");
 
-    let mut app = read_to_string(path).expect("file not found");
+    let mut app = read_to_string(path)
+        .unwrap_or_else(|e| {
+            StdErr::exec(OSError, &e.to_string());
+        
+            todo!()
+        });
+
     let mut _imports: Vec<Component> = vec![];
     let mut _names: Vec<String> = vec![];
 
@@ -73,11 +80,7 @@ pub fn component(
     let _ = script
         .run(scope);
 
-    let caught = template(html, js.clone(), scope, st);
-
-    js = caught.1;
-    html = caught.0;
-
+    template(&mut html, &mut js, scope, st);
     at_html(&mut html, &mut js, scope, st);
     _state(&mut js, st, scope);
 

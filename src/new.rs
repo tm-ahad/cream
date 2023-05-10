@@ -1,4 +1,5 @@
 use crate::input::std_input;
+use crate::std_err::{StdErr, ErrType::OSError};
 use crate::std_out::std_out;
 use std::env::consts::OS;
 use std::fs::{File, create_dir};
@@ -58,9 +59,9 @@ title${t}
 port$8871
 host$127.0.0.1
 _app_js$./build/app.js
-_app_script$script/app.js
 _app_html$build/index.html").as_bytes())
-            .expect("Cannot write file");
+            .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
+
 
         f.write_all(
             "
@@ -71,7 +72,7 @@ app {
 }"
                 .as_bytes(),
         )
-            .expect("Cannot write file");
+        .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
         std_out(&format!("{} ✨\n", "Done".green().bold()));
     }
