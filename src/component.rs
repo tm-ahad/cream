@@ -119,17 +119,14 @@ pub fn component(
         }
     }
 
-    let mut fail = String::new();
-
     for n in _names {
-        fail = format!("<{}/>", n);
-        let m = fail.as_str();
+        let m = &*format!("<{}/>", n);
 
-        if html.contains(<&str>::clone(&m)) {
+        if html.contains(m) {
             for i in &_imports {
                 if i.name == n {
 
-                     if let Some(e) = html.find(<&str>::clone(&m)) {
+                     if let Some(e) = html.find(m) {
                          html.replace_range(e..m.len() + 1, &i.html);
                          js = format!("{js}\n{}", i.js)
                      }

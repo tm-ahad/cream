@@ -28,8 +28,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
 
-    let mut fail = String::new();
-
     let main_app = collect_gen(app.clone(), "app{".to_string(), "}", Some(0), false);
     let split = main_app.split('\n');
 
@@ -254,10 +252,9 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
 
     for n in names {
-        fail = format!("<{}/>", n);
-        let m = fail.as_str();
+        let m = &format!("<{}/>", n);
 
-        if let Some(e) = comp_html.find(<&str>::clone(&m)) {
+        if let Some(e) = comp_html.find(m) {
             for i in &imports {
                 if i.name == n {
                     comp_html.replace_range(e..e+m.len()+1, &i.html);
