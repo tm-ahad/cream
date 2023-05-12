@@ -5,8 +5,6 @@ pub fn v8_parse(
     s: &str
 ) -> std::string::String {
 
-    println!("{}", s);
-
     let v8_str = String::new(scope, s)
         .unwrap();
 

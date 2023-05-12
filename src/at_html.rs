@@ -4,7 +4,6 @@ use crate::id_gen::IdGen;
 use rusty_v8::{ContextScope, HandleScope};
 use std::string::String;
 
-
 pub fn at_html(
     html: &mut String,
     js: &mut String,
@@ -64,12 +63,12 @@ pub fn at_html(
                     end += 1;
                 }
 
-                html[a + 4..end].to_string()
+                String::from(&html[a + 4..end])
             }
             None => IdGen::get_and_update(),
         };
 
-        let val = html[a + 5..idx].to_string();
+        let val = String::from(&html[a + 5..idx]);
 
         let result = &v8_parse(scope, &val);
 

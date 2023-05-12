@@ -56,7 +56,7 @@ pub fn component(
 
     let mut js = String::new();
 
-    let mut html = collect_gen(main_app, "<temp>".to_string(), "</temp>", None, false);
+    let mut html = collect_gen(main_app, String::from("<temp>"), "</temp>", None, false);
 
 
     for s in split {
@@ -108,10 +108,10 @@ pub fn component(
         let cns = app[e+17..ci].split(',');
 
         for cn in cns {
-            _names.push(app[e + 16..namei].trim().to_string());
+            _names.push(String::from(app[e + 16..namei].trim()));
             _imports.push(component(
-                fnm.to_string(),
-                cn.trim().to_string(),
+                String::from(fnm),
+                String::from(cn.trim()),
                 scope,
                 st,
                 import_base
@@ -163,7 +163,7 @@ pub fn component(
                     init += 1
                 }
 
-                th = li[e+5..init].to_string()
+                th = String::from(&li[e+5..init])
             }
         }
 
@@ -176,7 +176,7 @@ pub fn component(
                     init += 1
                 }
 
-                do_ = li[e+3..init].to_string()
+                do_ = String::from(&li[e+3..init])
             }
         }
 

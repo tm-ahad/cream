@@ -14,5 +14,5 @@ pub fn std_input(p: &str, def: &str) -> String {
         def.to_string()
     } else {user_input};
 
-    user_input.trim().to_string()
+    String::from(user_input.trim())
 }

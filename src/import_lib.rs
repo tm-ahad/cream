@@ -1,3 +1,5 @@
+use std::string;
+
 use crate::import_base::ImportBase;
 use crate::import_base::ImportType::Libs;
 use crate::js_lib::libs;
@@ -17,10 +19,11 @@ pub fn import_lib(app: &mut String, import_base: &mut ImportBase, js: &mut Strin
         app.replace_range(e..ci + 1, "");
 
         for name in names {
+            let string_name = String::from(*name);
 
-            if import_base.validate(Libs, name.to_string()) {
+            if import_base.validate(Libs, string_name.clone()) {
                 let resp = libs(name);
-                import_base.push(Libs, name.to_string());
+                import_base.push(Libs, string_name);
 
                 js.insert_str(0, &resp)
             }
@@ -43,10 +46,11 @@ pub fn import_lib_bind(app: &mut String, import_base: &mut ImportBase) {
         app.replace_range(e..ci + 1, "");
 
         for name in names {
+            let string_name = String::from(*name);
 
-            if import_base.validate(Libs, name.to_string()) {
+            if import_base.validate(Libs, string_name.clone()) {
                 let resp = libs(name);
-                import_base.push(Libs, name.to_string());
+                import_base.push(Libs, string_name);
 
                 app.insert_str(0, &resp)
             }

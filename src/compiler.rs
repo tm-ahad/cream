@@ -178,7 +178,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                 let not_found = match map.get("404") {
                     Some(e) => parse(&component(
                         e.clone(),
-                        "Render".to_string(),
+                        String::from("Page"),
                         scope,
                         &mut state,
                         &mut import_base
@@ -201,15 +201,15 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                 let obj = binding.as_object().unwrap();
 
                 let mut map = Map::new();
-                map.insert("404".to_string(), Value::String(not_found));
+                map.insert(String::from("404"), Value::String(not_found));
 
                 for (key, val) in obj {
                     let s = val.as_str().unwrap();
                     let _ = map.insert(
                         key.clone(),
                         Value::String(parse(&component(
-                            s.to_string(),
-                            "Render".to_string(),
+                            String::from(s),
+                            String::from("Render"),
                             scope,
                             &mut state,
                             &mut import_base
@@ -295,7 +295,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                     init += 1
                 }
 
-                th = li[e+5..init].to_string()
+                th = String::from(&li[e+5..init])
             }
         }
 
@@ -310,7 +310,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                     init += 1
                 }
 
-                do_ = li[e+3..init].to_string()
+                do_ = String::from(&li[e+3..init])
             }
         }
 

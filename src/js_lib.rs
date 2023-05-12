@@ -356,7 +356,7 @@ pub fn libs(key: &str) -> String {
              {cb})
           {cb}", r);
 
-    match key {
+    String::from(match key {
         "context" => "\
 class Context {
    map = new Map()
@@ -628,5 +628,5 @@ class Routine {
             ""
         }
 
-    }.to_string()
+    })
 }

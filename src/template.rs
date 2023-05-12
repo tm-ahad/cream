@@ -86,7 +86,7 @@ pub fn template(
                     init += 1
                 }
 
-                html[au + 4..init].to_string()
+                String::from(&html[au + 4..init])
             }
             None => {
                 let r = IdGen::get_and_update();
@@ -107,7 +107,7 @@ pub fn template(
                 let mut ls = s;
                 let d = if b {
                     format!("\"{ps}\"")
-                } else {ps.to_string()};
+                } else {String::from(ps)};
 
                 ls.push_str("${");
                 ls.push_str(&d);

@@ -50,7 +50,7 @@ fn main() {
 
         let inst = format!("{ne}\n{build}\n{start}");
 
-        std_out(inst.as_str())
+        std_out(&inst)
     } else {
         let map;
 

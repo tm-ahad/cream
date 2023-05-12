@@ -25,7 +25,7 @@ pub fn _state(
                     && !li.ends_with(".sin()")
                 {
                     let len = li.len();
-                    let c = li[a + 1..len].trim().to_string();
+                    let c = String::from(li[a + 1..len].trim());
 
                     let a_ = var_not_allowed();
 
@@ -74,14 +74,14 @@ pub fn _state(
                             let raw_val = &li[..a];
                             
                             for k in refs {
-                            	b._set(k.to_string(), raw_val.to_string(),
+                            	b._set(String::from(k), String::from(raw_val),
                                    c.replace(".cam()", ""));
                             }
                         }
                         Ok(_) => pass(),
                     }
 
-                    let rw = li[..a].trim().to_string();
+                    let rw = String::from(li[..a].trim());
 
                     if !li.ends_with(".cam()") {
                         b.parse(rw, String::new(), c.clone());
@@ -91,12 +91,12 @@ pub fn _state(
                                       scope);
                     }
 
-                    lines.push(li.to_string());
+                    lines.push(String::from(li));
                     lines.push(b.parse.clone());
                 }
                 else if &li[a..a + 2] == ":=" && !li.ends_with(".sin()") {
                     let len = li.len();
-                    let c = li[a + 1..len].trim().to_string();
+                    let c = String::from(li[a + 1..len].trim());
 
                     let a_ = var_not_allowed();
 
@@ -145,7 +145,7 @@ pub fn _state(
                             let raw_val = &li[..a];
 
                             for k in refs {
-                                b._set(k.to_string(), raw_val.to_string(),
+                                b._set(String::from(k), String::from(raw_val),
                                        c.replace(".cam()", ""));
                             }
                         }
@@ -154,11 +154,11 @@ pub fn _state(
                 }
                 else if &li[a..a+2] == "::" && !li.ends_with(".sin()") {
                     if !li.ends_with(".cam()") {
-                        b.parse(li[..a].to_string(), String::new(),
-                                li[a+2..].to_string());
+                        b.parse(String::from(&li[..a]), String::new(),
+                        String::from(&li[a+2..]));
                     }
                     else {
-                        b.catch_parse(li[..a].to_string(),
+                        b.catch_parse(String::from(li[..a]),
                                       String::new(),
                                       li[a+2..].replace(".cam()", ""),
                                       scope);
@@ -171,7 +171,7 @@ pub fn _state(
                     || li.starts_with("var")
                     || li.ends_with(".sin()")
                 {
-                    lines.push(li.to_string())
+                    lines.push(String::from(li))
                 }
                 else {
                     StdErr::exec(SyntaxError, "Invalid Operator");
@@ -179,7 +179,7 @@ pub fn _state(
 
                 continue;
             }
-            None => lines.push(li.to_string())
+            None => lines.push(String::from(li))
 
         }
     }

@@ -12,12 +12,12 @@ pub enum ErrType {
 
 impl ErrType {
     pub fn _to_string(self) -> String {
-        match self {
+        String::from(match self {
             ErrType::SyntaxError => "SyntaxError",
             ErrType::OSError => "OSError",
             ErrType::NotFound => "NotFound",
             _ => "ConfigError",
-        }.to_string()
+        })
     }
 }
 

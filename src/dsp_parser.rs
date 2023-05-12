@@ -18,8 +18,8 @@ pub fn dsp_parser(path: &str) -> HashMap<String, String> {
         let pair = ln.split('$')
             .collect::<Vec<&str>>();
 
-        map.insert(pair[0].to_string(),
-                   pair[1].to_string());
+        map.insert(String::from(pair[0]),
+                   String::from(pair[1]));
     }
 
     map.clone()
