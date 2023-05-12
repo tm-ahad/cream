@@ -44,8 +44,8 @@ fn main() {
     let import_base = ImportBase::new();
 
     if args.len() == 1 {
-        let ne = "ntc new {project_name} - Create a new project";
-        let build = "ntc build {project_name} - Build your project";
+        let ne = "cream new {project_name} - Create a new project";
+        let build = "cream make - Build your project";
         let start = "serve (not nts serve) - serve your project\n";
 
         let inst = format!("{ne}\n{build}\n{start}");
@@ -56,12 +56,12 @@ fn main() {
 
         match args[1].as_str() {
             "new" => new(args.get(2).expect("Project name not provided")),
-            "build" => {
+            "make" => {
                 map = dsp_parser("./config.dsp");
 
                 compile(state_base, import_base, map.clone());
 
-                match map.get("pre_build") {
+                match map.get("pre_make") {
                     Some(c) => {
                         let mut com = c.split(' ').collect::<Vec<&str>>();
 

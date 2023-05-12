@@ -40,7 +40,7 @@ pub fn new(name: &String) {
             .expect("File exists");
 
         shell.write_all(b"
-nts build
+cream make
 serve").expect("Cannot write file");
 
         config.write_all(format!("\
@@ -50,7 +50,7 @@ static_dir_render$/script
 name${n}
 lang${input}
 head$
-pre_build$
+pre_make$
 pre_start$
 keywords${k}
 author${a}
