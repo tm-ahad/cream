@@ -91,7 +91,7 @@ pub fn _state(
                                       scope);
                     }
 
-                    lines.push(String::from(li));
+                    lines.push(li.to_string());
                     lines.push(b.parse.clone());
                 }
                 else if &li[a..a + 2] == ":=" && !li.ends_with(".sin()") {
@@ -158,7 +158,7 @@ pub fn _state(
                         String::from(&li[a+2..]));
                     }
                     else {
-                        b.catch_parse(String::from(li[..a]),
+                        b.catch_parse(String::from(&li[..a]),
                                       String::new(),
                                       li[a+2..].replace(".cam()", ""),
                                       scope);
@@ -171,7 +171,7 @@ pub fn _state(
                     || li.starts_with("var")
                     || li.ends_with(".sin()")
                 {
-                    lines.push(String::from(li))
+                    lines.push(li.to_string())
                 }
                 else {
                     StdErr::exec(SyntaxError, "Invalid Operator");
@@ -179,7 +179,7 @@ pub fn _state(
 
                 continue;
             }
-            None => lines.push(String::from(li))
+            None => lines.push(li.to_string())
 
         }
     }
