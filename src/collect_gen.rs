@@ -31,9 +31,8 @@ pub fn collect_gen(toks: String, keyword: String, end: &str, found_id: Option<us
 
             let res_len = res.len();
 
-            return res[if temp {
-                    ..res_len - 8
-                } else {..res_len}].to_string();
+            return res[if temp {..res_len - 8} else {..res_len}]
+                .to_string();
         }
     }
 

@@ -7,6 +7,7 @@ use crate::IdGen;
 use crate::import_base::ImportBase;
 use crate::import_script::import_script;
 use crate::js_module::module;
+use crate::at_gen_id::_gen_id;
 use crate::std_err::{ErrType::OSError, StdErr};
 use crate::import_lib::import_lib;
 use rusty_v8::{ContextScope, HandleScope, self as v8, Script};
@@ -55,7 +56,7 @@ pub fn component(
 
     let mut js = String::new();
 
-    let mut html = collect_gen(main_app.clone(), "<temp>".to_string(), "</temp>", None, false);
+    let mut html = collect_gen(main_app, "<temp>".to_string(), "</temp>", None, false);
 
 
     for s in split {
@@ -70,6 +71,7 @@ pub fn component(
     import_lib(&mut app, import_base, &mut js);
     module(&mut app, import_base, &mut js);
     import_script(&mut app, import_base, &mut js);
+    _gen_id(&mut js, &mut html);
 
     let string = v8::String::new(scope, &js)
         .unwrap();

@@ -3,7 +3,6 @@ use crate::pass::pass;
 use std::collections::HashMap;
 use rusty_v8::{ContextScope, HandleScope, Script};
 
-#[derive(Debug)]
 #[derive(Clone)]
 pub struct _StateBase {
     pub map: HashMap<String, (HashMap<String, String>, String)>,

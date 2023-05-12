@@ -12,6 +12,7 @@ use crate::state_base::_StateBase;
 use crate::import_base::ImportBase;
 use crate::std_err::{StdErr, ErrType::OSError};
 use crate::template::template;
+use crate::at_gen_id::_gen_id;
 use rusty_v8 as v8;
 use rusty_v8::json::stringify;
 use rusty_v8::Script;
@@ -22,7 +23,6 @@ use std::fs::{read_to_string, write};
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
-
     let mut app = read_to_string(format!("./src/app.{ext}")).expect("Project or app.nts not found");
 
     let mut imports: Vec<Component> = vec![];
@@ -70,6 +70,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
     module(&mut app, &mut import_base, &mut js);
     import_script(&mut app, &mut import_base, &mut js);
+    _gen_id(&mut js, &mut comp_html);
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
@@ -401,7 +402,7 @@ work.do([], function() {cb1}
             get_prop(map.clone(), "description"),
             get_prop(map.clone(), "keywords"),
             get_prop(map.clone(), "author"),
-            get_prop(map.clone(), "title")
+            get_prop(map, "title")
         ),
     )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));

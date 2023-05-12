@@ -10,6 +10,7 @@ mod std_err;
 mod var_not_allowed;
 mod v8_parse;
 mod pass;
+mod at_gen_id;
 mod std_out;
 mod input;
 mod dsp_parser;
@@ -72,8 +73,6 @@ fn main() {
                                 .output() {
                                 Ok(e) => e.stdout,
                                 Err(e) => {
-                                    println!("Some one here");
-
                                     StdErr::exec(OSError, &e.to_string());
                                     Vec::new()
                                 }
