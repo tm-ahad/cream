@@ -13,7 +13,6 @@ use crate::std_err::{ErrType::OSError, StdErr};
 use crate::import_lib::import_lib;
 use rusty_v8::{ContextScope, HandleScope, self as v8, Script};
 use std::fs::read_to_string;
-
 pub struct Component {
     pub js: String,
     pub html: String,

@@ -21,7 +21,6 @@ use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{read_to_string, write};
 
-
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
     let mut app = read_to_string(format!("./src/app.{ext}")).expect("Project or app.nts not found");
