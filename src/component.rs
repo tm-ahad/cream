@@ -73,7 +73,6 @@ pub fn component(
     module(&mut app, import_base, &mut js);
     import_script(&mut app, import_base, &mut js);
     _gen_id(&mut js, &mut html);
-    import_npm(&mut app, &mut js);
 
     let string = v8::String::new(scope, &js)
         .unwrap();
@@ -244,6 +243,8 @@ work.do(function() {cb1}
 {cb2})
         ", th_comp.js, th_comp.html));
     }
+
+    import_npm(&mut app, &mut js);
 
     Component {
         js,

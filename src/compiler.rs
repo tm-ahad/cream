@@ -70,7 +70,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
     module(&mut app, &mut import_base, &mut js);
     import_script(&mut app, &mut import_base, &mut js);
     _gen_id(&mut js, &mut comp_html);
-    import_npm(&mut app, &mut js);
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
@@ -379,6 +378,8 @@ work.do([], function() {cb1}
     }
 
     let head = get_prop(map.clone(), "head");
+
+    import_npm(&mut app, &mut js);
 
     write(
         "./build/index.html",
