@@ -7,6 +7,7 @@ use crate::import_lib::import_lib;
 use crate::import_script::import_script;
 use crate::js_module::module;
 use crate::IdGen;
+use crate::import_npm::import_npm;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::import_base::ImportBase;
@@ -69,6 +70,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
     module(&mut app, &mut import_base, &mut js);
     import_script(&mut app, &mut import_base, &mut js);
     _gen_id(&mut js, &mut comp_html);
+    import_npm(&mut app, &mut js);
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;

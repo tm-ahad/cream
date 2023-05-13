@@ -21,6 +21,7 @@ mod js_module;
 mod import_lib;
 mod import_script;
 mod import_base;
+mod import_npm;
 mod merge_js;
 
 use crate::state_base::_StateBase;
@@ -46,7 +47,7 @@ fn main() {
     if args.len() == 1 {
         let ne = "cream new {project_name} - Create a new project";
         let build = "cream make - Build your project";
-        let start = "serve (not nts serve) - serve your project\n";
+        let start = "serve (not cream serve) - serve your project\n";
 
         let inst = format!("{ne}\n{build}\n{start}");
 
@@ -87,7 +88,7 @@ fn main() {
 
                 merge_js(map);
             },
-            &_ => {}
+            &_ => pass()
         }
     }
 

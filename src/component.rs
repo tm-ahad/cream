@@ -3,6 +3,7 @@ use crate::collect_gen::collect_gen;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
+use crate::import_npm::import_npm;
 use crate::IdGen;
 use crate::import_base::ImportBase;
 use crate::import_script::import_script;
@@ -72,6 +73,7 @@ pub fn component(
     module(&mut app, import_base, &mut js);
     import_script(&mut app, import_base, &mut js);
     _gen_id(&mut js, &mut html);
+    import_npm(&mut app, &mut js);
 
     let string = v8::String::new(scope, &js)
         .unwrap();
