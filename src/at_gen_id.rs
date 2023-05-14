@@ -10,7 +10,8 @@ pub fn _gen_id(js: &mut String, html: &mut String) {
 
             while &html[end..end+1] != " " &&  
                   &html[end..end+1] != "<" &&
-                  &html[end..end+1] != ">" {
+                  &html[end..end+1] != ">" &&
+                  &html[end..end+1] != "/" {
                   end += 1;
             }
 

@@ -166,8 +166,7 @@ pub fn template(
                 _ => pig-prop.len()..zig
             }, "");
 
-            js.push_str(&
-                format!("\ndocument.getElementById({:?}).{prop}={}.sin()", id, fin));
+            js.push_str(&format!("\ndocument.getElementById({:?}).{prop}={}.sin()", id, fin));
         }
     }
 }

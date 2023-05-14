@@ -623,6 +623,11 @@ class Routine {
 ",
         "http_client_js" => http_client_js,
         "http_client_ts" => http_cleint_ts,
+        "get_by_id" => "
+function GetbyID(name) {
+   return document.getElementById(eval(name));
+}
+        ",
         _ => {
             StdErr::exec(NotFound, &format!("Library {key} not found"));
             ""
