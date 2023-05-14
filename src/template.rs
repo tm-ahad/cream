@@ -14,12 +14,12 @@ pub fn template(
         let mut ch = (">", "<", "<");
         let le = html.clone();
 
-        let mut is_not_inner_text = false;
+        let mut is_not_inner_text = true;
 
         let mut i = a;
 
         while &html[i..i+1] != "=" && &html[i..i+1] != ">" {
-            is_not_inner_text = &html[i..i+1] == "=";
+            is_not_inner_text = &html[i..i+1] != "=";
 
             i += 1;
         }
@@ -73,8 +73,6 @@ pub fn template(
         while &html[up..up + 1] != "\n" && up < html_len {
             up += 1
         }
-
-        
 
         let sh = &html[fall..up];
 
@@ -166,7 +164,7 @@ pub fn template(
                 _ => pig-prop.len()..zig
             }, "");
 
-            js.push_str(&format!("\ndocument.getElementById({:?}).{prop}={}.sin()", id, fin));
+            js.push_str(&format!("\ndocument.getElementById({:?}).{prop}{}.sin()", id, fin));
         }
     }
 }

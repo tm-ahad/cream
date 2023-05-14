@@ -591,12 +591,12 @@ class Routine {
     }
 }
 ",
-        "routine_js" =>
+        "routine" =>
             "
 class Routine {
 
-    #value: Function;
-    #args: any[];
+    #value;
+    #args;
 
     constructor(init, args = []) {
         this.value = init;
@@ -621,13 +621,26 @@ class Routine {
     }
 }
 ",
-        "http_client_js" => http_client_js,
+        "http_client" => http_client_js,
         "http_client_ts" => http_cleint_ts,
-        "get_by_id" => "
-function GetbyID(name) {
+        "get_by_name" => "
+function GetByName(name) {
+
+   if (name === 'name') {
+      throw Error('Name should not be \"name\" try another name')
+   } 
    return document.getElementById(eval(name));
 }
         ",
+        "get_by_name_ts" => "
+function GetByName<T = HTMLElement>(name): T {
+        
+   if (name === 'name') {
+      throw Error('Name should not be \"name\" try another name')
+   } 
+   return document.getElementById(eval(name));
+}
+                ",
         _ => {
             StdErr::exec(NotFound, &format!("Library {key} not found"));
             ""
