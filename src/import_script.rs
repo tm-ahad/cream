@@ -1,6 +1,6 @@
 use crate::import_base::ImportBase;
-use std::fs::read_to_string;
 use crate::import_base::ImportType::Scripts;
+use std::fs::read_to_string;
 
 pub fn import_script(app: &mut String, import_base: &mut ImportBase, js: &mut String) {
 
