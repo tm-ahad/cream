@@ -1,8 +1,6 @@
 ## cream.js
 A full stack compiler/library/framework to build web app that compile into vanilla js.
 
-Docs - [Cream.js](https://www.cream.dev/)
-
 features
 1. Compiled JavaScript with Zero abstraction
 2. No bundler
