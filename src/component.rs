@@ -7,12 +7,14 @@ use crate::import_npm::import_npm;
 use crate::IdGen;
 use crate::import_base::ImportBase;
 use crate::import_script::import_script;
+use crate::sys_exec::sys_exec;
 use crate::js_module::module;
 use crate::at_gen_id::_gen_id;
 use crate::std_err::{ErrType::OSError, StdErr};
 use crate::import_lib::import_lib;
 use rusty_v8::{ContextScope, HandleScope, self as v8, Script};
-use std::fs::read_to_string;
+use std::fs::{read_to_string, write};
+
 pub struct Component {
     pub js: String,
     pub html: String,
@@ -32,7 +34,9 @@ pub fn component(
     c_name: String,
     scope: &mut ContextScope<HandleScope>,
     st: &mut _StateBase,
-    import_base: &mut ImportBase
+    import_base: &mut ImportBase,
+    command: &String,
+    ext: &String,
 ) -> Component {
 
     let path = format!("./{f_name}").replace('\"', "");
@@ -40,7 +44,6 @@ pub fn component(
     let mut app = read_to_string(path)
         .unwrap_or_else(|e| {
             StdErr::exec(OSError, &e.to_string());
-        
             todo!()
         });
 
@@ -58,7 +61,6 @@ pub fn component(
 
     let mut html = collect_gen(main_app, String::from("<temp>"), "</temp>", None, false);
 
-
     for s in split {
         if s != "<temp>" {
             js.push('\n');
@@ -72,6 +74,14 @@ pub fn component(
     module(&mut app, import_base, &mut js);
     import_script(&mut app, import_base, &mut js);
     _gen_id(&mut js, &mut html);
+
+    write(format!("./build/.$.{ext}"), js.clone())
+        .unwrap_or_else(|e| panic!("{}", e));
+
+    sys_exec(format!("{command} ./build/.$.{ext}"));
+
+    js = read_to_string("./build/.$.js")
+            .unwrap_or(js.clone());
 
     let string = v8::String::new(scope, &js)
         .unwrap();
@@ -114,7 +124,9 @@ pub fn component(
                 String::from(cn.trim()),
                 scope,
                 st,
-                import_base
+                import_base,
+                command,
+                &ext,
             ))
         }
     }

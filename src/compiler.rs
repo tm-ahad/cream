@@ -7,6 +7,7 @@ use crate::import_lib::import_lib;
 use crate::import_script::import_script;
 use crate::js_module::module;
 use crate::IdGen;
+use crate::sys_exec::sys_exec;
 use crate::import_npm::import_npm;
 use crate::state::_state;
 use crate::state_base::_StateBase;
@@ -23,6 +24,11 @@ use std::fs::{read_to_string, write};
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
+
+    let binding = String::new();
+    let command = map.get("build")
+        .unwrap_or(&binding);
+
     let mut app = read_to_string(format!("./src/app.{ext}")).expect("Project or app.nts not found");
 
     let mut imports: Vec<Component> = vec![];
@@ -49,6 +55,18 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
     import_lib(&mut app, &mut import_base, &mut js);
 
+    module(&mut app, &mut import_base, &mut js);
+    import_script(&mut app, &mut import_base, &mut js);
+    _gen_id(&mut js, &mut comp_html);
+
+    write(format!("./build/.$.{ext}"), js.clone())
+        .unwrap_or_else(|e| panic!("{}", e));
+
+    sys_exec(format!("{command} ./build/.$.{ext}"));
+
+    js = read_to_string("./build/$.{ext}")
+        .unwrap_or(js.clone());
+
     let platform = v8::new_default_platform(0, false).make_shared();
     v8::V8::initialize_platform(platform);
     v8::V8::initialize();
@@ -65,10 +83,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
     let mut script = Script::compile(scope, code, None).unwrap();
 
     let _ = script.run(scope).unwrap();
-
-    module(&mut app, &mut import_base, &mut js);
-    import_script(&mut app, &mut import_base, &mut js);
-    _gen_id(&mut js, &mut comp_html);
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
@@ -93,7 +107,9 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                 cn.trim().to_string(),
                 scope,
                 &mut state,
-                &mut import_base
+                &mut import_base,
+                command,
+                &ext
             ));
         }
 
@@ -136,7 +152,9 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                                     "Render".to_string(),
                                     scope,
                                     &mut state,
-                                    &mut import_base
+                                    &mut import_base,
+                                    command,
+                                    &ext
                                 ))),
                             );
                         }
@@ -181,7 +199,9 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                         String::from("Page"),
                         scope,
                         &mut state,
-                        &mut import_base
+                        &mut import_base,
+                        command,
+                        &ext
                     )),
                     None => "\
                         <pre style=\"word-wrap: break-word; white-space: pre-wrap;\">404 page not found</pre>
@@ -212,7 +232,9 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                             String::from("Render"),
                             scope,
                             &mut state,
-                            &mut import_base
+                            &mut import_base,
+                            command,
+                            &ext
                         ))),
                     );
                 }
@@ -380,8 +402,12 @@ work.do([], function() {cb1}
 
     import_npm(&mut app, &mut js);
 
+    let binding = String::from("./build/dist.html");
+    let _app_html = map.get("_app_html")
+        .unwrap_or(&binding);
+
     write(
-        "./build/index.html",
+        _app_html,
         format!(
             "
 <!DOCTYPE html>
@@ -395,13 +421,16 @@ work.do([], function() {cb1}
 </head>
 <body>
     {comp_html}
+    <script>
+        {js}
+    </script>
 <body>
 </html>
 ",
             get_prop(map.clone(), "description"),
             get_prop(map.clone(), "keywords"),
             get_prop(map.clone(), "author"),
-            get_prop(map, "title")
+            get_prop(map.clone(), "title")
         ),
     )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));

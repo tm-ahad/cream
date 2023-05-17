@@ -1,1 +1,1 @@
-pub fn pass(){}
+pub fn pass() {}

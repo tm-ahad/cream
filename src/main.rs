@@ -10,6 +10,7 @@ mod std_err;
 mod var_not_allowed;
 mod v8_parse;
 mod pass;
+mod sys_exec;
 mod at_gen_id;
 mod std_out;
 mod input;
@@ -22,7 +23,6 @@ mod import_lib;
 mod import_script;
 mod import_base;
 mod import_npm;
-mod merge_js;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
@@ -34,7 +34,6 @@ use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
 use crate::id_gen::IdGen;
 use crate::import_base::ImportBase;
-use crate::merge_js::merge_js;
 use std::env;
 use std::process::Command;
 
@@ -60,8 +59,6 @@ fn main() {
             "make" => {
                 map = dsp_parser("./config.dsp");
 
-                compile(state_base, import_base, map.clone());
-
                 match map.get("pre_make") {
                     Some(c) => {
                         let mut com = c.split(' ').collect::<Vec<&str>>();
@@ -86,7 +83,7 @@ fn main() {
                     None => pass()
                 }
 
-                merge_js(map);
+                compile(state_base, import_base, map.clone());
             },
             &_ => pass()
         }

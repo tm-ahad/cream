@@ -51,6 +51,7 @@ name${n}
 lang${input}
 head$
 pre_make$
+build$
 pre_start$
 keywords${k}
 author${a}
@@ -58,7 +59,6 @@ description${d}
 title${t}
 port$8871
 host$127.0.0.1
-_app_js$./build/app.js
 _app_html$build/index.html").as_bytes())
             .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
