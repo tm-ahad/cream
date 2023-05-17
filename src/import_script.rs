@@ -23,7 +23,7 @@ pub fn import_script(app: &mut String, import_base: &mut ImportBase, js: &mut St
                 let resp = read_to_string(&fmt)
                     .unwrap_or_else(|_| panic!("Script {name} not found"));
 
-                import_base.push(Scripts, String::from(fmt));
+                import_base.push(Scripts, fmt);
 
                 js.insert_str(0, &resp)
             }

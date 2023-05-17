@@ -83,7 +83,7 @@ fn main() {
                     None => pass()
                 }
 
-                compile(state_base, import_base, map.clone());
+                compile(state_base, import_base, map);
             },
             &_ => pass()
         }

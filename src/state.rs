@@ -90,9 +90,12 @@ pub fn _state(
                         b.catch_parse(rw, String::new(), c.replace(".cam()", ""),
                                       scope);
                     }
-
+                    
                     lines.push(li.to_string());
-                    lines.push(b.parse.clone());
+
+                    if !b.parse.clone().is_empty() { 
+                        lines.push(b.parse.clone());
+                    }
                 }
                 else if &li[a..a + 2] == ":=" && !li.ends_with(".sin()") {
                     let len = li.len();

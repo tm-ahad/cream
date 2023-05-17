@@ -20,7 +20,7 @@ use rusty_v8::json::stringify;
 use rusty_v8::Script;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
-use std::fs::{read_to_string, write};
+use std::fs::{read_to_string, write, remove_file};
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
@@ -272,7 +272,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
         }
     }
 
-
     for n in names {
         let m = &format!("<{}/>", n);
 
@@ -392,7 +391,6 @@ let work = new Work(function() {cb1}
 
 work.do([], function() {cb1}
     let ptr = document.getElementById(\"{id}\")
-
     ptr.innerHTML = \"{}\"
 {cb2})
         ", th_comp.js, th_comp.html));
@@ -435,6 +433,9 @@ work.do([], function() {cb1}
     )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
-    write(format!("./build/app.{ext}"), js)
-        .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
+    remove_file(format!("./build/.$.{ext}"))
+        .unwrap_or(());
+
+    write(format!("./build/.$.js"), "")
+        .unwrap_or(())
 }

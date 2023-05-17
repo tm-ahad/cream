@@ -39,6 +39,9 @@ pub fn new(name: &String) {
         let mut shell = File::create(format!("./{}/start{sh}", name))
             .expect("File exists");
 
+        File::create("./build/.$.js")
+            .unwrap_or_else(|e| panic!("{e}"));
+
         shell.write_all(b"
 cream make
 serve").expect("Cannot write file");
