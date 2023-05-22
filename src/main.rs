@@ -59,6 +59,8 @@ fn main() {
             "make" => {
                 map = dsp_parser("./config.dsp");
 
+                compile(state_base, import_base, map.clone());
+
                 match map.get("pre_make") {
                     Some(c) => {
                         let mut com = c.split(' ').collect::<Vec<&str>>();
@@ -82,8 +84,6 @@ fn main() {
                     }
                     None => pass()
                 }
-
-                compile(state_base, import_base, map);
             },
             &_ => pass()
         }

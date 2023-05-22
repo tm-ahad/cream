@@ -20,7 +20,7 @@ use rusty_v8::json::stringify;
 use rusty_v8::Script;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
-use std::fs::{read_to_string, write, remove_file};
+use std::fs::{read_to_string, write};
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<String, String>) {
     let ext = get_prop(map.clone(), "lang");
@@ -64,7 +64,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
     sys_exec(format!("{command} ./build/.$.{ext}"));
 
-    js = read_to_string("./build/$.{ext}")
+    js = read_to_string("./build/.$.js")
         .unwrap_or(js.clone());
 
     let platform = v8::new_default_platform(0, false).make_shared();
@@ -367,9 +367,9 @@ class Work {
         this.#value = init;
     }
 
-    do(args, then) {
+    do(then) {
         try {
-            let _res = this.#value(...args);
+            let _res = this.#value();
 
             let res = then({
                 state: \"done\",
@@ -389,9 +389,9 @@ let work = new Work(function() {cb1}
     {}
 {cb2})
 
-work.do([], function() {cb1}
+work.do(function() {cb1}
     let ptr = document.getElementById(\"{id}\")
-    ptr.innerHTML = \"{}\"
+    ptr.innerHTML = `{}`
 {cb2})
         ", th_comp.js, th_comp.html));
     }
@@ -432,10 +432,4 @@ work.do([], function() {cb1}
         ),
     )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
-
-    remove_file(format!("./build/.$.{ext}"))
-        .unwrap_or(());
-
-    write(format!("./build/.$.js"), "")
-        .unwrap_or(())
 }

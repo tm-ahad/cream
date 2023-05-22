@@ -220,7 +220,7 @@ class Work {
 
     #value;
 
-    constructor(init, args = []) {
+    constructor(init) {
         this.#value = init;
     }
 
@@ -250,7 +250,7 @@ let work = new Work(function() {cb1}
 work.do(function() {cb1}
     let ptr = document.getElementById({id})
 
-    ptr.innerHTML = {}
+    ptr.innerHTML = `{}`
 {cb2})
         ", th_comp.js, th_comp.html));
     }
