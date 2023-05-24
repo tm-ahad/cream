@@ -276,7 +276,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
         let m = &format!("<{}/>", n);
         let rep = comp_html.replace(" ", "");
 
-        if rep.contains(m) {
+        if let Some(e) = rep.find(m) {
             for i in &imports {
                 if i.name == n {
                     comp_html.replace_range(e..e+m.len()+1, &i.html);
