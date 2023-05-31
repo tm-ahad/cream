@@ -1,0 +1,23 @@
+/home/ahad/.node/bin/node
+/home/ahad/.cream/tools/regexp/main.js
+var input = ":n1";
+var id = ":n0";
+function GetByName(name) {
+    if (name === name) {
+        throw Error(Name
+should
+not
+be
+name
+try
+another
+name);
+    }
+    return document.getElementById(eval(name));
+}
+var element = GetByName("id");
+var todo = GetByName("input");
+var addTodo = function () {
+    var val = todo.value;
+    element.innerHTML += "\n<li>".concat(val, "</li>");
+};
