@@ -1,6 +1,6 @@
+use crate::config::Config;
 use std::io::{Read, Write};
 use std::{net::TcpListener, fs::read_to_string};
-use std::collections::HashMap;
 
 struct Buffer;
 struct Request;
@@ -16,7 +16,7 @@ impl Buffer {
 impl Request {
     pub fn path(req: String) -> Option<String> {
         if let Some(i) = req.find(' ') {
-            let mut idx = i;
+            let mut idx = i+1;
 
             while &req[idx..idx+1] != " " {
                 idx += 1;
@@ -27,11 +27,17 @@ impl Request {
     }
 }
 
-pub fn serve(map: HashMap<String, String>) {
+pub fn serve(map: Config) {
     let port = map.get("port")
         .unwrap_or_else(|| panic!("Port not found on config.dsp"));
 
-    let server = TcpListener::bind(port)
+    let error = read_to_string("./build/error.html")
+        .unwrap_or(String::from("<pre style=\"word-wrap: break-word; white-space: pre-wrap;\">404 page not found</pre>"));
+
+    let host = map.get("host")
+        .unwrap_or_else(|| panic!("Host not found on config.dsp"));
+
+    let server = TcpListener::bind(format!("{host}:{port}"))
         .unwrap();
 
     for stream in server.incoming() {
@@ -47,33 +53,32 @@ pub fn serve(map: HashMap<String, String>) {
 
         let empty = &String::new();
 
-        let static_dir = map.get("static_dir")
-            .unwrap_or(empty);
+        let static_dir = map.get_or("static_dir", empty);
 
-        let static_dir_render = map.get("static_dir_render")
-            .unwrap_or(static_dir);
+        let static_dir_render = map.get_or("static_dir_render", empty);
 
         let _app_html = map.get("_app_html")
             .unwrap();
 
         let len = static_dir_render.len();
-        let is_not_main_path = path.starts_with(static_dir_render);
+        let is_not_main_path = path.starts_with(static_dir_render) && 
+            !static_dir.trim().is_empty();
 
         let mut resp_type = "HTTP/1.1 200 OK\r\n";
 
         let content = if is_not_main_path {
-            path.replace_range(..len+1, static_dir);
+            path.replace_range(..len, static_dir);
 
-            match read_to_string("path") {
+            match read_to_string(path) {
                 Ok(c) => c,
                 Err(_) => {
                     resp_type = "HTTP/1.1 404 NotFound\r\n";
-                    String::from("404 page not found")
+                    error.clone()
                 }
             }
         } else {
             read_to_string(_app_html)
-                .unwrap_or(String::from("404 page not found"))
+                .unwrap_or(error.clone())
         };
 
         let _ = stream.write(

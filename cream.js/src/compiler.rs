@@ -1,10 +1,10 @@
 use crate::at_html::at_html;
 use crate::collect_gen::collect_gen;
 use crate::component::Component;
-use crate::component::{component, parse};
-use crate::get_prop::get_prop;
+use crate::component::{component, stringify_component};
 use crate::import_lib::import_lib;
 use crate::import_script::import_script;
+use crate::config::{Config, self};
 use crate::js_module::module;
 use crate::IdGen;
 use crate::scope::{parse_scope, scopify};
@@ -21,11 +21,11 @@ use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{read_to_string, write};
 
-pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<String, String>) {
-    let ext = get_prop(map.clone(), "lang");
+pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
+    let ext = config.get_or("lang", "js");
 
     let binding = String::new();
-    let command = map.get("build")
+    let command = config.get("build")
         .unwrap_or(&binding);
 
     let mut app = read_to_string(format!("./src/app.{ext}")).expect("Project or app.nts not found");
@@ -89,7 +89,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                 &mut state,
                 &mut import_base,
                 command,
-                &ext
+                config
             ));
         }
 
@@ -103,11 +103,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
     js = read_to_string("./build/.$.js")
         .unwrap_or(js.clone());
-
-    let platform = v8::new_default_platform(0, false).make_shared();
-    v8::V8::initialize_platform(platform);
-    v8::V8::initialize();
-
+    
     let isolate = &mut v8::Isolate::new(Default::default());
 
     let scope = &mut v8::HandleScope::new(isolate);
@@ -160,14 +156,14 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                             let s = val.as_str().unwrap();
                             map.insert(
                                 key.clone(),
-                                Value::String(parse(&component(
+                                Value::String(stringify_component(&component(
                                     s.to_string(),
                                     "Render".to_string(),
                                     scope,
                                     &mut state,
                                     &mut import_base,
                                     command,
-                                    &ext
+                                    config
                                 ))),
                             );
                         }
@@ -206,20 +202,23 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
 
                 let name_ = comp_html[a + 14..idx].trim();
 
-                let not_found = match map.get("404") {
-                    Some(e) => parse(&component(
+                let not_found = match config.get("404") {
+                    Some(e) => stringify_component(&component(
                         e.clone(),
                         String::from("Page"),
                         scope,
                         &mut state,
                         &mut import_base,
                         command,
-                        &ext
+                        config
                     )),
                     None => "\
                         <pre style=\"word-wrap: break-word; white-space: pre-wrap;\">404 page not found</pre>
                     ".to_string()
                 };
+
+                write("./build/error.html", not_found.clone())
+                    .unwrap_or_else(|e| panic!("{e}"));
 
                 let v8_str = v8::String::new(scope, name_).unwrap();
 
@@ -240,17 +239,19 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, map: HashMap<
                     let s = val.as_str().unwrap();
                     let _ = map.insert(
                         key.clone(),
-                        Value::String(parse(&component(
+                        Value::String(stringify_component(&component(
                             String::from(s),
                             String::from("Render"),
                             scope,
                             &mut state,
                             &mut import_base,
                             command,
-                            &ext
+                            config
                         ))),
                     );
                 }
+
+                drop(&config);
 
                 js = format!(
                     "{}\nvar Route = {}",
@@ -410,15 +411,15 @@ work.do(function() {cb1}
         ", th_comp.js, th_comp.html));
     }
 
-    let head = get_prop(map.clone(), "head");
+    let head = config.expect("head");
 
     import_npm(&mut app, &mut js);
 
     let binding = String::from("./build/dist.html");
-    let _app_html = map.get("_app_html")
+    let _app_html = config.get("_app_html")
         .unwrap_or(&binding);
 
-    scopify(&mut js, &scopes);
+    scopify(&mut js, &scopes, config);
 
     write(
         _app_html,
@@ -441,10 +442,10 @@ work.do(function() {cb1}
 <body>
 </html>
 ",
-            get_prop(map.clone(), "description"),
-            get_prop(map.clone(), "keywords"),
-            get_prop(map.clone(), "author"),
-            get_prop(map.clone(), "title")
+            config.expect("description"),
+            config.expect("keywords"),
+            config.expect("author"),
+            config.expect("title")
         ),
     )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));

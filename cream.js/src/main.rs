@@ -16,8 +16,6 @@ mod at_gen_id;
 mod std_out;
 mod scope;
 mod input;
-mod dsp_parser;
-mod get_prop;
 mod id_gen;
 mod js_lib;
 mod js_module;
@@ -25,13 +23,14 @@ mod import_lib;
 mod import_script;
 mod import_base;
 mod import_npm;
+mod config;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;
 use crate::new::new;
 use crate::pass::pass;
 use crate::std_out::std_out;
-use crate::dsp_parser::dsp_parser;
+use crate::config::Config;
 use crate::std_err::ErrType::OSError;
 use crate::serve::serve;
 use crate::std_err::StdErr;
@@ -55,14 +54,15 @@ fn main() {
 
         std_out(&inst)
     } else {
-        let map;
+        let mut map;
 
         match args[1].as_str() {
             "new" => new(args.get(2).expect("Project name not provided")),
             "make" => {
-                map = dsp_parser("./config.dsp");
-
-                compile(state_base, import_base, map.clone());
+                map = Config::new();
+                map.load(String::from("./config.dsp"));
+            
+                compile(state_base, import_base, &map);
 
                 match map.get("pre_make") {
                     Some(c) => {
@@ -89,7 +89,9 @@ fn main() {
                 }
             },
             "serve" => {
-                map = dsp_parser("./config.dsp");
+                map = Config::new();
+                map.load(String::from("./config.dsp"));
+
                 serve(map)
             },
             &_ => pass()

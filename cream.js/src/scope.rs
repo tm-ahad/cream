@@ -1,3 +1,5 @@
+use crate::sys_exec::sys_exec;
+use crate::config::Config;
 use crate::{state::_state, state_base::_StateBase};
 use rusty_v8::{Script, self as v8};
 use v8::{ContextScope, HandleScope};
@@ -74,8 +76,10 @@ pub fn parse_scope(script: &mut str, ptr: &mut HashMap<usize, String>, scope: &m
 
 }
 
-pub fn scopify(script: &mut String, map: &HashMap<usize, String>) {
+pub fn scopify(script: &mut String, map: &HashMap<usize, String>, config: &Config) {
     for (k, v) in map.iter() {
+        sys_exec(format!(".$.{}", config.expect("build")));
+
         script.insert_str(*k, v)
     }
 }

@@ -6,6 +6,7 @@ use crate::template::template;
 use crate::import_npm::import_npm;
 use crate::IdGen;
 use crate::import_base::ImportBase;
+use crate::config::Config;
 use crate::import_script::import_script;
 use crate::sys_exec::sys_exec;
 use crate::js_module::module;
@@ -37,8 +38,9 @@ pub fn component(
     st: &mut _StateBase,
     import_base: &mut ImportBase,
     command: &String,
-    ext: &String,
+    config: &Config,
 ) -> Component {
+    let ext = config.get_or("lang", "js");
 
     let path = format!("./{f_name}").replace('\"', "");
 
@@ -98,7 +100,7 @@ pub fn component(
                 st,
                 import_base,
                 command,
-                ext,
+                config,
             ))
         }
     }
@@ -262,7 +264,7 @@ work.do(function() {cb1}
 
     import_npm(&mut app, &mut js);
 
-    scopify(&mut js, &scopes);
+    scopify(&mut js, &scopes, config);
 
     Component {
         js,
@@ -271,7 +273,7 @@ work.do(function() {cb1}
     }
 }
 
-pub fn parse(s: &Component) -> String {
+pub fn stringify_component(s: &Component) -> String {
     format!(
         "
 {}

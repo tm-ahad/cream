@@ -42,14 +42,17 @@ pub fn new(name: &String) {
         File::create("./build/.$.js")
             .unwrap_or_else(|e| panic!("{e}"));
 
+        File::create("./build/error.html")
+            .unwrap_or_else(|e| panic!("{e}"));
+
         shell.write_all(b"
 cream make
 serve").expect("Cannot write file");
 
         config.write_all(format!("\
 home$/
-static_dir$/build
-static_dir_render$/script
+static_dir$
+static_dir_render$
 name${n}
 lang${input}
 head$
