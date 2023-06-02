@@ -6,15 +6,17 @@ use crate::template::template;
 use crate::import_npm::import_npm;
 use crate::IdGen;
 use crate::import_base::ImportBase;
+use crate::config::Config;
 use crate::import_script::import_script;
 use crate::sys_exec::sys_exec;
 use crate::js_module::module;
 use crate::at_gen_id::_gen_id;
 use crate::std_err::{ErrType::OSError, StdErr};
 use crate::import_lib::import_lib;
+use crate::scope::{parse_scope, scopify};
 use rusty_v8::{ContextScope, HandleScope, self as v8, Script};
 use std::fs::{read_to_string, write};
-
+use std::collections::HashMap;
 pub struct Component {
     pub js: String,
     pub html: String,
@@ -36,8 +38,9 @@ pub fn component(
     st: &mut _StateBase,
     import_base: &mut ImportBase,
     command: &String,
-    ext: &String,
+    config: &Config,
 ) -> Component {
+    let ext = config.get_or("lang", "js");
 
     let path = format!("./{f_name}").replace('\"', "");
 
@@ -70,6 +73,58 @@ pub fn component(
         }
     }
 
+    while let Some(e) = app.find("import component") {
+        let mut namei = e + 17;
+        let mut ci = e + 30;
+
+        while &app[namei..namei + 4] != "from" {
+            namei += 1;
+        }
+
+        while &app[ci..ci + 1] != "\n" {
+            ci += 1
+        }
+
+        app.replace_range(e..namei, "");
+
+        let fnm = &app[namei+5..ci];
+
+        let cns = app[e+17..ci].split(',');
+
+        for cn in cns {
+            _names.push(String::from(app[e + 16..namei].trim()));
+            _imports.push(component(
+                String::from(fnm),
+                String::from(cn.trim()),
+                scope,
+                st,
+                import_base,
+                command,
+                config,
+            ))
+        }
+    }
+
+    for n in _names {
+        let m = &*format!("<{}/>", n);
+        let rep = html.replace(' ', "");
+
+        if rep.contains(m) {
+            for i in &_imports {
+                if i.name == n {
+                     if let Some(e) = html.find(m) {
+                         html.replace_range(e..m.len() + 1, &i.html);
+                         js = format!("{js}\n{}", i.js)
+                     }
+                }
+            }
+        }
+    }
+
+    let mut scopes: HashMap<usize, String> = HashMap::new();
+
+    js = parse_scope(&mut js, &mut scopes, scope);
+
     import_lib(&mut app, import_base, &mut js);
     module(&mut app, import_base, &mut js);
     import_script(&mut app, import_base, &mut js);
@@ -98,54 +153,6 @@ pub fn component(
 
     js = js.replace(".sin()", "")
         .replace(".cam()", "");
-
-    while let Some(e) = app.find("import component") {
-        let mut namei = e + 17;
-        let mut ci = e + 30;
-
-        while &app[namei..namei + 4] != "from" {
-            namei += 1;
-        }
-
-        while &app[ci..ci + 1] != "\n" {
-            ci += 1
-        }
-
-        app.replace_range(e..namei, "");
-
-        let fnm = &app[namei+5..ci];
-
-        let cns = app[e+17..ci].split(',');
-
-        for cn in cns {
-            _names.push(String::from(app[e + 16..namei].trim()));
-            _imports.push(component(
-                String::from(fnm),
-                String::from(cn.trim()),
-                scope,
-                st,
-                import_base,
-                command,
-                &ext,
-            ))
-        }
-    }
-
-    for n in _names {
-        let m = &*format!("<{}/>", n);
-
-        if html.contains(m) {
-            for i in &_imports {
-                if i.name == n {
-
-                     if let Some(e) = html.find(m) {
-                         html.replace_range(e..m.len() + 1, &i.html);
-                         js = format!("{js}\n{}", i.js)
-                     }
-                }
-            }
-        }
-    }
 
     let first = true;
 
@@ -257,6 +264,8 @@ work.do(function() {cb1}
 
     import_npm(&mut app, &mut js);
 
+    scopify(&mut js, &scopes, config);
+
     Component {
         js,
         html,
@@ -264,7 +273,7 @@ work.do(function() {cb1}
     }
 }
 
-pub fn parse(s: &Component) -> String {
+pub fn stringify_component(s: &Component) -> String {
     format!(
         "
 {}
