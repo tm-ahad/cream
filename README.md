@@ -2,7 +2,7 @@
 A full stack compiler/library/framework to build web app that compile into vanilla js.
 
 features
-- Compiled JavaScript with Zero abstraction
+- Compiled javaScript with xero abstraction
 - All js and markup in one html file
 - Reactive states without weird apis
 - Very small js script with zero dependencies
