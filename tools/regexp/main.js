@@ -10,7 +10,6 @@ if (match) {
     let exp = new RegExp(`${match} *{(\n?[\\S| ]?\n*)*}`, 'gi')
     let mat = message.match(exp)
 
-
     out = `${message.search(exp)}*${mat ? mat[0]: null}`
 } else {
     let regs = [
