@@ -175,8 +175,7 @@ pub fn _state(
                     || li.ends_with(".sin()")
                 {
                     lines.push(li.to_string())
-                }
-                else {
+                } else {
                     StdErr::exec(SyntaxError, "Invalid Operator");
                 }
 

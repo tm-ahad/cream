@@ -1,5 +1,5 @@
 use crate::at_html::at_html;
-use crate::collect_gen::collect_gen;
+use crate::collect_scope::collect_scope;
 use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
@@ -40,7 +40,10 @@ pub fn component(
     command: &String,
     config: &Config,
 ) -> Component {
-    let ext = config.get_or("lang", "js");
+    let __js__ = &String::from("js");
+
+    let ext = config.get("lang")
+        .unwrap_or(__js__);
 
     let path = format!("./{f_name}").replace('\"', "");
 
@@ -50,19 +53,22 @@ pub fn component(
             todo!()
         });
 
+    app = app.lines()
+        .map(|e| e.trim())
+        .collect::<Vec<&str>>()
+        .join("\n");
+
     let mut _imports: Vec<Component> = vec![];
     let mut _names: Vec<String> = vec![];
 
     let mut macher = c_name.clone();
     macher.push('{');
 
-    let main_app = collect_gen(app.clone(), macher, "}", Some(0), false);
+    let (main_app, id) = collect_scope(&app, &macher);
     let binding = main_app.clone();
     let split = binding.split('\n');
 
     let mut js = String::new();
-
-    let mut html = collect_gen(main_app, String::from("<temp>"), "</temp>", None, false);
 
     for s in split {
         if s != "<temp>" {
@@ -72,6 +78,10 @@ pub fn component(
             break
         }
     }
+
+    let mut html = collect_scope(&main_app, &"<temp>".to_string()).0;
+
+    html.push('\n');
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
@@ -121,13 +131,15 @@ pub fn component(
         }
     }
 
+    import_lib(&mut app, import_base, &mut js, id);
+    module(&mut app, import_base, &mut js);
+    import_script(&mut app, import_base, &mut js);
+
     let mut scopes: HashMap<usize, String> = HashMap::new();
 
     js = parse_scope(&mut js, &mut scopes, scope);
 
-    import_lib(&mut app, import_base, &mut js);
-    module(&mut app, import_base, &mut js);
-    import_script(&mut app, import_base, &mut js);
+    println!("{}", html);
     _gen_id(&mut js, &mut html);
 
     write(format!("./build/.$.{ext}"), js.clone())
@@ -265,6 +277,7 @@ work.do(function() {cb1}
     import_npm(&mut app, &mut js);
 
     scopify(&mut js, &scopes, config);
+
 
     Component {
         js,

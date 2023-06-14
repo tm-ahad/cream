@@ -1,10 +1,10 @@
 use crate::at_html::at_html;
-use crate::collect_gen::collect_gen;
+use crate::collect_scope::collect_scope;
 use crate::component::Component;
 use crate::component::{component, stringify_component};
 use crate::import_lib::import_lib;
 use crate::import_script::import_script;
-use crate::config::{Config, self};
+use crate::config::Config;
 use crate::js_module::module;
 use crate::IdGen;
 use crate::scope::{parse_scope, scopify};
@@ -22,19 +22,29 @@ use std::collections::HashMap;
 use std::fs::{read_to_string, write};
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
-    let ext = config.get_or("lang", "js");
+    let binding = String::from("js");
+    let ext = config.get("lang")
+         .unwrap_or(&binding);
 
     let binding = String::new();
     let command = config.get("build")
         .unwrap_or(&binding);
 
-    let mut app = read_to_string(format!("./src/app.{ext}")).expect("Project or app.nts not found");
+    let src = &format!("./src/app.{ext}");
+
+    let mut app = read_to_string(src).expect("Project or app.nts not found");
+
+    app = app.lines()
+        .map(|e| e.trim())
+        .collect::<Vec<&str>>()
+        .join("\n");
 
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
 
-    let main_app = collect_gen(app.clone(), "app{".to_string(), "}", Some(0), false);
+    let (main_app, id) = collect_scope(&app, &"app".to_string());
     let split = main_app.split('\n');
+
 
     let mut js = String::new();
 
@@ -47,10 +57,9 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         }
     }
 
-    let mut comp_html = format!(
-        "{}\n",
-        collect_gen(main_app.clone(), "<temp>".to_string(), "<temp/>", None, true)
-    );
+    let mut comp_html = collect_scope(&main_app, &"<temp>".to_string()).0;
+
+    comp_html.push('\n');
 
     let mut scopes: HashMap<usize, String> = HashMap::new();
 
@@ -110,12 +119,12 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     let context = v8::Context::new(scope);
     let scope = &mut v8::ContextScope::new(scope, context);
 
-    js = parse_scope(&mut js, &mut scopes, scope);
-
-    import_lib(&mut app, &mut import_base, &mut js);
-
+    import_lib(&mut app, &mut import_base, &mut js, id);
     module(&mut app, &mut import_base, &mut js);
     import_script(&mut app, &mut import_base, &mut js);
+
+    js = parse_scope(&mut js, &mut scopes, scope);
+
     _gen_id(&mut js, &mut comp_html);
 
     let ben = &js.replace(".cam()", "");
@@ -127,7 +136,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
 
     at_html(&mut comp_html, &mut js, scope, &mut state);
     template(&mut comp_html, &mut js, scope, &mut state);
-
     _state(&mut js, &mut state, scope);
 
     js = js.replace(".sin()", "")
@@ -250,8 +258,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
                         ))),
                     );
                 }
-
-                drop(&config);
 
                 js = format!(
                     "{}\nvar Route = {}",

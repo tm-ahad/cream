@@ -53,9 +53,11 @@ pub fn serve(map: Config) {
 
         let empty = &String::new();
 
-        let static_dir = map.get_or("static_dir", empty);
+        let static_dir = map.get("static_dir")
+            .unwrap_or(empty);
 
-        let static_dir_render = map.get_or("static_dir_render", empty);
+        let static_dir_render = map.get("static_dir_render")
+            .unwrap_or(empty);
 
         let _app_html = map.get("_app_html")
             .unwrap();

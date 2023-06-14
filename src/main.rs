@@ -1,5 +1,5 @@
 mod at_html;
-mod collect_gen;
+mod collect_scope;
 mod compiler;
 mod component;
 mod new;
@@ -18,12 +18,13 @@ mod scope;
 mod input;
 mod id_gen;
 mod js_lib;
-mod js_module;
 mod import_lib;
 mod import_script;
 mod import_base;
 mod import_npm;
 mod config;
+mod js_module;
+mod mp;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;

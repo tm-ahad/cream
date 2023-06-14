@@ -24,8 +24,6 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> Self {
-        let empty = String::new();
-
         Config {
             name: String::new(),
             home: String::new(),
@@ -106,20 +104,14 @@ impl Config {
             "port" => Some(&self.port),
             "host" => Some(&self.host),
             "_app_js" => Some(&self._app_js),
+            "_app_html" => Some(&self._app_html),
             _ => None,
         } 
     }
 
     pub fn expect(&self, prop: &str) -> &String {
-        &self.get(prop)
+        self.get(prop)
             .unwrap_or_else(|| panic!("Property {prop} not found on configuration"))
-    }
-
-    pub fn get_or(&self, prop: &str, or: &str) -> &String {
-        match &self.get(prop) {
-            Some(v) => v,
-            None => &String::from(or)
-        }
     }
     
 }

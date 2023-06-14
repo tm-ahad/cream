@@ -6,7 +6,6 @@ pub struct StdErr;
 pub enum ErrType {
     SyntaxError,
     OSError,
-    ConfigError,
     NotFound,
     PackageError,
 }
@@ -17,8 +16,7 @@ impl ErrType {
             ErrType::SyntaxError => "SyntaxError",
             ErrType::OSError => "OSError",
             ErrType::NotFound => "NotFound",
-            ErrType::PackageError => "PackageError",
-            _ => "ConfigError",
+            ErrType::PackageError => "PackageError"
         })
     }
 }
