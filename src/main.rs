@@ -25,6 +25,8 @@ mod import_npm;
 mod config;
 mod js_module;
 mod mp;
+mod channel;
+mod udt;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;

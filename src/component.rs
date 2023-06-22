@@ -4,7 +4,6 @@ use crate::state::_state;
 use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::import_npm::import_npm;
-use crate::IdGen;
 use crate::import_base::ImportBase;
 use crate::config::Config;
 use crate::import_script::import_script;
@@ -17,6 +16,8 @@ use crate::scope::{parse_scope, scopify};
 use rusty_v8::{ContextScope, HandleScope, self as v8, Script};
 use std::fs::{read_to_string, write};
 use std::collections::HashMap;
+use crate::udt::UDT;
+
 pub struct Component {
     pub js: String,
     pub html: String,
@@ -61,8 +62,7 @@ pub fn component(
     let mut _imports: Vec<Component> = vec![];
     let mut _names: Vec<String> = vec![];
 
-    let mut macher = c_name.clone();
-    macher.push('{');
+    let macher = c_name.clone();
 
     let (main_app, id) = collect_scope(&app, &macher);
     let binding = main_app.clone();
@@ -138,8 +138,6 @@ pub fn component(
     let mut scopes: HashMap<usize, String> = HashMap::new();
 
     js = parse_scope(&mut js, &mut scopes, scope);
-
-    println!("{}", html);
     _gen_id(&mut js, &mut html);
 
     write(format!("./build/.$.{ext}"), js.clone())
@@ -166,118 +164,11 @@ pub fn component(
     js = js.replace(".sin()", "")
         .replace(".cam()", "");
 
-    let first = true;
-
-    while let Some(e) = html.find("<Until ") {
-        let mut fall = e;
-
-        while &html[fall..fall+1] == "\n" {
-            fall -= 1;
-        }
-
-        let mut up = e + 7;
-
-        while &html[up..up+1] == "\n" {
-            up += 1;
-        }
-
-        let li = &html[fall..up];
-        let mut th = String::new();
-        let mut do_ = String::new();
-
-        match li.find("that=") {
-            None => {}
-            Some(e) => {
-                let mut init = e + 5;
-
-                while &li[init..init+1] != " " && &li[init..init+1] != "/" {
-                    init += 1
-                }
-
-                th = String::from(&li[e+5..init])
-            }
-        }
-
-        match li.find("do=") {
-            None => {}
-            Some(e) => {
-                let mut init = e + 3;
-
-                while &li[init..init+1] != " " && &li[init..init+1] != "/" {
-                    init += 1
-                }
-
-                do_ = String::from(&li[e+3..init])
-            }
-        }
-
-        let mut th_comp = &Component::NEW;
-        let mut do_comp = &Component::NEW;
-
-        for i in &_imports {
-            if i.name == th {
-                th_comp = i
-            }
-        }
-
-        for i in &_imports {
-            if i.name == do_ {
-                do_comp = i
-            }
-        }
-
-        let id = IdGen::get_and_update();
-
-        let cb1 = "{";
-        let cb2 = "}";
-
-        html.replace_range(fall..up, &format!("<div id={}>{}</div>",id , do_comp.html));
-
-        if first {
-            js.push_str("
-class Work {
-
-    #value;
-
-    constructor(init) {
-        this.#value = init;
-    }
-
-    do(then) {
-        try {
-            let _res = this.#value();
-
-            let res = then({
-                state: \"done\",
-                error: null,
-                value: _res
-            });
-
-            return res;
-        }
-        } catch (e) {
-           throw e;
-        }
-    }
-}")
-        }
-        js.push_str(&format!("\
-let work = new Work(function() {cb1}
-    {}
-{cb2})
-
-work.do(function() {cb1}
-    let ptr = document.getElementById({id})
-
-    ptr.innerHTML = `{}`
-{cb2})
-        ", th_comp.js, th_comp.html));
-    }
+    UDT(&mut html, &mut js, &_imports);
 
     import_npm(&mut app, &mut js);
 
     scopify(&mut js, &scopes, config);
-
 
     Component {
         js,

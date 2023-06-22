@@ -1,46 +1,55 @@
-let argv = process.argv;
+const fs = require('fs');
 
-if (process.argc < 3) {process.exit(1)}
+fs.readFile('./builds/mp.chan', 'utf8', (err, data) => {
+    let [match, message] = data.split('&');
 
-let match = argv[3];
-let message = argv[2];
-let out;
+    if (err) {
+        console.error(err);
+        return;
+    }
 
-if (match) {
-    let exp = new RegExp(`${match} *{(\n?[\\S| ]?\n*)*}`, 'gi')
-    let mat = message.match(exp)
+    let out;
 
-    out = `${message.search(exp)}*${mat ? mat[0]: null}`
-} else {
-    let regs = [
-        /dom *{(\n?[\S| ]?\n*)*}/gi,
-        /cam *{(\n?[\S| ]?\n*)*}/gi,
-        /sin *{(\n?[\S| ]?\n*)*}/gi,
-    ]
-    
-    let section_id = 0;
-    let arr = [[], [], []];
-    
-    for (let exp of regs) {
-    
-        let curr = exp.exec(message);
-    
-        while (curr != null) {
-            let idx = curr.index;
-    
-            arr[section_id].push([idx, curr[0].length + idx])
-            curr = exp.exec(message)
+    if (match) {
+        let exp = match == "<temp>" ? new RegExp("<temp> *(\n?[\\S| ]?\n*)*<temp/>") :
+            new RegExp(`${match} *{(\n?[\\S| ]?\n*)*}`, 'i');
+
+        let mat = message.match(exp)
+
+        out = `${message.search(exp)}&${mat ? mat[0]: null}`
+    } else {
+        let regs = [
+            /dom *{(\n?[\S| ]?\n*)*}/gi,
+            /cam *{(\n?[\S| ]?\n*)*}/gi,
+            /sin *{(\n?[\S| ]?\n*)*}/gi,
+        ]
+
+        let section_id = 0;
+        let arr = [[], [], []];
+
+        for (let exp of regs) {
+
+            let curr = exp.exec(message);
+
+            while (curr != null) {
+                let idx = curr.index;
+
+                arr[section_id].push([idx, curr[0].length + idx])
+                curr = exp.exec(message)
+            }
+
+            section_id++
         }
-    
-        section_id++
-    }
-    
-    for (let $arr of arr) {
-        for (let [a, b] of $arr) {
-            out += `${a}$${b}\n`
-        }  
-        out += "#\n"
-    }
+
+        for (let $arr of arr) {
+            for (let [a, b] of $arr) {
+                out += `${a}$${b}\n`
+            }
+            out += "#\n"
+        }
 }
 
-process.stdout.write(out)
+    let emp = new Function();
+
+    fs.appendFile("./build/mp.out", "\n" + out, emp)
+});

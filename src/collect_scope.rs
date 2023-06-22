@@ -1,26 +1,15 @@
-use std::process::Command;
-
+use crate::sys_exec::sys_exec;
+use crate::channel::{Channel, Input};
 use crate::mp::Mp;
 
 pub fn collect_scope(toks: &String, matchr: &String) -> (String, usize) {
-    let mut com = Command::new("node");
+    let mut chan = Channel::new();
 
-    let output = com
-        .arg("/home/ahad/.cream/tools/regexp/main.js")
-        .arg(toks)
-        .arg(matchr)
-        .output()
-        .expect("Failed to execute command");
+    chan.write(Input(matchr, toks));
+    sys_exec(format!("node /home/ahad/.cream/tools/regexp/main.js"));
 
-    let bytes = output.stdout;
-
-    let mut res = String::new();
-
-    for byte in bytes {
-        res.push(byte as char);
-    }
-
-    let p = Mp::parse(res);
+    let res = chan.read();
+    let p = Mp::decode_res(res);
 
     match p {
         Some((s, idx)) => 
@@ -32,8 +21,8 @@ pub fn collect_scope(toks: &String, matchr: &String) -> (String, usize) {
                 while &res[id..id + 1] != "}" {
                     id += 1;
                 }
-
-                (res[start..id].to_string(), idx)
+                
+                (String::from(&res[start+1..id]), idx)
             },
         None => (String::new(), 0),
     }
