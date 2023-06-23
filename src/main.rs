@@ -27,6 +27,8 @@ mod js_module;
 mod mp;
 mod channel;
 mod udt;
+mod cream_io;
+mod compiler_enum;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;

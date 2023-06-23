@@ -45,6 +45,9 @@ pub fn new(name: &String) {
         File::create("./build/error.html")
             .unwrap_or_else(|e| panic!("{e}"));
 
+        File::create("./build/mp.chan")
+            .unwrap_or_else(|e| panic!("Creating File: ./build/mp.chan; Err: {e}"));
+
         shell.write_all(b"
 cream make
 serve").expect("Cannot write file");

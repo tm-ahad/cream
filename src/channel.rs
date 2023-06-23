@@ -1,16 +1,25 @@
 use crate::mp::Mp;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
+use std::path::Path;
+use crate::compiler_enum::Compiler;
 
 pub struct Input<'a>(pub &'a String, pub &'a String);
-pub struct Channel(File);
+pub struct Channel(String, File);
 
 impl Channel {
-    pub fn new() -> Channel {
-        Channel(match File::open("./build/mp.chan") {
-            Ok(f) => f,
-            Err(e) => panic!("{e}")
-        })
+    pub fn path(&self) -> &String {
+        &self.0
+    }
+
+    pub fn new(path: String) -> Channel {
+        let file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(path)
+            .unwrap_or_else(|e| panic!("{e}"));
+
+        Channel(path, file)
     }
 
     pub fn write(&mut self, data: Input) {
@@ -32,6 +41,8 @@ impl Channel {
                 for b in bytes {
                     res.push(b as char)
                 }
+                self.0.set_len(0)
+                    .unwrap_or_else(|e| panic!("File: ./build/mp.chan; err: {}", e));
                 res
             },
             Err(e) => panic!("{e}")
