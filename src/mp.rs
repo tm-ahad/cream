@@ -4,6 +4,7 @@ pub struct Mp;
 
 impl Mp {
     pub fn decode_res(s: String) -> Option<(String, usize)> {
+        println!("{}", s);
         let i = s.find('&').unwrap();
         let mut ret_none = false;
 

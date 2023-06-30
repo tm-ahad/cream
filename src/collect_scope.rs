@@ -3,7 +3,7 @@ use crate::channel::{Channel, Input};
 use crate::mp::Mp;
 
 pub fn collect_scope(toks: &String, matchr: &String) -> (String, usize) {
-    let mut chan = Channel::new();
+    let mut chan = Channel::new(String::from("./build/mp.chan"));
 
     chan.write(Input(matchr, toks));
     sys_exec(format!("node /home/ahad/.cream/tools/regexp/main.js"));

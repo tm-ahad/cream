@@ -1,10 +1,16 @@
 const fs = require('fs');
 
-fs.readFile('./builds/mp.chan', 'utf8', (err, data) => {
-    let [match, message] = data.split('&');
+fs.readFile('./build/mp.chan', 'utf8', (err, data) => {
+    let point = 0;
+
+    while (data[point] !== "&") {
+        point++;
+    }
+
+    let match = data.substring(0, point);
+    let message = data.substring(point);
 
     if (err) {
-        console.error(err);
         return;
     }
 
@@ -51,5 +57,5 @@ fs.readFile('./builds/mp.chan', 'utf8', (err, data) => {
 
     let emp = new Function();
 
-    fs.appendFile("./build/mp.out", "\n" + out, emp)
+    fs.writeFile("./build/mp.chan", "\n" + out, emp)
 });

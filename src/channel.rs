@@ -1,25 +1,19 @@
 use crate::mp::Mp;
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
-use std::path::Path;
-use crate::compiler_enum::Compiler;
+use std::io::{Write, Read, Seek, SeekFrom};
 
 pub struct Input<'a>(pub &'a String, pub &'a String);
-pub struct Channel(String, File);
+pub struct Channel(File);
 
 impl Channel {
-    pub fn path(&self) -> &String {
-        &self.0
-    }
-
     pub fn new(path: String) -> Channel {
         let file = OpenOptions::new()
-            .read(true)
             .write(true)
+            .read(true)
             .open(path)
             .unwrap_or_else(|e| panic!("{e}"));
 
-        Channel(path, file)
+        Channel(file)
     }
 
     pub fn write(&mut self, data: Input) {
@@ -30,22 +24,17 @@ impl Channel {
             Ok(_) => {},
             Err(e) => panic!("{e}")
         }
+
+        self.0.seek(SeekFrom::Start(0))
+            .unwrap_or_else(|e| panic!("{e}"));
     }
 
     pub fn read(&mut self) -> String {
-        let mut bytes: [u8; 4294967295] = [0; 4294967295];
+        let mut content = String::new();
 
-        match self.0.read(&mut bytes) {
-            Ok(_) => {
-                let mut res = String::new();
-                for b in bytes {
-                    res.push(b as char)
-                }
-                self.0.set_len(0)
-                    .unwrap_or_else(|e| panic!("File: ./build/mp.chan; err: {}", e));
-                res
-            },
-            Err(e) => panic!("{e}")
+        match self.0.read_to_string(&mut content) {
+            Ok(_) => content,
+            Err(e) => panic!("{}", e)
         }
     }
 }

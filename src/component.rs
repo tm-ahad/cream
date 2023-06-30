@@ -122,10 +122,10 @@ pub fn component(
         if rep.contains(m) {
             for i in &_imports {
                 if i.name == n {
-                     if let Some(e) = html.find(m) {
-                         html.replace_range(e..m.len() + 1, &i.html);
-                         js = format!("{js}\n{}", i.js)
-                     }
+                    if let Some(e) = html.find(m) {
+                        html.replace_range(e..m.len() + 1, &i.html);
+                        js = format!("{js}\n{}", i.js)
+                    }
                 }
             }
         }
@@ -146,7 +146,7 @@ pub fn component(
     sys_exec(format!("{command} ./build/.$.{ext}"));
 
     js = read_to_string("./build/.$.js")
-            .unwrap_or(js.clone());
+        .unwrap_or(js.clone());
 
     let string = v8::String::new(scope, &js)
         .unwrap();

@@ -3,6 +3,7 @@ use crate::collect_scope::collect_scope;
 use crate::component::Component;
 use crate::component::{component, stringify_component};
 use crate::import_lib::import_lib;
+use crate::udt::UDT;
 use crate::import_script::import_script;
 use crate::config::Config;
 use crate::js_module::module;
@@ -19,12 +20,11 @@ use rusty_v8::{json::stringify, Script, self as v8};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{read_to_string, write};
-use crate::udt::UDT;
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
     let binding = String::from("js");
     let ext = config.get("lang")
-         .unwrap_or(&binding);
+        .unwrap_or(&binding);
 
     let binding = String::new();
     let command = config.get("build")
@@ -139,7 +139,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     _state(&mut js, &mut state, scope);
 
     js = js.replace(".sin()", "")
-           .replace(".cam()", "");
+        .replace(".cam()", "");
 
 
     match comp_html.find("<Router route=") {
