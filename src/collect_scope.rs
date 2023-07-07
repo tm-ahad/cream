@@ -1,29 +1,36 @@
+use crate::brace_pool::BracePool;
 use crate::sys_exec::sys_exec;
 use crate::channel::{Channel, Input};
 use crate::mp::Mp;
 
-pub fn collect_scope(toks: &String, matchr: &String) -> (String, usize) {
-    let mut chan = Channel::new(String::from("./build/mp.chan"));
+pub fn collect_scope(toks: &String, matchr: &String) -> Option<(String, usize)> {
+    return match toks.find(matchr) {
+        Some(s) => {
+            let ss = s;
+            let remain = &toks[s..];
 
-    chan.write(Input(matchr, toks));
-    sys_exec(format!("node /home/ahad/.cream/tools/regexp/main.js"));
+            match remain.find('{') {
+                Some(ss) => {
+                    let dif = &toks[s..s+ss];
+                    let pool = BracePool::new();
 
-    let res = chan.read();
-    let p = Mp::decode_res(res);
+                    while let Some(i) = dif.find("{") {
+                        pool.push('}');
+                        let dif = &dif[i..];
 
-    match p {
-        Some((s, idx)) => 
-            {
-                let res = (*s).to_string();
-                let start = res.find('{').unwrap();
-                let mut id = start;
+                        while let Some(i) = dif.find("}") {
+                            if pool.push('}'); {
 
-                while &res[id..id + 1] != "}" {
-                    id += 1;
-                }
-                
-                (String::from(&res[start+1..id]), idx)
-            },
-        None => (String::new(), 0),
+                            }
+                        }
+                    }
+
+
+                },
+                None => {}
+            }
+        }
+        None => None,
     }
+
 }

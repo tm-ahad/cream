@@ -40,6 +40,9 @@ pub fn serve(map: Config) {
     let server = TcpListener::bind(format!("{host}:{port}"))
         .unwrap();
 
+    let content = &read_to_string(_app_html)
+        .unwrap_or(error.clone());
+
     for stream in server.incoming() {
         let mut stream = stream.unwrap();
         let mut buffer: [u8; 2048] = [0; 2048];
@@ -79,8 +82,7 @@ pub fn serve(map: Config) {
                 }
             }
         } else {
-            read_to_string(_app_html)
-                .unwrap_or(error.clone())
+            content
         };
 
         let _ = stream.write(

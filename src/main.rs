@@ -27,6 +27,10 @@ mod js_module;
 mod mp;
 mod channel;
 mod udt;
+mod serializable_deserializable;
+mod smp;
+mod pmp;
+mod brace_pool;
 
 use crate::state_base::_StateBase;
 use crate::compiler::compile;

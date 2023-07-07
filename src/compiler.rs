@@ -43,6 +43,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     let mut names: Vec<String> = vec![];
 
     let (main_app, id) = collect_scope(&app, &"app".to_string());
+
     let split = main_app.split('\n');
 
 

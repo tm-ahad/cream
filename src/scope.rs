@@ -6,23 +6,16 @@ use v8::{ContextScope, HandleScope};
 use std::fs::{read_to_string, write};
 use std::process::Command;
 use std::collections::HashMap;
+use crate::channel::{Channel, Input};
 
 pub fn parse_scope(script: &mut str, ptr: &mut HashMap<usize, String>, scope: &mut ContextScope<HandleScope>) -> String {
     let mut c_script = script.replace(';', "");
-    
-    let mut com = Command::new("node");
+    let mut chan = Channel::INSTANCE;
 
-    let out_bytes = match com.args(["/home/ahad/.cream/tools/regexp/main.js", &format!("'{c_script}'")])
-        .output() {
-            Ok(o) => o.stdout,
-            Err(e) => panic!("{e}"),
-        };
+    chan.write(Input::PreDefinedMatcher(c_script.clone()));
+    sys_exec(String::from("node /home/ahad/.cream/tools/regexp/main.js"));
 
-    let mut out = String::new();
-
-    for bytes in out_bytes {
-        out.push(bytes as char)
-    }
+    let out = chan.read();
 
     let sections = out.split('#').collect::<Vec<&str>>();
     
