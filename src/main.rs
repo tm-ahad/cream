@@ -3,6 +3,7 @@ mod collect_scope;
 mod compiler;
 mod component;
 mod new;
+mod is_byte_in_str;
 mod state;
 mod state_base;
 mod template;

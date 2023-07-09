@@ -1,33 +1,37 @@
 use crate::brace_pool::BracePool;
 use crate::sys_exec::sys_exec;
 use crate::channel::{Channel, Input};
+use crate::is_byte_in_str::is_byte_in_str;
 use crate::mp::Mp;
 
 pub fn collect_scope(toks: &String, matchr: &String) -> Option<(String, usize)> {
     return match toks.find(matchr) {
         Some(s) => {
             let ss = s;
-            let remain = &toks[s..];
+            let remain = &toks[s+matchr.len()..];
 
-            match remain.find('{') {
+            return match remain.find('{') {
                 Some(ss) => {
-                    let dif = &toks[s..s+ss];
-                    let pool = BracePool::new();
+                    let dif = &remain[..ss];
 
-                    while let Some(i) = dif.find("{") {
-                        pool.push('}');
-                        let dif = &dif[i..];
+                    if dif.trim().is_empty() {
+                        let mut pool = BracePool::new();
+                        let i = ss+1;
 
-                        while let Some(i) = dif.find("}") {
-                            if pool.push('}'); {
-
-                            }
+                        while &remain[i..i+1] != "{" {
+                            pool.push('{');
                         }
+
+                        while &remain[i..i+1] != "}" {
+                            if pool.push('}') && !is_byte_in_str(i, &remain[ss+1..i]) {
+                                Some((remain[ss+1..i].to_string(), s+i));
+                            };
+                        }
+                    } else {
+                        collect_scope(&toks[s+ss..].to_string(), matchr)
                     }
-
-
                 },
-                None => {}
+                None => collect_scope(&remain.to_string(), matchr)
             }
         }
         None => None,
