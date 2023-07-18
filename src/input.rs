@@ -7,12 +7,15 @@ pub fn std_input(p: &str, def: &str) -> String {
     let mut user_input = String::new();
     let stdin = stdin(); // We get `Stdin` here.
 
-    let _ = stdin.read_line(&mut user_input)
+    let _ = stdin
+        .read_line(&mut user_input)
         .expect("Can read input from user");
 
     user_input = if user_input.trim().is_empty() {
         def.to_string()
-    } else {user_input};
+    } else {
+        user_input
+    };
 
     String::from(user_input.trim())
 }

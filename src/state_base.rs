@@ -1,7 +1,7 @@
-use crate::v8_parse::v8_parse;
 use crate::pass::pass;
-use std::collections::HashMap;
+use crate::v8_parse::v8_parse;
 use rusty_v8::{ContextScope, HandleScope, Script};
+use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct _StateBase {
@@ -24,11 +24,11 @@ impl _StateBase {
             for l in &mut self.map {
                 if l.0 == &k {
                     p_a = true;
-                    l.1.0.insert(v.clone(), rb.clone());
+                    l.1 .0.insert(v.clone(), rb.clone());
                 }
                 if l.0 == &k {
                     p_a = true;
-                    l.1.0.insert(v.clone(), rb.clone());
+                    l.1 .0.insert(v.clone(), rb.clone());
                 }
             }
 
@@ -40,13 +40,13 @@ impl _StateBase {
             }
         }
     }
-    
+
     pub fn catch_parse(
         &mut self,
         key: String,
         ext: String,
         v: String,
-        scope: &mut ContextScope<HandleScope>
+        scope: &mut ContextScope<HandleScope>,
     ) {
         let mut binding = self.map.clone();
         let val = binding.get_mut(&key);
@@ -61,24 +61,20 @@ impl _StateBase {
                         let check = v8_parse(scope, k);
 
                         if result != check {
-
                             if k.trim() == key {
-                                continue
+                                continue;
                             }
 
                             let fmt = &format!("{}={}{}\n", k, result, ext);
                             let v8_str = rusty_v8::String::new(scope, fmt).unwrap();
 
-                            self.catch_parse(k.clone(), ext.clone(), v.clone(),
-                                scope);
+                            self.catch_parse(k.clone(), ext.clone(), v.clone(), scope);
 
                             p.push_str(fmt);
                             p.push_str(&self.parse);
 
                             let s = Script::compile(scope, v8_str, None);
-                            let _ = s
-                                .unwrap()
-                                .run(scope);
+                            let _ = s.unwrap().run(scope);
                         }
                     }
 
@@ -88,16 +84,11 @@ impl _StateBase {
                     l.1 = format!("   {}={}{}\n", key, v, ext)
                 }
             }
-            None => pass()
+            None => pass(),
         }
     }
 
-    pub fn parse(
-        &mut self,
-        key: String,
-        ext: String,
-        v: String
-    ) {
+    pub fn parse(&mut self, key: String, ext: String, v: String) {
         let mut binding = self.map.clone();
         let val = binding.get_mut(&key);
 
@@ -108,7 +99,7 @@ impl _StateBase {
 
                     for (k, vl) in &l.0 {
                         if k.trim() == key {
-                            continue
+                            continue;
                         }
 
                         let fmt = &format!("{}={}{}\n", k, vl, ext.clone());
@@ -125,7 +116,7 @@ impl _StateBase {
                     l.1 = format!("   {}={}{}\n", key, v, ext)
                 }
             }
-            None => pass()
+            None => pass(),
         }
     }
 }

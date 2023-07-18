@@ -1,6 +1,6 @@
-use crate::IdGen;
-use crate::v8_parse::v8_parse;
 use crate::state_base::_StateBase;
+use crate::v8_parse::v8_parse;
+use crate::IdGen;
 use rusty_v8::{ContextScope, HandleScope};
 
 pub fn template(
@@ -9,7 +9,6 @@ pub fn template(
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
 ) {
-
     while let Some(a) = html.find('$') {
         let mut ch = (">", "<", "<");
         let le = html.clone();
@@ -18,8 +17,8 @@ pub fn template(
 
         let mut i = a;
 
-        while &html[i..i+1] != "=" && &html[i..i+1] != ">" {
-            is_not_inner_text = &html[i..i+1] != "=";
+        while &html[i..i + 1] != "=" && &html[i..i + 1] != ">" {
+            is_not_inner_text = &html[i..i + 1] != "=";
 
             i += 1;
         }
@@ -28,12 +27,14 @@ pub fn template(
             ch = ("=", ">", " ");
             let mut s = a;
 
-            while &html[s-1..s] != " " {
+            while &html[s - 1..s] != " " {
                 s -= 1;
             }
 
             &le[s..a]
-        } else {"innerText"};
+        } else {
+            "innerText"
+        };
 
         let mut idx = a;
 
@@ -44,8 +45,7 @@ pub fn template(
             idx += 1;
         }
 
-        while &html[zig..zig + 1] != ch.1 && &html[zig..zig + 1] != ch.2
-        {
+        while &html[zig..zig + 1] != ch.1 && &html[zig..zig + 1] != ch.2 {
             zig += 1;
         }
 
@@ -90,10 +90,13 @@ pub fn template(
                 let r = IdGen::get_and_update();
 
                 len = r.len() + 6;
-                html.insert_str(match prop {
-                    "innerText" => pig,
-                    _ => zig
-                }, &format!(" id=\"{}\"", r));
+                html.insert_str(
+                    match prop {
+                        "innerText" => pig,
+                        _ => zig,
+                    },
+                    &format!(" id=\"{}\"", r),
+                );
                 r
             }
         };
@@ -105,7 +108,9 @@ pub fn template(
                 let mut ls = s;
                 let d = if b {
                     format!("\"{ps}\"")
-                } else {String::from(ps)};
+                } else {
+                    String::from(ps)
+                };
 
                 ls.push_str("${");
                 ls.push_str(&d);
@@ -116,55 +121,68 @@ pub fn template(
             }
 
             if !start.is_empty() {
-                s=push_s(s, start, true);
+                s = push_s(s, start, true);
             }
-            s=push_s(s, val, false);
+            s = push_s(s, val, false);
 
             if !end.is_empty() {
-                s=push_s(s, end, true);
+                s = push_s(s, end, true);
             }
             s.push('`')
         }
 
-        let fin = &if prop == "innerText" {s.replace(".dyn()", "")} else {
+        let fin = &if prop == "innerText" {
+            s.replace(".dyn()", "")
+        } else {
             val.replace(".dyn()", "")
         };
 
         let mut result = if !val.ends_with(".dyn()") {
             v8_parse(scope, fin)
-        } else {String::new()};
-        
+        } else {
+            String::new()
+        };
 
         let p_val = val.replace(".dyn()", "");
 
         base._set(
             p_val.clone(),
             format!("document.getElementById({:?}).{prop}", id),
-            if prop == "innerText" {s.replace(".dyn()", "")}
-            else {p_val.clone()}
+            if prop == "innerText" {
+                s.replace(".dyn()", "")
+            } else {
+                p_val.clone()
+            },
         );
 
-        result = if (!end.is_empty() || !start.is_empty())
-            && prop != "innerText" {
-
-            let wed=format!("\"{}\"", result);
+        result = if (!end.is_empty() || !start.is_empty()) && prop != "innerText" {
+            let wed = format!("\"{}\"", result);
             wed
-        } else {result};
+        } else {
+            result
+        };
 
         if !val.ends_with(".dyn()") {
-
-            html.replace_range( match prop {
-                "innerText" => pig+len+1..zig+len,
-                _ => pig+1..zig
-            }, &result);
+            html.replace_range(
+                match prop {
+                    "innerText" => pig + len + 1..zig + len,
+                    _ => pig + 1..zig,
+                },
+                &result,
+            );
         } else {
+            html.replace_range(
+                match prop {
+                    "innerText" => pig + len + 1..zig + len,
+                    _ => pig - prop.len()..zig,
+                },
+                "",
+            );
 
-            html.replace_range( match prop {
-                "innerText" => pig+len+1..zig+len,
-                _ => pig-prop.len()..zig
-            }, "");
-
-            js.push_str(&format!("\ndocument.getElementById({:?}).{prop}{}.sin()", id, fin));
+            js.push_str(&format!(
+                "\ndocument.getElementById({:?}).{prop}{}.sin()",
+                id, fin
+            ));
         }
     }
 }

@@ -10,8 +10,7 @@ pub fn sys_exec(command: String) {
     let mut cmd = Command::new(prog);
     cmd.args(v);
 
-    let o = cmd.output()
-        .unwrap_or_else(|e| panic!("{}", e));
+    let o = cmd.output().unwrap_or_else(|e| panic!("{}", e));
 
     let mut string_output = String::new();
     let chars = o.stdout;

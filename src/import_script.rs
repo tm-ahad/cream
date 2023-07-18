@@ -3,7 +3,6 @@ use crate::import_base::ImportType::Scripts;
 use std::fs::read_to_string;
 
 pub fn import_script(app: &mut String, import_base: &mut ImportBase, js: &mut String) {
-
     while let Some(e) = app.find("import script:") {
         let mut ci = e + 9;
 
@@ -17,11 +16,10 @@ pub fn import_script(app: &mut String, import_base: &mut ImportBase, js: &mut St
         app.replace_range(e..ci + 1, "");
 
         for name in names {
-
             if import_base.validate(Scripts, name.to_string()) {
                 let fmt = format!("./src/{name}");
-                let resp = read_to_string(&fmt)
-                    .unwrap_or_else(|_| panic!("Script {name} not found"));
+                let resp =
+                    read_to_string(&fmt).unwrap_or_else(|_| panic!("Script {name} not found"));
 
                 import_base.push(Scripts, fmt);
 
@@ -29,5 +27,4 @@ pub fn import_script(app: &mut String, import_base: &mut ImportBase, js: &mut St
             }
         }
     }
-
 }

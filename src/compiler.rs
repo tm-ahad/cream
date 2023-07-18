@@ -1,56 +1,66 @@
+use crate::at_gen_id::_gen_id;
 use crate::at_html::at_html;
 use crate::collect_scope::collect_scope;
 use crate::component::Component;
 use crate::component::{component, stringify_component};
-use crate::import_lib::import_lib;
-use crate::udt::UDT;
-use crate::import_script::import_script;
 use crate::config::Config;
-use crate::js_module::module;
-use crate::scope::{parse_scope, scopify};
-use crate::sys_exec::sys_exec;
+use crate::expected::expect_some;
+use crate::import_base::ImportBase;
+use crate::import_lib::import_lib;
 use crate::import_npm::import_npm;
+use crate::import_script::import_script;
+use crate::js_module::module;
+use crate::matcher::Matcher;
+use crate::scope::{parse_scope, scopify};
 use crate::state::_state;
 use crate::state_base::_StateBase;
-use crate::import_base::ImportBase;
-use crate::std_err::{StdErr, ErrType::OSError};
+use crate::std_err::{ErrType::OSError, StdErr};
+use crate::sys_exec::sys_exec;
 use crate::template::template;
-use crate::at_gen_id::_gen_id;
-use rusty_v8::{json::stringify, Script, self as v8};
+use crate::udt::UDT;
+use rusty_v8::{self as v8, json::stringify, Script};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{read_to_string, write};
+use crate::pass::pass;
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
     let binding = String::from("js");
-    let ext = config.get("lang")
-        .unwrap_or(&binding);
+    let ext = config.get("lang").unwrap_or(&binding);
 
     let binding = String::new();
-    let command = config.get("build")
-        .unwrap_or(&binding);
+    let command = config.get("build").unwrap_or(&binding);
 
     let src = &format!("./src/app.{ext}");
 
     let mut app = read_to_string(src).expect("Project or app.nts not found");
 
-    app = app.lines()
+    app = app
+        .lines()
         .map(|e| e.trim())
         .collect::<Vec<&str>>()
         .join("\n");
 
+
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
 
-    let (main_app, id) = collect_scope(&app, &"app".to_string());
+    let binding = "app".to_string();
+    let app_matcher = Matcher::Component(&binding);
+
+    let pat = expect_some(collect_scope(&app, &app_matcher), "App component");
+
+    let id = pat.index();
+    let main_app = pat.mp_val();
 
     let split = main_app.split('\n');
 
-
     let mut js = String::new();
+    let binding = Matcher::Template.to_string();
+    let t = binding.as_str();
 
     for s in split {
-        if s != "<temp>" {
+        if s != t {
             js.push('\n');
             js.push_str(s)
         } else {
@@ -58,7 +68,8 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         }
     }
 
-    let mut comp_html = collect_scope(&main_app, &"<temp>".to_string()).0;
+    let mut comp_html = expect_some(collect_scope(&main_app, &Matcher::Template), "Template")
+        .mp_val();
 
     comp_html.push('\n');
 
@@ -71,14 +82,14 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
             namei += 1;
         }
 
-        let mut ci = namei+5;
+        let mut ci = namei + 5;
 
         while &app[ci..ci + 1] != "\n" {
             ci += 1
         }
 
-        let cns = app[e+16..namei].split(',');
-        let fnm = &app[namei+5..ci];
+        let cns = app[e + 16..namei].split(',');
+        let fnm = &app[namei + 5..ci];
 
         let platform = v8::new_default_platform(0, false).make_shared();
         v8::V8::initialize_platform(platform);
@@ -99,20 +110,18 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
                 &mut state,
                 &mut import_base,
                 command,
-                config
+                config,
             ));
         }
 
         app.replace_range(e..ci + 1, "")
     }
 
-    write(format!("./build/.$.{ext}"), js.clone())
-        .unwrap_or_else(|e| panic!("{}", e));
+    write(format!("./build/.$.{ext}"), js.clone()).unwrap_or_else(|e| panic!("{}", e));
 
     sys_exec(format!("{command} ./build/.$.{ext}"));
 
-    js = read_to_string("./build/.$.js")
-        .unwrap_or(js.clone());
+    js = read_to_string("./build/.$.js").unwrap_or(js.clone());
 
     let isolate = &mut v8::Isolate::new(Default::default());
 
@@ -123,8 +132,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     import_lib(&mut app, &mut import_base, &mut js, id);
     module(&mut app, &mut import_base, &mut js);
     import_script(&mut app, &mut import_base, &mut js);
-
-    js = parse_scope(&mut js, &mut scopes, scope);
+    parse_scope(&mut js, &mut scopes);
 
     _gen_id(&mut js, &mut comp_html);
 
@@ -139,12 +147,10 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     template(&mut comp_html, &mut js, scope, &mut state);
     _state(&mut js, &mut state, scope);
 
-    js = js.replace(".sin()", "")
-        .replace(".cam()", "");
-
+    js = js.replace(".sin()", "").replace(".cam()", "");
 
     match comp_html.find("<Router route=") {
-        None => {}
+        None => pass(),
         Some(a) => {
             if &comp_html[a + 14..a + 15] == "{" {
                 let mut idx = a;
@@ -172,7 +178,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
                                     &mut state,
                                     &mut import_base,
                                     command,
-                                    config
+                                    config,
                                 ))),
                             );
                         }
@@ -226,8 +232,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
                     ".to_string()
                 };
 
-                write("./build/error.html", not_found.clone())
-                    .unwrap_or_else(|e| panic!("{e}"));
+                write("./build/error.html", not_found.clone()).unwrap_or_else(|e| panic!("{e}"));
 
                 let v8_str = v8::String::new(scope, name_).unwrap();
 
@@ -255,7 +260,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
                             &mut state,
                             &mut import_base,
                             command,
-                            config
+                            config,
                         ))),
                     );
                 }
@@ -300,7 +305,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         if let Some(e) = rep.find(m) {
             for i in &imports {
                 if i.name == n {
-                    comp_html.replace_range(e..e+m.len()+1, &i.html);
+                    comp_html.replace_range(e..e + m.len() + 1, &i.html);
                     js = format!("{js}\n{}", i.js);
                 }
             }
@@ -314,10 +319,9 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     import_npm(&mut app, &mut js);
 
     let binding = String::from("./build/dist.html");
-    let _app_html = config.get("_app_html")
-        .unwrap_or(&binding);
+    let _app_html = config.get("_app_html").unwrap_or(&binding);
 
-    scopify(&mut js, &scopes, config);
+    scopify(&mut js, scopes, config);
 
     write(
         _app_html,
@@ -346,5 +350,5 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
             config.expect("title")
         ),
     )
-        .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
+    .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 }

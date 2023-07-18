@@ -1,6 +1,6 @@
+use crate::id_gen::IdGen;
 use crate::state_base::_StateBase;
 use crate::v8_parse::v8_parse;
-use crate::id_gen::IdGen;
 use rusty_v8::{ContextScope, HandleScope};
 use std::string::String;
 
@@ -49,7 +49,6 @@ pub fn at_html(
             &html[is_x..id_x],
             val
         ));
-
 
         while &html[pig..pig + 1] != ">" {
             pig -= 1

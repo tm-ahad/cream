@@ -1,51 +1,51 @@
-mod at_html;
-mod collect_scope;
-mod compiler;
-mod component;
-mod new;
-mod is_byte_in_str;
-mod state;
-mod state_base;
-mod template;
-mod std_err;
-mod var_not_allowed;
-mod v8_parse;
-mod pass;
-mod sys_exec;
-mod serve;
-mod at_gen_id;
-mod std_out;
-mod scope;
-mod input;
-mod id_gen;
-mod js_lib;
-mod import_lib;
-mod import_script;
-mod import_base;
-mod import_npm;
 mod config;
+mod consts;
+mod expected;
+mod id_gen;
+mod import_base;
+mod import_lib;
+mod import_npm;
+mod import_script;
+mod input;
+mod is_byte_in_str;
+mod js_lib;
 mod js_module;
 mod mp;
-mod channel;
-mod udt;
+mod new;
+mod pass;
+mod scope;
 mod serializable_deserializable;
-mod smp;
-mod pmp;
+mod serve;
+mod state;
+mod state_base;
+mod std_err;
+mod std_out;
+mod sys_exec;
+mod template;
+mod udt;
+mod v8_parse;
+mod var_not_allowed;
+mod matcher;
+mod compiler;
+mod component;
+mod collect_scope;
 mod brace_pool;
+mod at_html;
+mod at_gen_id;
 
-use crate::state_base::_StateBase;
 use crate::compiler::compile;
-use crate::new::new;
-use crate::pass::pass;
-use crate::std_out::std_out;
 use crate::config::Config;
-use crate::std_err::ErrType::OSError;
-use crate::serve::serve;
-use crate::std_err::StdErr;
 use crate::id_gen::IdGen;
 use crate::import_base::ImportBase;
-use std::process::Command;
+use crate::new::new;
+use crate::pass::pass;
+use crate::serve::serve;
+use crate::state_base::_StateBase;
+use crate::std_err::ErrType::OSError;
+use crate::std_err::StdErr;
+use crate::std_out::std_out;
 use std::env;
+use std::process::Command;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -69,7 +69,7 @@ fn main() {
             "make" => {
                 map = Config::new();
                 map.load(String::from("./config.dsp"));
-            
+
                 compile(state_base, import_base, &map);
 
                 match map.get("pre_make") {
@@ -79,9 +79,7 @@ fn main() {
                         com.retain(|x| !x.is_empty());
 
                         if !com.is_empty() {
-                            let a  = match Command::new(com[0])
-                                .args(com[1..].to_vec())
-                                .output() {
+                            let a = match Command::new(com[0]).args(com[1..].to_vec()).output() {
                                 Ok(e) => e.stdout,
                                 Err(e) => {
                                     StdErr::exec(OSError, &e.to_string());
@@ -90,20 +88,18 @@ fn main() {
                             };
 
                             std_out(&String::from_utf8_lossy(&a));
-
                         }
                     }
-                    None => pass()
+                    None => pass(),
                 }
-            },
+            }
             "serve" => {
                 map = Config::new();
                 map.load(String::from("./config.dsp"));
 
                 serve(map)
-            },
-            &_ => pass()
+            }
+            &_ => pass(),
         }
     }
-
 }

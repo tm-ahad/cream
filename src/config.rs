@@ -3,6 +3,7 @@ use std::fs::read_to_string;
 pub struct Config {
     pub name: String,
     pub home: String,
+    pub _app_html: String,
     pub static_dir: String,
     pub static_dir_render: String,
     pub lang: String,
@@ -18,8 +19,6 @@ pub struct Config {
     pub title: String,
     pub port: String,
     pub host: String,
-    pub _app_js: String,
-    pub _app_html: String
 }
 
 impl Config {
@@ -42,14 +41,12 @@ impl Config {
             title: String::new(),
             port: String::new(),
             host: String::new(),
-            _app_js: String::new(),
             _app_html: String::new(),
         }
     }
 
     pub fn load(&mut self, path: String) {
-        let cont = read_to_string(path)
-            .unwrap_or_else( |e| panic!("{e}"));
+        let cont = read_to_string(path).unwrap_or_else(|e| panic!("{e}"));
 
         let lines = cont.lines();
 
@@ -77,11 +74,10 @@ impl Config {
                 "title" => self.title = v.to_string(),
                 "port" => self.port = v.to_string(),
                 "host" => self.host = v.to_string(),
-                "_app_js" => self._app_js = v.to_string(),
                 "_app_html" => self._app_html = v.to_string(),
                 _ => panic!("Field not found for key: {}", k),
             };
-        }   
+        }
     }
 
     pub fn get(&self, prop: &str) -> Option<&String> {
@@ -103,15 +99,13 @@ impl Config {
             "title" => Some(&self.title),
             "port" => Some(&self.port),
             "host" => Some(&self.host),
-            "_app_js" => Some(&self._app_js),
             "_app_html" => Some(&self._app_html),
             _ => None,
-        } 
+        }
     }
 
     pub fn expect(&self, prop: &str) -> &String {
         self.get(prop)
             .unwrap_or_else(|| panic!("Property {prop} not found on configuration"))
     }
-    
 }

@@ -1,5 +1,5 @@
-use std::process::exit;
 use colored::Colorize;
+use std::process::exit;
 
 pub struct StdErr;
 
@@ -10,25 +10,20 @@ pub enum ErrType {
     PackageError,
 }
 
-impl ErrType {
-    pub fn _to_string(self) -> String {
+impl ToString for ErrType {
+    fn to_string(&self) -> String {
         String::from(match self {
             ErrType::SyntaxError => "SyntaxError",
             ErrType::OSError => "OSError",
             ErrType::NotFound => "NotFound",
-            ErrType::PackageError => "PackageError"
+            ErrType::PackageError => "PackageError",
         })
     }
 }
 
 impl StdErr {
-
     pub fn exec(type_: ErrType, err: &str) {
-        eprintln!(
-            "{}: {}",
-            type_._to_string(),
-            err.truecolor(242, 53, 19)
-        );
+        eprintln!("{}: {}", type_.to_string(), err.truecolor(242, 53, 19));
 
         exit(400)
     }

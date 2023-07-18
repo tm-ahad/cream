@@ -1,5 +1,4 @@
 use std::string::String;
-use crate::channel::Input;
 
 pub trait Serializable {
     type SerializationType;

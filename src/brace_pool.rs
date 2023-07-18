@@ -7,23 +7,27 @@ impl BracePool {
 
     pub fn push(&mut self, c: char) -> bool {
         match self.0.last() {
-            Some(a) => if *a {
-                let b = c == '}';
+            Some(a) => {
+                if *a {
+                    let b = c == '}';
 
-                return if b && self.0.starts_with(&[true]) {
-                    self.0.remove(self.0.len() - 1);
-                    false
-                } else if b  {
-                    true
-                } else {
-                    self.0.push(c == '{');
-                    false
+                    return if b {
+                        let len = self.0.len();
+                        self.0.remove(len - 1);
+
+                        if len > 1 {
+                            self.0.remove(0);
+                        }
+                        false
+                    } else {
+                        self.0.push(c == '{');
+                        false
+                    };
                 }
-
-            },
+            }
             None => {
                 self.0.push(c == '{');
-                return false;
+                return c == '}';
             }
         }
 

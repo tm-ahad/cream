@@ -6,7 +6,8 @@ pub fn libs(key: &str) -> String {
     let ob = "{";
     let cb = "}";
 
-    let http_client_js = &format!("
+    let http_client_js = &format!(
+        "
     class Status {ob}
        code
        text
@@ -178,10 +179,11 @@ pub fn libs(key: &str) -> String {
              method: 'TRACE'
           {cb})
        {cb}
-    {cb}", r);
+    {cb}",
+        r
+    );
 
-
-       let http_cleint_ts = &format!("
+    let http_cleint_ts = &format!("
        interface Status {ob}
           code: number
           text: string
