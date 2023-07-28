@@ -20,8 +20,7 @@ impl BracePool {
                         }
                         false
                     } else {
-                        self.0.push(c == '{');
-                        false
+                        panic!("Syntax error!")
                     };
                 }
             }
@@ -31,6 +30,6 @@ impl BracePool {
             }
         }
 
-        todo!()
+        panic!("Syntax error!")
     }
 }

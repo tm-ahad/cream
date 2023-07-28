@@ -64,12 +64,14 @@ pub fn component(
     let mut _names: Vec<String> = vec![];
 
     let macher = Matcher::Component(&c_name);
+
     let pat = expect_some(collect_scope(&app, &macher), &c_name);
 
     let id = pat.index();
     let main_app = pat.mp_val();
 
     let binding = &main_app;
+
     let split = binding.split('\n');
 
     let mut js = String::new();
@@ -85,8 +87,7 @@ pub fn component(
         }
     }
 
-    let mut html =
-        expect_some(collect_scope(&main_app, &Matcher::Template), "Template").mp_val();
+    let mut html = expect_some(collect_scope(&main_app, &Matcher::Template), "Template").mp_val();
 
     html.push('\n');
 

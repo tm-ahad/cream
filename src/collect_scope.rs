@@ -11,7 +11,8 @@ pub fn collect_scope(toks: &str, matcher: &Matcher) -> Option<Mp> {
         Some(s) => {
             match matcher {
                 Matcher::Component(_) => {
-                    let remain = &toks[s + matchr.len()..];
+                    let len = matchr.len();
+                    let remain = &toks[s + len..];
 
                     return match remain.find('{') {
                         Some(ss) => {

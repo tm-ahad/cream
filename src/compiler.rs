@@ -18,11 +18,11 @@ use crate::std_err::{ErrType::OSError, StdErr};
 use crate::sys_exec::sys_exec;
 use crate::template::template;
 use crate::udt::UDT;
+use crate::pass::pass;
 use rusty_v8::{self as v8, json::stringify, Script};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::fs::{read_to_string, write};
-use crate::pass::pass;
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
     let binding = String::from("js");
@@ -45,7 +45,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
 
-    let binding = "app".to_string();
+    let binding = String::from("app");
     let app_matcher = Matcher::Component(&binding);
 
     let pat = expect_some(collect_scope(&app, &app_matcher), "App component");
