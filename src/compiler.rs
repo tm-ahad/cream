@@ -11,6 +11,7 @@ use crate::import_npm::import_npm;
 use crate::import_script::import_script;
 use crate::js_module::module;
 use crate::matcher::Matcher;
+use crate::pass::pass;
 use crate::scope::{parse_scope, scopify};
 use crate::state::_state;
 use crate::state_base::_StateBase;
@@ -18,7 +19,6 @@ use crate::std_err::{ErrType::OSError, StdErr};
 use crate::sys_exec::sys_exec;
 use crate::template::template;
 use crate::udt::UDT;
-use crate::pass::pass;
 use rusty_v8::{self as v8, json::stringify, Script};
 use serde_json::{Map, Value};
 use std::collections::HashMap;
@@ -40,7 +40,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         .map(|e| e.trim())
         .collect::<Vec<&str>>()
         .join("\n");
-
 
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
@@ -68,8 +67,8 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         }
     }
 
-    let mut comp_html = expect_some(collect_scope(&main_app, &Matcher::Template), "Template")
-        .mp_val();
+    let mut comp_html =
+        expect_some(collect_scope(&main_app, &Matcher::Template), "Template").mp_val();
 
     comp_html.push('\n');
 

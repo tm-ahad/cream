@@ -10,7 +10,6 @@ pub fn parse_scope(script: &mut String, ptr: &mut HashMap<usize, String>) {
     let matchers: [Matcher; 3] = [Matcher::Dom, Matcher::Cam, Matcher::Sin];
 
     for m in matchers {
-
         while let Some(pat) = collect_scope(script, &m) {
             let ind = pat.index();
             indexes.0 += ind;

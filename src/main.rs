@@ -1,3 +1,9 @@
+mod at_gen_id;
+mod at_html;
+mod brace_pool;
+mod collect_scope;
+mod compiler;
+mod component;
 mod config;
 mod consts;
 mod expected;
@@ -10,6 +16,7 @@ mod input;
 mod is_byte_in_str;
 mod js_lib;
 mod js_module;
+mod matcher;
 mod mp;
 mod new;
 mod pass;
@@ -24,13 +31,6 @@ mod template;
 mod udt;
 mod v8_parse;
 mod var_not_allowed;
-mod matcher;
-mod compiler;
-mod component;
-mod collect_scope;
-mod brace_pool;
-mod at_html;
-mod at_gen_id;
 
 use crate::compiler::compile;
 use crate::config::Config;
@@ -43,8 +43,8 @@ use crate::state_base::_StateBase;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
 use crate::std_out::std_out;
-use std::process::Command;
 use std::env;
+use std::process::Command;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();

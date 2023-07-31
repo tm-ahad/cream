@@ -1,10 +1,10 @@
-
+#[derive(Debug)]
 pub enum Matcher<'a> {
     Component(&'a String),
     Template,
     Dom,
     Sin,
-    Cam
+    Cam,
 }
 
 impl<'a> ToString for Matcher<'a> {

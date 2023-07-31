@@ -1,4 +1,4 @@
-pub struct BracePool(Vec<bool>);
+pub struct BracePool(pub Vec<bool>);
 
 impl BracePool {
     pub fn new() -> BracePool {
@@ -6,7 +6,7 @@ impl BracePool {
     }
 
     pub fn push(&mut self, c: char) -> bool {
-        match self.0.last() {
+        return match self.0.last() {
             Some(a) => {
                 if *a {
                     let b = c == '}';
@@ -15,21 +15,27 @@ impl BracePool {
                         let len = self.0.len();
                         self.0.remove(len - 1);
 
-                        if len > 1 {
-                            self.0.remove(0);
+                        return if self.0.len() == 0 {
+                            true
+                        } else {
+                            false
                         }
-                        false
                     } else {
-                        panic!("Syntax error!")
+                        self.0.push(true);
+                        false
                     };
+                } else {
+                    panic!("It isn't possible!")
                 }
             }
             None => {
-                self.0.push(c == '{');
-                return c == '}';
-            }
-        }
+                if c == '}' {
+                    panic!("Syntax Error!")
+                }
 
-        panic!("Syntax error!")
+                self.0.push(c == '{');
+                false
+            }
+        };
     }
 }

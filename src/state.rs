@@ -14,7 +14,9 @@ pub fn _state(js: &mut String, b: &mut _StateBase, scope: &mut ContextScope<Hand
         match li.find('=') {
             Some(a) => {
                 if &li[a..a + 1] == "="
-                    && !(li.starts_with("const") || li.starts_with("let") || li.starts_with("var"))
+                    && !(li.starts_with("const ")
+                        || li.starts_with("let ")
+                        || li.starts_with("var "))
                     && !li.ends_with(".sin()")
                 {
                     let len = li.len();

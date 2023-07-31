@@ -8,6 +8,7 @@ use crate::import_lib::import_lib;
 use crate::import_npm::import_npm;
 use crate::import_script::import_script;
 use crate::js_module::module;
+use crate::matcher::Matcher;
 use crate::scope::{parse_scope, scopify};
 use crate::state::_state;
 use crate::state_base::_StateBase;
@@ -18,7 +19,6 @@ use crate::udt::UDT;
 use rusty_v8::{self as v8, ContextScope, HandleScope, Script};
 use std::collections::HashMap;
 use std::fs::{read_to_string, write};
-use crate::matcher::Matcher;
 
 pub struct Component {
     pub js: String,

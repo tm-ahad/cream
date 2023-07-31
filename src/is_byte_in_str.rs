@@ -1,4 +1,3 @@
-
 #[allow(unreachable_code)]
 pub fn is_byte_in_str(index: usize, str: &str) -> bool {
     let mut front = str[..index].to_string();
@@ -11,7 +10,6 @@ pub fn is_byte_in_str(index: usize, str: &str) -> bool {
         s_f += 1;
         front.remove(a);
     }
-
 
     while let Some(a) = front.find('\'') {
         s_f += 1;
