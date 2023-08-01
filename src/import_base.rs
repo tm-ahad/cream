@@ -12,7 +12,7 @@ pub struct ImportBase {
 
 impl ImportBase {
     pub fn new() -> ImportBase {
-        Self {
+        ImportBase {
             mods: Vec::new(),
             libs: Vec::new(),
             scripts: Vec::new(),

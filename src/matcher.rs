@@ -1,4 +1,3 @@
-#[derive(Debug)]
 pub enum Matcher<'a> {
     Component(&'a String),
     Template,

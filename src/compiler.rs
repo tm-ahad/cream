@@ -21,7 +21,6 @@ use crate::template::template;
 use crate::udt::UDT;
 use rusty_v8::{self as v8, json::stringify, Script};
 use serde_json::{Map, Value};
-use std::collections::HashMap;
 use std::fs::{read_to_string, write};
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
@@ -47,7 +46,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     let binding = String::from("app");
     let app_matcher = Matcher::Component(&binding);
 
-    let pat = expect_some(collect_scope(&app, &app_matcher), "App component");
+    let pat = expect_some(collect_scope(&app, &app_matcher, false), "App component");
 
     let id = pat.index();
     let main_app = pat.mp_val();
@@ -67,12 +66,15 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         }
     }
 
-    let mut comp_html =
-        expect_some(collect_scope(&main_app, &Matcher::Template), "Template").mp_val();
+    let mut comp_html = expect_some(
+        collect_scope(&main_app, &Matcher::Template, false),
+        "Template",
+    )
+    .mp_val();
 
     comp_html.push('\n');
 
-    let mut scopes: HashMap<usize, String> = HashMap::new();
+    let mut scopes: Vec<String> = Vec::new();
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;

@@ -17,7 +17,6 @@ use crate::sys_exec::sys_exec;
 use crate::template::template;
 use crate::udt::UDT;
 use rusty_v8::{self as v8, ContextScope, HandleScope, Script};
-use std::collections::HashMap;
 use std::fs::{read_to_string, write};
 
 pub struct Component {
@@ -65,7 +64,7 @@ pub fn component(
 
     let macher = Matcher::Component(&c_name);
 
-    let pat = expect_some(collect_scope(&app, &macher), &c_name);
+    let pat = expect_some(collect_scope(&app, &macher, false), &c_name);
 
     let id = pat.index();
     let main_app = pat.mp_val();
@@ -87,7 +86,11 @@ pub fn component(
         }
     }
 
-    let mut html = expect_some(collect_scope(&main_app, &Matcher::Template), "Template").mp_val();
+    let mut html = expect_some(
+        collect_scope(&main_app, &Matcher::Template, false),
+        "Template",
+    )
+    .mp_val();
 
     html.push('\n');
 
@@ -143,7 +146,7 @@ pub fn component(
     module(&mut app, import_base, &mut js);
     import_script(&mut app, import_base, &mut js);
 
-    let mut scopes: HashMap<usize, String> = HashMap::new();
+    let mut scopes: Vec<String> = Vec::new();
 
     parse_scope(&mut js, &mut scopes);
     _gen_id(&mut js, &mut html);

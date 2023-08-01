@@ -10,8 +10,8 @@ pub struct _StateBase {
 }
 
 impl _StateBase {
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> _StateBase {
+        _StateBase {
             map: HashMap::new(),
             parse: String::new(),
         }

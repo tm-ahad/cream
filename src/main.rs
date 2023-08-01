@@ -5,7 +5,6 @@ mod collect_scope;
 mod compiler;
 mod component;
 mod config;
-mod consts;
 mod expected;
 mod id_gen;
 mod import_base;

@@ -1,7 +1,7 @@
 use std::fs::read_to_string;
 
 pub struct Config {
-    pub name: String,
+    name: String,
     pub home: String,
     pub _app_html: String,
     pub static_dir: String,
@@ -22,7 +22,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Self {
+    pub fn new() -> Config {
         Config {
             name: String::new(),
             home: String::new(),
