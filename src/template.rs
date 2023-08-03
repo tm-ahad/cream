@@ -132,24 +132,24 @@ pub fn template(
         }
 
         let fin = &if prop == "innerText" {
-            s.replace(".dyn()", "")
+            s.replace("dyn:", "")
         } else {
-            val.replace(".dyn()", "")
+            val.replace("dyn:", "")
         };
 
-        let mut result = if !val.ends_with(".dyn()") {
+        let mut result = if !val.starts_with("dyn:") {
             v8_parse(scope, fin)
         } else {
             String::new()
         };
 
-        let p_val = val.replace(".dyn()", "");
+        let p_val = val.replace("dyn:", "");
 
         base._set(
             p_val.clone(),
             format!("document.getElementById({:?}).{prop}", id),
             if prop == "innerText" {
-                s.replace(".dyn()", "")
+                s.replace("dyn:", "")
             } else {
                 p_val.clone()
             },
@@ -162,7 +162,7 @@ pub fn template(
             result
         };
 
-        if !val.ends_with(".dyn()") {
+        if !val.starts_with("dyn:") {
             html.replace_range(
                 match prop {
                     "innerText" => pig + len + 1..zig + len,

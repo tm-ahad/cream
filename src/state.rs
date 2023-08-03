@@ -13,7 +13,7 @@ pub fn _state(js: &mut String, b: &mut _StateBase, scope: &mut ContextScope<Hand
     for li in spl.iter() {
         match li.find('=') {
             Some(a) => {
-                if &li[a..a + 1] == "="
+                if &li[a..a + 2] != "=="
                     && !(li.starts_with("const ")
                         || li.starts_with("let ")
                         || li.starts_with("var "))
@@ -21,6 +21,7 @@ pub fn _state(js: &mut String, b: &mut _StateBase, scope: &mut ContextScope<Hand
                 {
                     let len = li.len();
                     let c = String::from(li[a + 1..len].trim());
+                    println!("{}", c);
 
                     let a_ = var_not_allowed();
 
@@ -175,14 +176,8 @@ pub fn _state(js: &mut String, b: &mut _StateBase, scope: &mut ContextScope<Hand
                     }
 
                     lines.push(b.parse.clone())
-                } else if li.starts_with("const")
-                    || li.starts_with("let")
-                    || li.starts_with("var")
-                    || li.ends_with(".sin()")
-                {
-                    lines.push(li.to_string())
                 } else {
-                    StdErr::exec(SyntaxError, "Invalid Operator");
+                    lines.push(li.to_string())
                 }
 
                 continue;
