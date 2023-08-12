@@ -1,9 +1,8 @@
 use crate::pass::pass;
-use crate::v8_parse::v8_parse;
-use rusty_v8::{ContextScope, HandleScope, Script};
 use std::collections::HashMap;
 
-#[derive(Clone)]
+struct REL(pub String, pub String, pub String);
+
 pub struct _StateBase {
     pub map: HashMap<String, (HashMap<String, String>, String)>,
     pub parse: String,
@@ -19,104 +18,57 @@ impl _StateBase {
 
     pub fn _set(&mut self, k: String, v: String, rb: String) {
         if k != v {
-            let mut p_a: bool = false;
+             match self.map.get_mut(&k) {
+                Some(val) => {
+                    val.0.insert(v.clone(), rb.clone());
+                } ,
+                None => {
+                    let mut map = HashMap::new();
+                    map.insert(v, rb);
 
-            for l in &mut self.map {
-                if l.0 == &k {
-                    p_a = true;
-                    l.1 .0.insert(v.clone(), rb.clone());
+                    self.map.insert(k, (map, String::new()));
                 }
-                if l.0 == &k {
-                    p_a = true;
-                    l.1 .0.insert(v.clone(), rb.clone());
-                }
-            }
-
-            if !p_a {
-                let mut map = HashMap::new();
-                map.insert(v, rb);
-
-                self.map.insert(k, (map, String::new()));
             }
         }
     }
 
-    pub fn catch_parse(
-        &mut self,
-        key: String,
-        ext: String,
-        v: String,
-        scope: &mut ContextScope<HandleScope>,
-    ) {
-        let mut binding = self.map.clone();
-        let val = binding.get_mut(&key);
+    pub fn parse(&mut self, key: &String, ext: String, v: String) -> String {
+        let val = self.map.get_mut(key);
+        let mut rels = Vec::new();
+        let mut p = String::new();
 
         match val {
             Some(l) => {
                 if l.1 == String::new() {
-                    let mut p = String::new();
-
-                    for (k, vl) in &l.0 {
-                        let result = v8_parse(scope, vl);
-                        let check = v8_parse(scope, k);
-
-                        if result != check {
-                            if k.trim() == key {
-                                continue;
-                            }
-
-                            let fmt = &format!("{}={}{}\n", k, result, ext);
-                            let v8_str = rusty_v8::String::new(scope, fmt).unwrap();
-
-                            self.catch_parse(k.clone(), ext.clone(), v.clone(), scope);
-
-                            p.push_str(fmt);
-                            p.push_str(&self.parse);
-
-                            let s = Script::compile(scope, v8_str, None);
-                            let _ = s.unwrap().run(scope);
-                        }
-                    }
-
-                    self.parse = p.clone();
-                    l.1 = p.clone();
-                } else {
-                    l.1 = format!("   {}={}{}\n", key, v, ext)
-                }
-            }
-            None => pass(),
-        }
-    }
-
-    pub fn parse(&mut self, key: String, ext: String, v: String) {
-        let mut binding = self.map.clone();
-        let val = binding.get_mut(&key);
-
-        match val {
-            Some(l) => {
-                if l.1 == String::new() {
-                    let mut p = String::new();
-
-                    for (k, vl) in &l.0 {
+                    for (k, val) in &l.0 {
                         if k.trim() == key {
                             continue;
                         }
 
-                        let fmt = &format!("{}={}{}\n", k, vl, ext.clone());
-                        p.push_str(fmt);
+                        rels.push(REL(k.clone(), ext.clone(), val.clone()));
 
-                        self.parse(k.clone(), ext.clone(), v.clone());
-
-                        p.push_str(&self.parse);
                     }
-
-                    self.parse = p.clone();
-                    l.1 = p.clone();
                 } else {
-                    l.1 = format!("   {}={}{}\n", key, v, ext)
+                    l.1 = format!("   {}={}{}\n", key, v, ext);
+                    return l.1.clone()
                 }
             }
             None => pass(),
         }
+
+        for rel in rels {
+            let key = rel.0;
+            let val = rel.1;
+            let ext = rel.2;
+
+            let fmt = &format!("{}={}{}\n", key, val, ext);
+            p.push_str(fmt);
+
+            p.push_str(&self.parse(&key, val, ext));
+        }
+
+        p
     }
 }
+
+

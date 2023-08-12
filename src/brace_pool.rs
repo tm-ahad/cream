@@ -15,7 +15,7 @@ impl BracePool {
                         let len = self.0.len();
                         self.0.remove(len - 1);
 
-                        return if self.0.len() == 0 { true } else { false };
+                        self.0.is_empty()
                     } else {
                         self.0.push(true);
                         false

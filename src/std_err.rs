@@ -4,7 +4,6 @@ use std::process::exit;
 pub struct StdErr;
 
 pub enum ErrType {
-    SyntaxError,
     OSError,
     NotFound,
     PackageError,
@@ -13,7 +12,6 @@ pub enum ErrType {
 impl ToString for ErrType {
     fn to_string(&self) -> String {
         String::from(match self {
-            ErrType::SyntaxError => "SyntaxError",
             ErrType::OSError => "OSError",
             ErrType::NotFound => "NotFound",
             ErrType::PackageError => "PackageError",

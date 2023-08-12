@@ -1,5 +1,5 @@
 use crate::at_gen_id::_gen_id;
-use crate::at_html::at_html;
+use crate::at_temp::at_temp;
 use crate::collect_scope::collect_scope;
 use crate::config::Config;
 use crate::expected::expect_some;
@@ -42,6 +42,7 @@ pub fn component(
     command: &String,
     config: &Config,
 ) -> Component {
+
     let __js__ = &String::from("js");
 
     let ext = config.get("lang").unwrap_or(__js__);
@@ -126,22 +127,6 @@ pub fn component(
         }
     }
 
-    for n in _names {
-        let m = &*format!("<{}/>", n);
-        let rep = html.replace(' ', "");
-
-        if rep.contains(m) {
-            for i in &_imports {
-                if i.name == n {
-                    if let Some(e) = html.find(m) {
-                        html.replace_range(e..m.len() + 1, &i.html);
-                        js = format!("{js}\n{}", i.js)
-                    }
-                }
-            }
-        }
-    }
-
     import_lib(&mut app, import_base, &mut js, id);
     module(&mut app, import_base, &mut js);
     import_script(&mut app, import_base, &mut js);
@@ -163,9 +148,27 @@ pub fn component(
 
     let _ = script.run(scope);
 
+    at_temp(&mut html, &mut js, st, scope);
     template(&mut html, &mut js, scope, st);
-    at_html(&mut html, &mut js, scope, st);
-    _state(&mut js, st, scope);
+    _state(&mut js, st);
+
+    println!("{}", js);
+
+    for n in _names {
+        let m = &*format!("<{}/>", n);
+        let rep = html.replace(' ', "");
+
+        if rep.contains(m) {
+            for i in &_imports {
+                if i.name == n {
+                    if let Some(e) = html.find(m) {
+                        html.replace_range(e..m.len() + 1, &i.html);
+                        js = format!("{js}\n{}", i.js)
+                    }
+                }
+            }
+        }
+    }
 
     js = js.replace(".sin()", "").replace(".cam()", "");
 

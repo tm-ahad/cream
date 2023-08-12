@@ -18,21 +18,17 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
 
                         if dif.trim().is_empty() {
                             let mut pool = BracePool::new();
-                            let mut cidx = 0;
 
-                            for c in remain.chars() {
+                            for (cidx, c) in remain.chars().enumerate() {
                                 if c == '{' {
                                     pool.push(c);
-                                } else if c == '}' {
-                                    if pool.push('}') && !is_byte_in_str(cidx, remain) {
-                                        return Some(Mp::new(
-                                            remain[ss + 1..cidx - 1].to_string(),
-                                            if i_s { s } else { s + cidx },
-                                            if i_s { Some(s + len + ss + cidx) } else { None },
-                                        ));
-                                    }
+                                } else if c == '}' && pool.push('}') && !is_byte_in_str(cidx, remain) {
+                                    return Some(Mp::new(
+                                        remain[ss + 1..cidx - 1].to_string(),
+                                        if i_s { s } else { s + cidx },
+                                        if i_s { Some(s + len + ss + cidx) } else { None },
+                                    ));
                                 }
-                                cidx += 1;
                             }
 
                             None

@@ -1,5 +1,5 @@
 use crate::at_gen_id::_gen_id;
-use crate::at_html::at_html;
+use crate::at_temp::at_temp;
 use crate::collect_scope::collect_scope;
 use crate::component::Component;
 use crate::component::{component, stringify_component};
@@ -144,9 +144,9 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
 
     let _ = script.run(scope).unwrap();
 
-    at_html(&mut comp_html, &mut js, scope, &mut state);
+    at_temp(&mut comp_html, &mut js,&mut state, scope);
     template(&mut comp_html, &mut js, scope, &mut state);
-    _state(&mut js, &mut state, scope);
+    _state(&mut js, &mut state);
 
     js = js.replace(".sin()", "").replace(".cam()", "");
 
