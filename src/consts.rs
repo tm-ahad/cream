@@ -1,0 +1,1 @@
+pub const IGNORE_STATE: &str = " /!state/";

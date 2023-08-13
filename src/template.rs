@@ -1,5 +1,6 @@
 use crate::state_base::_StateBase;
 use crate::v8_parse::v8_parse;
+use crate::consts::IGNORE_STATE;
 use crate::IdGen;
 use rusty_v8::{ContextScope, HandleScope};
 
@@ -180,7 +181,7 @@ pub fn template(
             );
 
             js.push_str(&format!(
-                "\ndocument.getElementById({:?}).{prop}{}.sin()",
+                "\ndocument.getElementById({:?}).{prop}{}{IGNORE_STATE}",
                 id, fin
             ));
         }

@@ -3,16 +3,15 @@ use std::collections::HashMap;
 
 struct REL(pub String, pub String, pub String);
 
+#[derive(Debug)]
 pub struct _StateBase {
-    pub map: HashMap<String, (HashMap<String, String>, String)>,
-    pub parse: String,
+    pub map: HashMap<String, (HashMap<String, String>, String)>
 }
 
 impl _StateBase {
     pub fn new() -> _StateBase {
         _StateBase {
-            map: HashMap::new(),
-            parse: String::new(),
+            map: HashMap::new()
         }
     }
 

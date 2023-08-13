@@ -1,30 +1,38 @@
+use crate::consts::IGNORE_STATE;
 use crate::var_not_allowed::var_not_allowed;
 use crate::state_base::_StateBase;
 
 pub fn _state(js: &mut String, b: &mut _StateBase) {
-    let spl = js.lines();
+    let spl = js.lines()
+        .map(|l| l.to_string());
     let mut lines = vec![];
 
-    for li in spl {
+    for mut li in spl {
+        li = li.trim()
+            .to_string();
+
         match li.find('=') {
-            Some(a) => {
-                if  &li[a..a + 2]   !=    "==" &&
-                    &li[a..a + 2]   !=    "=>" &&
-                    &li[a..a + 2]   !=    "<=" &&
-                    &li[a-1..a + 1] !=    ">=" &&
-                    &li[a-1..a + 1] !=    "!=" &&
-                     !(li.starts_with("const ")
+            Some(e) => {
+                let z = &li[e..e + 2]   !=    "==" &&
+                    &li[e..e + 2]   !=    "=>" &&
+                    &li[e..e + 2]   !=    "<=" &&
+                    &li[e-1..e + 1] !=    ">=" &&
+                    &li[e-1..e + 1] !=    "!=" &&
+                    !(li.starts_with("const ")
                         || li.starts_with("let ")
                         || li.starts_with("var "))
-                    && !li.ends_with(":sin")
-                    && li.contains('$')
+                    && !li.ends_with(IGNORE_STATE);
+
+                if z && li.contains('$')
                 {
                     let len = li.len();
-                    let c = String::from(li[a + 1..len].trim());
+                    let mut c = String::from(li[e + 1..len].trim());
 
                     let mut dl = false;
 
                     while let Some(a) = c.find('$') {
+                        li.remove(e+a+2);
+                        c.remove(a);
                         dl = true;
                         let char_array = var_not_allowed();
                         let mut idx = a;
@@ -40,7 +48,7 @@ pub fn _state(js: &mut String, b: &mut _StateBase) {
                             idx += 1;
                         }
 
-                        let vn = &c[a+1..idx+1];
+                        let vn = &c[a..idx+1];
 
                         if vn
                             .chars()
@@ -51,21 +59,36 @@ pub fn _state(js: &mut String, b: &mut _StateBase) {
                             panic!("Invalid variable name: {}", vn)
                         }
 
-                        b._set(vn.to_string(), li[..a].to_string(), c.clone());
+
+                        b._set(
+                            vn.to_string(),
+                            li[..e]
+                                .trim()
+                                .to_string(),
+                            c.clone()
+                        );
 
                         let p = b.parse(&ls, String::new(), c.clone());
 
                         lines.push(p);
+                        c.remove(a);
                     }
 
                     if !dl {
                         lines.push(li.to_string())
                     }
-                } else if li.ends_with(":sin") {
+                } else if li.ends_with(IGNORE_STATE) {
                     let l = li.len();
                     lines.push(li[..l-4].to_string());
 
                     continue
+                } else if z {
+                    let ls = String::from(li[e + 1..li.len()].trim());
+                    let rs = String::from(li[..e].trim());
+
+                    let parsed = b.parse(&rs, String::new(), ls);
+
+                    lines.push(parsed);
                 }
 
                 lines.push(li.to_string());

@@ -18,6 +18,7 @@ use crate::template::template;
 use crate::udt::UDT;
 use rusty_v8::{self as v8, ContextScope, HandleScope, Script};
 use std::fs::{read_to_string, write};
+use crate::consts::IGNORE_STATE;
 
 pub struct Component {
     pub js: String,
@@ -152,8 +153,6 @@ pub fn component(
     template(&mut html, &mut js, scope, st);
     _state(&mut js, st);
 
-    println!("{}", js);
-
     for n in _names {
         let m = &*format!("<{}/>", n);
         let rep = html.replace(' ', "");
@@ -170,7 +169,8 @@ pub fn component(
         }
     }
 
-    js = js.replace(".sin()", "").replace(".cam()", "");
+    js = js.replace(IGNORE_STATE, "").
+            replace(".cam()", "");
 
     UDT(&mut html, &mut js, &_imports);
     import_npm(&mut app, &mut js);

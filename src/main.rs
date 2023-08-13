@@ -30,6 +30,7 @@ mod template;
 mod udt;
 mod v8_parse;
 mod var_not_allowed;
+mod consts;
 
 use crate::compiler::compile;
 use crate::config::Config;

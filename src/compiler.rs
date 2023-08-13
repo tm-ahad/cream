@@ -22,6 +22,7 @@ use crate::udt::UDT;
 use rusty_v8::{self as v8, json::stringify, Script};
 use serde_json::{Map, Value};
 use std::fs::{read_to_string, write};
+use crate::consts::IGNORE_STATE;
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
     let binding = String::from("js");
@@ -148,7 +149,8 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     template(&mut comp_html, &mut js, scope, &mut state);
     _state(&mut js, &mut state);
 
-    js = js.replace(".sin()", "").replace(".cam()", "");
+    js = js.replace(IGNORE_STATE, "").
+            replace(".cam()", "");
 
     match comp_html.find("<Router route=") {
         None => pass(),

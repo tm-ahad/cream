@@ -1,7 +1,8 @@
 use crate::state_base::_StateBase;
 use crate::v8_parse::v8_parse;
-use rusty_v8::{ContextScope, HandleScope};
+use crate::consts::IGNORE_STATE;
 use crate::var_not_allowed::var_not_allowed;
+use rusty_v8::{ContextScope, HandleScope};
 
 pub fn at_temp(
     html: &mut String,
@@ -73,19 +74,19 @@ pub fn at_temp(
 
             base._set(
                 vn.to_string(),
-                format!("document.getElementById({id})"),
+                format!("document.getElementById({id}).innerHTML"),
                 main_v.clone(),
             );
 
             if is_dyn {
-                js.push_str(&format!("document.getElementById({id}).innerHTML={}:sin", &main_v));
+                js.push_str(&format!("document.getElementById({id}).innerHTML={}{IGNORE_STATE}", &main_v));
 
                 html.replace_range(a..n,"");
             } else {
                 html.replace_range(a..n, &v8_parse(scope, vn));
             }
 
-            v.replace_range(i..i+1, "");
+            v.remove(i);
         }
     }
 }
