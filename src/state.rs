@@ -23,6 +23,8 @@ pub fn _state(js: &mut String, b: &mut _StateBase) {
                         || li.starts_with("var "))
                     && !li.ends_with(IGNORE_STATE);
 
+                let mut htpol = true;
+
                 if z && li.contains('$')
                 {
                     let len = li.len();
@@ -88,10 +90,14 @@ pub fn _state(js: &mut String, b: &mut _StateBase) {
 
                     let parsed = b.parse(&rs, String::new(), ls);
 
+                    htpol = false;
+                    lines.push(li.to_string());
                     lines.push(parsed);
                 }
 
-                lines.push(li.to_string());
+                if htpol {
+                    lines.push(li.to_string());
+                }
             }
             None => lines.push(li.to_string()),
         }

@@ -324,7 +324,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     let binding = String::from("./build/dist.html");
     let _app_html = config.get("_app_html").unwrap_or(&binding);
 
-    scopify(&mut js, scopes, config);
+    scopify(&mut js, scopes, config, &mut state);
 
     write(
         _app_html,

@@ -80,7 +80,6 @@ pub fn at_temp(
 
             if is_dyn {
                 js.push_str(&format!("document.getElementById({id}).innerHTML={}{IGNORE_STATE}", &main_v));
-
                 html.replace_range(a..n,"");
             } else {
                 html.replace_range(a..n, &v8_parse(scope, vn));

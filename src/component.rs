@@ -43,7 +43,6 @@ pub fn component(
     command: &String,
     config: &Config,
 ) -> Component {
-
     let __js__ = &String::from("js");
 
     let ext = config.get("lang").unwrap_or(__js__);
@@ -174,7 +173,7 @@ pub fn component(
 
     UDT(&mut html, &mut js, &_imports);
     import_npm(&mut app, &mut js);
-    scopify(&mut js, scopes, config);
+    scopify(&mut js, scopes, config, st);
 
     Component {
         js,
