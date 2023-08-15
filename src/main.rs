@@ -31,6 +31,7 @@ mod udt;
 mod v8_parse;
 mod var_not_allowed;
 mod consts;
+mod comment;
 
 use crate::compiler::compile;
 use crate::config::Config;

@@ -1,4 +1,4 @@
-#[allow(unreachable_code)]
+
 pub fn is_byte_in_str(index: usize, str: &str) -> bool {
     let mut front = str[..index].to_string();
     let mut end = str[index..].to_string();

@@ -23,6 +23,7 @@ use crate::udt::UDT;
 use rusty_v8::{self as v8, json::stringify, Script};
 use serde_json::{Map, Value};
 use std::fs::{read_to_string, write};
+use crate::comment::comment;
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
     let binding = String::from("js");
@@ -40,6 +41,8 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         .map(|e| e.trim())
         .collect::<Vec<&str>>()
         .join("\n");
+
+    comment(&mut app);
 
     let mut imports: Vec<Component> = vec![];
     let mut names: Vec<String> = vec![];
@@ -308,14 +311,16 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         if let Some(e) = rep.find(m) {
             for i in &imports {
                 if i.name == n {
-                    let mut cde = e+m.len()+1;
+                    let mut cde = e+n.len()+1;
 
                     while &comp_html[cde..cde+1] != ">" {
                         cde += 1;
                     }
 
                     comp_html.replace_range(e..cde+1, &i.html);
-                    js = format!("{js}\n{}", i.js);
+
+                    js.push('\n');
+                    js.push_str(i.js.as_str())
                 }
             }
         }

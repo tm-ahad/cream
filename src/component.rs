@@ -7,6 +7,7 @@ use crate::import_base::ImportBase;
 use crate::import_lib::import_lib;
 use crate::import_npm::import_npm;
 use crate::import_script::import_script;
+use crate::comment::comment;
 use crate::js_module::module;
 use crate::matcher::Matcher;
 use crate::scope::{parse_scope, scopify};
@@ -59,6 +60,8 @@ pub fn component(
         .map(|e| e.trim())
         .collect::<Vec<&str>>()
         .join("\n");
+
+    comment(&mut app);
 
     let mut _imports: Vec<Component> = vec![];
     let mut _names: Vec<String> = vec![];
@@ -160,14 +163,16 @@ pub fn component(
             for i in &_imports {
                 if i.name == n {
                     if let Some(e) = html.find(m) {
-                        let mut cde = e+m.len()+1;
+                        let mut cde = e+n.len()+1;
 
                         while &html[cde..cde+1] != ">" {
                             cde += 1;
                         }
 
                         html.replace_range(e..cde+1, &i.html);
-                        js = format!("{js}\n{}", i.js)
+
+                        js.push('\n');
+                        js.push_str(i.js.as_str())
                     }
                 }
             }
