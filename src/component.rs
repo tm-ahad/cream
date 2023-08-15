@@ -96,8 +96,6 @@ pub fn component(
     )
     .mp_val();
 
-    html.push('\n');
-
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
         let mut ci = e + 30;

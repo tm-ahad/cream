@@ -80,9 +80,9 @@ pub fn at_temp(
 
             if is_dyn {
                 js.push_str(&format!("document.getElementById({id}).innerHTML={}{IGNORE_STATE}", &main_v));
-                html.replace_range(a..n,"");
+                html.replace_range(a..n+1,"");
             } else {
-                html.replace_range(a..n, &v8_parse(scope, vn));
+                html.replace_range(a..n+1, &v8_parse(scope, vn));
             }
 
             v.remove(i);

@@ -76,8 +76,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     )
     .mp_val();
 
-    comp_html.push('\n');
-
     let mut scopes: Vec<String> = Vec::new();
 
     let platform = v8::new_default_platform(0, false).make_shared();
