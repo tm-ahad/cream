@@ -1,7 +1,7 @@
 use crate::pass::pass;
 use std::collections::HashMap;
 
-struct REL(pub String, pub String, pub String);
+struct Rel(pub String, pub String, pub String);
 
 #[derive(Debug)]
 pub struct _StateBase {
@@ -44,7 +44,7 @@ impl _StateBase {
                             continue;
                         }
 
-                        rels.push(REL(k.clone(), ext.clone(), val.clone()));
+                        rels.push(Rel(k.clone(), ext.clone(), val.clone()));
 
                     }
                 } else {

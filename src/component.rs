@@ -15,10 +15,10 @@ use crate::state_base::_StateBase;
 use crate::std_err::{ErrType::OSError, StdErr};
 use crate::sys_exec::sys_exec;
 use crate::template::template;
+use crate::consts::IGNORE_STATE;
 use crate::udt::UDT;
 use rusty_v8::{self as v8, ContextScope, HandleScope, Script};
 use std::fs::{read_to_string, write};
-use crate::consts::IGNORE_STATE;
 
 pub struct Component {
     pub js: String,
@@ -67,7 +67,7 @@ pub fn component(
 
     let pat = expect_some(collect_scope(&app, &macher, false), &c_name);
 
-    let id = pat.index();
+    let app_started = pat.index();
     let main_app = pat.mp_val();
 
     let binding = &main_app;
@@ -127,7 +127,7 @@ pub fn component(
         }
     }
 
-    import_lib(&mut app, import_base, &mut js, id);
+    import_lib(&mut app, import_base, &mut js, app_started);
     module(&mut app, import_base, &mut js);
     import_script(&mut app, import_base, &mut js);
 
@@ -160,7 +160,13 @@ pub fn component(
             for i in &_imports {
                 if i.name == n {
                     if let Some(e) = html.find(m) {
-                        html.replace_range(e..m.len() + 1, &i.html);
+                        let mut cde = e+m.len()+1;
+
+                        while &html[cde..cde+1] != ">" {
+                            cde += 1;
+                        }
+
+                        html.replace_range(e..cde+1, &i.html);
                         js = format!("{js}\n{}", i.js)
                     }
                 }

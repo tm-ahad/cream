@@ -42,6 +42,5 @@ pub fn is_byte_in_str(index: usize, str: &str) -> bool {
         true
     } else {
         panic!("Syntax Error");
-        todo!()
     };
 }

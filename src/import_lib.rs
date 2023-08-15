@@ -13,12 +13,14 @@ pub fn import_lib(
 
         while &app[ci..ci + 1] != "\n" {
             ci += 1
-        }
+        }                 
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();
 
         app.replace_range(e..ci + 1, "");
+
+        let mut pl = String::new();
 
         for name in names {
             let string_name = String::from(*name);
@@ -27,15 +29,17 @@ pub fn import_lib(
                 let resp = libs(name);
                 import_base.push(Libs, string_name);
 
-                let u = e as i32 - app_started as i32;
-                let r: usize = if u > 0 { u as usize } else { 0 };
-
-                let q = ci as i32 - app_started as i32;
-                let p: usize = if q > 0 { q as usize } else { 0 };
-
-                js.replace_range(r..p + 1, &resp);
+                pl.push_str(resp.as_str());
             }
         }
+
+        let u = e as i32 - app_started as i32;
+        let r: usize = if u > 0 { u as usize } else { 0 };
+
+        let q = ci as i32 - app_started as i32;
+        let p: usize = if q > 0 { q as usize } else { 0 };
+
+        js.replace_range(r..p + 1, &pl);
     }
 }
 

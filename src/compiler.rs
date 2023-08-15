@@ -18,11 +18,11 @@ use crate::state_base::_StateBase;
 use crate::std_err::{ErrType::OSError, StdErr};
 use crate::sys_exec::sys_exec;
 use crate::template::template;
+use crate::consts::IGNORE_STATE;
 use crate::udt::UDT;
 use rusty_v8::{self as v8, json::stringify, Script};
 use serde_json::{Map, Value};
 use std::fs::{read_to_string, write};
-use crate::consts::IGNORE_STATE;
 
 pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Config) {
     let binding = String::from("js");
@@ -49,7 +49,7 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
 
     let pat = expect_some(collect_scope(&app, &app_matcher, false), "App component");
 
-    let id = pat.index();
+    let app_started = pat.index();
     let main_app = pat.mp_val();
 
     let split = main_app.split('\n');
@@ -77,6 +77,10 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
 
     let mut scopes: Vec<String> = Vec::new();
 
+    let platform = v8::new_default_platform(0, false).make_shared();
+    v8::V8::initialize_platform(platform);
+    v8::V8::initialize();
+
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
 
@@ -92,10 +96,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
 
         let cns = app[e + 16..namei].split(',');
         let fnm = &app[namei + 5..ci];
-
-        let platform = v8::new_default_platform(0, false).make_shared();
-        v8::V8::initialize_platform(platform);
-        v8::V8::initialize();
 
         let isolate = &mut v8::Isolate::new(Default::default());
 
@@ -119,8 +119,10 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         app.replace_range(e..ci + 1, "")
     }
 
-    write(format!("./build/.$.{ext}"), js.clone()).unwrap_or_else(|e| panic!("{}", e));
+    import_lib(&mut app, &mut import_base, &mut js, app_started);
+    parse_scope(&mut js, &mut scopes);
 
+    write(format!("./build/.$.{ext}"), js.clone()).unwrap_or_else(|e| panic!("{}", e));
     sys_exec(format!("{command} ./build/.$.{ext}"));
 
     js = read_to_string("./build/.$.js").unwrap_or(js.clone());
@@ -131,10 +133,8 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
     let context = v8::Context::new(scope);
     let scope = &mut v8::ContextScope::new(scope, context);
 
-    import_lib(&mut app, &mut import_base, &mut js, id);
     module(&mut app, &mut import_base, &mut js);
     import_script(&mut app, &mut import_base, &mut js);
-    parse_scope(&mut js, &mut scopes);
 
     _gen_id(&mut js, &mut comp_html);
 
@@ -308,7 +308,13 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
         if let Some(e) = rep.find(m) {
             for i in &imports {
                 if i.name == n {
-                    comp_html.replace_range(e..e + m.len() + 1, &i.html);
+                    let mut cde = e+m.len()+1;
+
+                    while &comp_html[cde..cde+1] != ">" {
+                        cde += 1;
+                    }
+
+                    comp_html.replace_range(e..cde+1, &i.html);
                     js = format!("{js}\n{}", i.js);
                 }
             }

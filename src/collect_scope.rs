@@ -25,7 +25,7 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
                                 } else if c == '}' && pool.push('}') && !is_byte_in_str(cidx, remain) {
                                     return Some(Mp::new(
                                         remain[ss + 1..cidx - 1].to_string(),
-                                        if i_s { s } else { s + cidx },
+                                        if i_s { s } else { s + ss + matchr.len() },
                                         if i_s { Some(s + len + ss + cidx) } else { None },
                                     ));
                                 }
