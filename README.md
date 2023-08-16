@@ -1,5 +1,5 @@
-## cream.js
-A full stack compiler/library/framework to build web app that compile into vanilla js.
+## cream
+A compiler that compiles to html & let you write frontend UI with declarative code
 
 features
 - Compiled javascript with zero abstraction
