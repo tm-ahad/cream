@@ -25,7 +25,7 @@ pub fn at_temp(
 
         let mut n = id_x;
 
-        while &html[n..n+1] != "\n" {
+        while &html[n..n+1] != ";" {
             n += 1;
         }
 

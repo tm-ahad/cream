@@ -146,6 +146,27 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
 
     let _ = script.run(scope).unwrap();
 
+    for n in names {
+        let m = &format!("<{}", n);
+
+        if let Some(e) = comp_html.find(m) {
+            for i in &imports {
+                if i.name == n {
+                    let mut cde = e+n.len();
+
+                    while &comp_html[cde..cde+2] != "/>" {
+                        cde += 1;
+                    }
+
+                    comp_html.replace_range(e..cde+2, &i.html);
+
+                    js.push('\n');
+                    js.push_str(i.js.as_str())
+                }
+            }
+        }
+    }
+
     at_temp(&mut comp_html, &mut js,&mut state, scope);
     template(&mut comp_html, &mut js, scope, &mut state);
     _state(&mut js, &mut state);
@@ -298,28 +319,6 @@ pub fn compile(mut state: _StateBase, mut import_base: ImportBase, config: &Conf
                 );
 
                 comp_html.replace_range(a..idx + 2, "");
-            }
-        }
-    }
-
-    for n in names {
-        let m = &format!("<{}/>", n);
-        let rep = comp_html.replace(' ', "");
-
-        if let Some(e) = rep.find(m) {
-            for i in &imports {
-                if i.name == n {
-                    let mut cde = e+n.len()+1;
-
-                    while &comp_html[cde..cde+1] != ">" {
-                        cde += 1;
-                    }
-
-                    comp_html.replace_range(e..cde+1, &i.html);
-
-                    js.push('\n');
-                    js.push_str(i.js.as_str())
-                }
             }
         }
     }

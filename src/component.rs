@@ -98,26 +98,24 @@ pub fn component(
 
     while let Some(e) = app.find("import component") {
         let mut namei = e + 17;
-        let mut ci = e + 30;
 
         while &app[namei..namei + 4] != "from" {
             namei += 1;
         }
 
+        let mut ci = namei + 5;
+
         while &app[ci..ci + 1] != "\n" {
             ci += 1
         }
 
-        app.replace_range(e..namei, "");
+        let file_name = &app[namei + 5..ci];
+        let comp_names = app[e+16..namei].split(',');
 
-        let fnm = &app[namei + 5..ci];
-
-        let cns = app[e + 17..ci].split(',');
-
-        for cn in cns {
+        for cn in comp_names {
             _names.push(String::from(app[e + 16..namei].trim()));
             _imports.push(component(
-                String::from(fnm),
+                String::from(file_name),
                 String::from(cn.trim()),
                 scope,
                 st,
@@ -126,6 +124,8 @@ pub fn component(
                 config,
             ))
         }
+
+        app.replace_range(e..ci+1, "");
     }
 
     import_lib(&mut app, import_base, &mut js, app_started);
@@ -149,33 +149,30 @@ pub fn component(
 
     let _ = script.run(scope);
 
-    at_temp(&mut html, &mut js, st, scope);
-    template(&mut html, &mut js, scope, st);
-    _state(&mut js, st);
-
     for n in _names {
-        let m = &*format!("<{}/>", n);
-        let rep = html.replace(' ', "");
+        let m = &format!("<{}", n);
 
-        if rep.contains(m) {
+        if let Some(e) = html.find(m) {
             for i in &_imports {
                 if i.name == n {
-                    if let Some(e) = html.find(m) {
-                        let mut cde = e+n.len()+1;
+                    let mut cde = e+n.len();
 
-                        while &html[cde..cde+1] != ">" {
-                            cde += 1;
-                        }
-
-                        html.replace_range(e..cde+1, &i.html);
-
-                        js.push('\n');
-                        js.push_str(i.js.as_str())
+                    while &html[cde..cde+2] != "/>" {
+                        cde += 1;
                     }
+
+                    html.replace_range(e..cde+2, &i.html);
+
+                    js.push('\n');
+                    js.push_str(i.js.as_str())
                 }
             }
         }
     }
+
+    at_temp(&mut html, &mut js, st, scope);
+    template(&mut html, &mut js, scope, st);
+    _state(&mut js, st);
 
     js = js.replace(IGNORE_STATE, "").
             replace(".cam()", "");
