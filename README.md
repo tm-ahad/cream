@@ -16,5 +16,5 @@ Installaion:
 
 To install latest version of cream on Mac or linux, run this command
 ```shell
-curl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.sh | bash
+curl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.bash | bash
 ```
