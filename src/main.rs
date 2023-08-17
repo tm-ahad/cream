@@ -56,7 +56,6 @@ fn main() {
     if args.len() == 1 {
         let ne = "cream new {project_name} - Create a new project";
         let build = "cream make - Build your project";
-        let start = "serve (not cream serve) - serve your project\n";
 
         let inst = format!("{ne}\n{build}\n{start}");
 

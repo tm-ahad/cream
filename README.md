@@ -11,3 +11,10 @@ features
 - Relatively newer syntax
 - Blazingly fast and memory safe cause build with **Rust**
 - No bundler
+
+Installaion:
+
+To install latest version of cream on mac or linux, run this command
+```shell
+curl -L0 -o cream https://github.com/tm-ahad/cream/releases/download/v0.1.0/cream && sudo mv ./cream /usr/bin/cream
+```
