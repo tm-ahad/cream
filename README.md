@@ -14,7 +14,9 @@ features
 
 Installaion:
 
-To install latest version of cream on Mac or linux, run this command
+To install latest version of cream on Mac or linux or on Windows(msys), run this command
 ```shell
 curl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.bash | bash
 ```
+
+**Note**: You'll have to run the command on a [msys](https://www.msys2.org/) shell on windows to install cream.
