@@ -1,8 +1,7 @@
-use crate::std_out::std_out;
 use std::io::stdin;
 
 pub fn std_input(p: &str, def: &str) -> String {
-    std_out(p);
+    print!("{p}");
 
     let mut user_input = String::new();
     let stdin = stdin(); // We get `Stdin` here.

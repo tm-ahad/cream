@@ -1,6 +1,5 @@
 use crate::input::std_input;
 use crate::std_err::{ErrType::OSError, StdErr};
-use crate::std_out::std_out;
 use colored::Colorize;
 use std::env::consts::OS;
 use std::fs::{create_dir, File};
@@ -85,6 +84,6 @@ app {
         )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
-        std_out(&format!("{} ✨\n", "Done".green().bold()));
+        println!("{} ✨", "Done".green().bold());
     }
 }

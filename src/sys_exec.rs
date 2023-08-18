@@ -1,4 +1,3 @@
-use crate::std_out::std_out;
 use std::process::Command;
 
 pub fn sys_exec(command: String) {
@@ -19,5 +18,5 @@ pub fn sys_exec(command: String) {
         string_output.push(ascii as char);
     }
 
-    std_out(&string_output);
+    println!("{}", string_output);
 }
