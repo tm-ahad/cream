@@ -24,7 +24,6 @@ mod serve;
 mod state;
 mod state_base;
 mod std_err;
-mod std_out;
 mod sys_exec;
 mod template;
 mod udt;
@@ -43,7 +42,6 @@ use crate::serve::serve;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
-use crate::std_out::std_out;
 use std::env;
 use std::process::Command;
 
@@ -58,8 +56,7 @@ fn main() {
         let build = "cream make - Build your project";
 
         let inst = format!("{ne}\n{build}");
-
-        std_out(&inst)
+        println!("{inst}");
     } else {
         let mut map;
 
@@ -86,7 +83,7 @@ fn main() {
                                 }
                             };
 
-                            std_out(&String::from_utf8_lossy(&a));
+                            println!("{}", String::from_utf8_lossy(&a));
                         }
                     }
                     None => pass(),
