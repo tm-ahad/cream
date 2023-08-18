@@ -57,7 +57,7 @@ fn main() {
         let ne = "cream new {project_name} - Create a new project";
         let build = "cream make - Build your project";
 
-        let inst = format!("{ne}\n{build}\n{start}");
+        let inst = format!("{ne}\n{build}");
 
         std_out(&inst)
     } else {
