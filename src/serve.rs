@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::dsp_map::DspMap;
 use std::io::{Read, Write};
 use std::{fs::read_to_string, net::TcpListener};
 
@@ -29,7 +29,7 @@ impl Request {
     }
 }
 
-pub fn serve(map: Config) {
+pub fn serve(map: DspMap) {
     let binding = String::from("./build/index.html");
     let _app_html = map.get("_app_html").unwrap_or(&binding);
 
@@ -62,9 +62,7 @@ pub fn serve(map: Config) {
         let empty = &String::new();
 
         let static_dir = map.get("static_dir").unwrap_or(empty);
-
         let static_dir_render = map.get("static_dir_render").unwrap_or(empty);
-
         let _app_html = map.get("_app_html").unwrap();
 
         let len = static_dir_render.len();

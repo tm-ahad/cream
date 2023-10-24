@@ -1,40 +1,50 @@
-mod at_gen_id;
 mod at_temp;
 mod brace_pool;
 mod collect_scope;
-mod compiler;
+mod comment;
 mod component;
-mod config;
-mod expected;
+mod component_args;
+mod component_markup;
+mod consts;
+mod dsp_map;
+mod escape_string;
+mod extract_component;
+mod gen_id;
+mod helpers;
 mod id_gen;
 mod import_base;
 mod import_lib;
 mod import_npm;
 mod import_script;
 mod input;
-mod is_byte_in_str;
 mod js_lib;
-mod js_module;
 mod matcher;
 mod mp;
 mod new;
+mod out;
 mod pass;
+mod quote_base;
+mod remove;
+mod replacement_flag;
+mod router;
 mod scope;
+mod script_module;
 mod serve;
 mod state;
 mod state_base;
 mod std_err;
 mod sys_exec;
 mod template;
+mod template_type;
+mod transpile_component;
+mod transpile_to_js;
+mod transpiler;
 mod udt;
 mod v8_parse;
 mod var_not_allowed;
-mod consts;
-mod comment;
+mod import_component;
 
-use crate::compiler::compile;
-use crate::config::Config;
-use crate::id_gen::IdGen;
+use crate::dsp_map::DspMap;
 use crate::import_base::ImportBase;
 use crate::new::new;
 use crate::pass::pass;
@@ -42,6 +52,7 @@ use crate::serve::serve;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
+use crate::transpiler::transpile;
 use std::env;
 use std::process::Command;
 
@@ -63,15 +74,14 @@ fn main() {
         match args[1].as_str() {
             "new" => new(args.get(2).expect("Project name not provided")),
             "make" => {
-                map = Config::new();
-                map.load(String::from("./config.dsp"));
+                map = DspMap::new();
+                map.load("./config.dsp");
 
-                compile(state_base, import_base, &map);
+                transpile(state_base, import_base, &map);
 
                 match map.get("pre_make") {
                     Some(c) => {
                         let mut com = c.split(' ').collect::<Vec<&str>>();
-
                         com.retain(|x| !x.is_empty());
 
                         if !com.is_empty() {
@@ -90,8 +100,8 @@ fn main() {
                 }
             }
             "serve" => {
-                map = Config::new();
-                map.load(String::from("./config.dsp"));
+                map = DspMap::new();
+                map.load("./config.dsp");
 
                 serve(map)
             }

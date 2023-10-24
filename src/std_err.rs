@@ -23,6 +23,6 @@ impl StdErr {
     pub fn exec(type_: ErrType, err: &str) {
         eprintln!("{}: {}", type_.to_string(), err.truecolor(242, 53, 19));
 
-        exit(400)
+        exit(400);
     }
 }

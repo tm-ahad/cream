@@ -1,9 +1,9 @@
-use crate::component::Component;
+use crate::consts::{SBF, SBS};
 use crate::id_gen::IdGen;
 use crate::pass::pass;
 
 #[allow(non_snake_case)]
-pub fn UDT(comp_html: &mut String, js: &mut String, imports: &Vec<Component>) {
+pub fn UDT<'a>(comp_html: &mut String, script: &mut String) {
     let first = true;
 
     while let Some(e) = comp_html.find("<Until ") {
@@ -20,12 +20,14 @@ pub fn UDT(comp_html: &mut String, js: &mut String, imports: &Vec<Component>) {
             up += 1;
         }
 
-        let li = &comp_html[fall..up + 1];
-        let mut th = String::new();
-        let mut do_ = String::new();
+        let mut do_ = "";
+        let mut th = "";
+
+        let bind = comp_html[fall..up].to_string();
+        let li = bind.as_str();
 
         match li.find("that=") {
-            None => pass(),
+            None => {return ()},
             Some(e) => {
                 let mut init = e + 5;
 
@@ -36,7 +38,7 @@ pub fn UDT(comp_html: &mut String, js: &mut String, imports: &Vec<Component>) {
                     init += 1
                 }
 
-                th = String::from(&li[e + 5..init])
+                th = &li[e + 5..init]
             }
         }
 
@@ -52,39 +54,29 @@ pub fn UDT(comp_html: &mut String, js: &mut String, imports: &Vec<Component>) {
                     init += 1
                 }
 
-                do_ = String::from(&li[e + 3..init])
+                do_ = &li[e + 3..init]
             }
         }
 
-        let mut th_comp = &Component::NEW;
-        let mut do_comp = &Component::NEW;
+        let id;
 
-        for i in imports {
-            if i.name == th {
-                th_comp = i
-            }
+        {
+            let mut do_comp = component_map.get(do_);
+            id = IdGen::gen_string();
+
+            comp_html.replace_range(
+                fall..up,
+                &format!("<div id={}>{}</div>", id, do_comp.html.stat),
+            );
         }
 
-        for i in imports {
-            if i.name == do_ {
-                do_comp = i
-            }
-        }
-
-        let id = IdGen::get_and_update();
-
-        let cb1 = "{";
-        let cb2 = "}";
-
-        comp_html.replace_range(fall..up, &format!("<div id={}>{}</div>", id, do_comp.html));
+        let mut th_comp = component_map.get(th);
 
         if first {
-            js.push_str(
+            script.push_str(
                 "
 class Work {
-
     #value;
-
     constructor(init) {
         this.#value = init;
     }
@@ -107,18 +99,18 @@ class Work {
 }\n",
             )
         }
-        js.push_str(&format!(
+        script.push_str(&format!(
             "\
-let work = new Work(function() {cb1}
+let work = new Work(function() {SBF}
     {}
-{cb2})
+{SBS})
 
-work.do(function() {cb1}
+work.do(function() {SBF}
     let ptr = document.getElementById(\"{id}\")
     ptr.innerHTML = `{}`
-{cb2})
+{SBS})
         ",
-            th_comp.js, th_comp.html
+            th_comp.script, th_comp.html.stat
         ));
     }
 }

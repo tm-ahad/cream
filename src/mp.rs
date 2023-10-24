@@ -6,7 +6,7 @@ impl Mp {
         Mp(s, i, ext)
     }
 
-    pub fn mp(&self) -> &String {
+    pub fn mp(&self) -> &str {
         &self.0
     }
     pub fn mp_val(self) -> String {

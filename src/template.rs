@@ -1,189 +1,145 @@
+use crate::component_markup::ComponentMarkUp;
+use crate::helpers::find_all_by_char::find_all_by_char;
+use crate::helpers::html_atrribute_dom_prop_map::html_attribute_dom_prop_map;
+use crate::helpers::interpolate_string::interpolate_string;
+use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
+use crate::replacement_flag::SingleReplacementMap;
 use crate::state_base::_StateBase;
+use crate::template_type::TemplateType;
 use crate::v8_parse::v8_parse;
-use crate::consts::IGNORE_STATE;
-use crate::IdGen;
+use crate::var_not_allowed::var_not_allowed;
 use rusty_v8::{ContextScope, HandleScope};
 
+pub fn split_once(s: String, delimiter: char, sd: String) -> (String, String) {
+    match s.find(delimiter) {
+        Some(a) => (s[..a].to_string(), s[a + 1..].to_string()),
+        None => (sd, s),
+    }
+}
+
 pub fn template(
-    html: &mut String,
+    html: &mut ComponentMarkUp,
     js: &mut String,
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
 ) {
-    while let Some(a) = html.find('$') {
-        let mut ch = (">", "<", "<");
-        let le = html.clone();
+    let dyn_html = &mut html.dynamic;
+    let html = &mut html.stat;
 
-        let mut is_not_inner_text = true;
+    let ao = find_all_by_char(html, '$');
+    let mut repmap = Vec::new();
 
-        let mut i = a;
+    'outer: for a in ao {
+        if &html[a - 1..a] == "\n" {
+            let mut ti = a;
+            let mut id_f_d = a + 1;
 
-        while &html[i..i + 1] != "=" && &html[i..i + 1] != ">" {
-            is_not_inner_text = &html[i..i + 1] != "=";
-
-            i += 1;
-        }
-
-        let prop = if is_not_inner_text {
-            ch = ("=", ">", " ");
-            let mut s = a;
-
-            while &html[s - 1..s] != " " {
-                s -= 1;
-            }
-
-            &le[s..a]
-        } else {
-            "innerText"
-        };
-
-        let mut idx = a;
-
-        let mut pig = a;
-        let mut zig = a;
-
-        while &html[idx..idx + 1] != ch.1 && &html[idx..idx + 1] != " " {
-            idx += 1;
-        }
-
-        while &html[zig..zig + 1] != ch.1 && &html[zig..zig + 1] != ch.2 {
-            zig += 1;
-        }
-
-        while &html[pig..pig + 1] != ch.0 {
-            pig -= 1
-        }
-
-        let mut len: usize = 0;
-        let cloned = html.clone();
-
-        let val = &cloned[a + 1..idx];
-        let start = &cloned[pig + 1..a];
-
-        let end = &cloned[idx..zig];
-
-        let mut fall = a;
-        let mut up = a;
-
-        let html_len = html.len() - 1;
-
-        while &html[fall..fall + 1] != "\n" && fall > 0 {
-            fall -= 1
-        }
-
-        while &html[up..up + 1] != "\n" && up < html_len {
-            up += 1
-        }
-
-        let sh = &html[fall..up];
-
-        let id = match sh.find("id=\"") {
-            Some(au) => {
-                let mut init = au + 4;
-
-                while &html[init..init + 1] != "\"" {
-                    init += 1
+            while &html[ti..ti + 1] != ":" {
+                if ti == a + 5 {
+                    break 'outer;
                 }
 
-                String::from(&html[au + 4..init])
+                ti += 1;
             }
-            None => {
-                let r = IdGen::get_and_update();
 
-                len = r.len() + 6;
-                html.insert_str(
-                    match prop {
-                        "innerText" => pig,
-                        _ => zig,
-                    },
-                    &format!(" id=\"{}\"", r),
-                );
-                r
+            while &html[id_f_d..id_f_d + 1] != " " {
+                id_f_d += 1;
             }
-        };
 
-        let mut s = String::from("`");
+            let mut id_x = id_f_d;
 
-        if prop == "innerText" {
-            pub fn push_s(s: String, ps: &str, b: bool) -> String {
-                let mut ls = s;
-                let d = if b {
-                    format!("\"{ps}\"")
+            while &html[id_x..id_x + 1] == " " {
+                id_x += 1;
+            }
+
+            let mut n = id_x;
+            let mut upd = UpdateIBIS::new(html.chars().nth(n).unwrap(), is_byte_in_str(n, html));
+
+            while &html[n..n + 1] != ";" || upd.update(&html[n..n + 1]) {
+                n += 1;
+            }
+
+            let mut v = html[id_x..n].to_string();
+
+            //For dynamic html
+            dyn_html.replace_range(a..n + 1, &interpolate_string(&v));
+
+            //For static html
+
+            let temp_type = TemplateType::from_str(&html[a + 1..ti]);
+            let attr_prop_map = html_attribute_dom_prop_map();
+            let is_dyn = temp_type.is_dynamic();
+            let mut rep = false;
+
+            let mut prop;
+
+            (prop, v) = split_once(v, '=', String::from("innerText"));
+            prop = match attr_prop_map.get(&*prop) {
+                Some(p) => p.to_string(),
+                None => prop,
+            };
+
+            while let Some(i) = v.find('$') {
+                let mut idx = i;
+                let char_array: [char; 64] = var_not_allowed();
+                let vlen = v.len();
+
+                let bytes = v.as_bytes();
+
+                while idx < vlen && char_array.contains(&(bytes[idx] as char)) {
+                    idx += 1;
+                }
+
+                let vn = &v[i + 1..idx];
+
+                if vn.chars().next().unwrap().is_ascii_digit() {
+                    panic!("Invalid variable name: {}", vn)
+                }
+
+                let id = if is_dyn {
+                    &html[a + 5..id_f_d]
                 } else {
-                    String::from(ps)
+                    &html[a + 2..id_f_d]
                 };
 
-                ls.push_str("${");
-                ls.push_str(&d);
+                let c = v.chars().nth(1).unwrap();
 
-                ls.push('}');
+                let main_v = if c == '$' {
+                    v[2..].to_string()
+                } else {
+                    v[1..].to_string()
+                };
 
-                ls
+                if is_dyn {
+                    js.push_str(&format!(
+                        "document.getElementById({id}).{prop}={};",
+                        &main_v
+                    ));
+
+                    if !rep {
+                        repmap.push(SingleReplacementMap::new(a..n + 1, String::new()));
+                    }
+                } else if !rep && !is_dyn {
+                    repmap.push(SingleReplacementMap::new(a..n + 1, v8_parse(scope, vn)));
+                    rep = true;
+                }
+
+                base._set(
+                    vn.to_string(),
+                    format!("document.getElementById({id}).{prop}"),
+                    main_v.clone(),
+                );
+
+                v.remove(i);
             }
-
-            if !start.is_empty() {
-                s = push_s(s, start, true);
-            }
-            s = push_s(s, val, false);
-
-            if !end.is_empty() {
-                s = push_s(s, end, true);
-            }
-            s.push('`')
+        } else {
+            continue;
         }
+    }
 
-        let fin = &if prop == "innerText" {
-            s.replace("dyn:", "")
-        } else {
-            val.replace("dyn:", "")
-        };
+    for r in repmap {
+        let (range, replace_with) = r.to_tuple();
 
-        let mut result = if !val.starts_with("dyn:") {
-            v8_parse(scope, fin)
-        } else {
-            String::new()
-        };
-
-        let p_val = val.replace("dyn:", "");
-
-        base._set(
-            p_val.clone(),
-            format!("document.getElementById({:?}).{prop}", id),
-            if prop == "innerText" {
-                s.replace("dyn:", "")
-            } else {
-                p_val.clone()
-            },
-        );
-
-        result = if (!end.is_empty() || !start.is_empty()) && prop != "innerText" {
-            let wed = format!("\"{}\"", result);
-            wed
-        } else {
-            result
-        };
-
-        if !val.starts_with("dyn:") {
-            html.replace_range(
-                match prop {
-                    "innerText" => pig + len + 1..zig + len,
-                    _ => pig + 1..zig,
-                },
-                &result,
-            );
-        } else {
-            html.replace_range(
-                match prop {
-                    "innerText" => pig + len + 1..zig + len,
-                    _ => pig - prop.len()..zig,
-                },
-                "",
-            );
-
-            js.push_str(&format!(
-                "\ndocument.getElementById({:?}).{prop}{}{IGNORE_STATE}",
-                id, fin
-            ));
-        }
+        html.replace_range(range, &replace_with);
     }
 }

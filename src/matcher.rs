@@ -1,5 +1,5 @@
 pub enum Matcher<'a> {
-    Component(&'a String),
+    Component(&'a str),
     Template,
     Dom,
     Sin,

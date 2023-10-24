@@ -3,24 +3,23 @@ use std::collections::HashMap;
 
 struct Rel(pub String, pub String, pub String);
 
-#[derive(Debug)]
 pub struct _StateBase {
-    pub map: HashMap<String, (HashMap<String, String>, String)>
+    pub map: HashMap<String, (HashMap<String, String>, String)>,
 }
 
 impl _StateBase {
     pub fn new() -> _StateBase {
         _StateBase {
-            map: HashMap::new()
+            map: HashMap::new(),
         }
     }
 
     pub fn _set(&mut self, k: String, v: String, rb: String) {
         if k != v {
-             match self.map.get_mut(&k) {
+            match self.map.get_mut(&k) {
                 Some(val) => {
-                    val.0.insert(v.clone(), rb.clone());
-                } ,
+                    val.0.insert(v, rb);
+                }
                 None => {
                     let mut map = HashMap::new();
                     map.insert(v, rb);
@@ -45,11 +44,10 @@ impl _StateBase {
                         }
 
                         rels.push(Rel(k.clone(), ext.clone(), val.clone()));
-
                     }
                 } else {
                     l.1 = format!("   {}={}{}\n", key, v, ext);
-                    return l.1.clone()
+                    return l.1.clone();
                 }
             }
             None => pass(),
@@ -69,5 +67,3 @@ impl _StateBase {
         p
     }
 }
-
-

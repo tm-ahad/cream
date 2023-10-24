@@ -359,32 +359,6 @@ pub fn libs(key: &str) -> String {
           {cb}", r);
 
     String::from(match key {
-        "context" => "\
-class Context {
-   map = new Map()
-   set(k, v, autoClean=true) {
-      this.map.set(k, {
-         autoClean,
-         val: v
-      })
-   }
-   get(k) {
-      let s = this.map.get(k)
-      if (s) {
-        if (!s.autoClean) {
-            return s
-        } else {
-            this.map.delete(k)
-            return s.val
-        }
-      } else {
-          throw Error(\"Property not found\")
-      }
-
-   }
-}
-
-        ",
         "camel" => "\
 class Camel {
   static toString(data) {
@@ -446,15 +420,14 @@ class Camel {
   }
 }
 
-        ",
+",
         "utilQuery" => "\
 function utilQuery {
     return new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop) => searchParams.get(prop),
     })
 }
-
-        ",
+",
         "utilRandomNumber" => "\
 function utilRandomNumber(n) {
    let frs = Math.round(Math.random() * n);
@@ -466,8 +439,7 @@ function utilRandomNumber(n) {
    }
    return -1
 };
-
-        ",
+",
         "utilUUID" => "\
 const utilUUID = () => {
    let hash = String(Math.random())
@@ -485,8 +457,7 @@ const utilUUID = () => {
    for (let [k, v] of map) { hash = hash.replace(k, v); }
    return '$' + hash.substring(2)
 };
-
-        ",
+",
         "nitro" => "\
 class HashGen {
     constructor() {
@@ -554,7 +525,7 @@ class HashGen {
         return '$' + _h;
     }
 }
-        ",
+",
         "enum" => "\
 function Enum(fields) {
     var len = fields.length
@@ -562,7 +533,7 @@ function Enum(fields) {
         this[fields[i]] = Symbol()
     }
 }
-        ",
+",
         "routine_ts" =>
             "
 class Routine {
@@ -596,7 +567,6 @@ class Routine {
         "routine" =>
             "
 class Routine {
-
     #value;
     #args;
 
@@ -633,16 +603,15 @@ function GetByName(name) {
    } 
    return document.getElementById(eval(name));
 }
-        ",
+",
         "get_by_name_ts" => "
 function GetByName<T = HTMLElement>(name): T {
-        
    if (name === 'name') {
       throw Error('Name should not be \"name\" try another name')
    } 
    return document.getElementById(eval(name)) as T;
 }
-                ",
+",
         "make_string" =>
             "
 Array.prototype.string = function (cb) {
@@ -652,7 +621,7 @@ Array.prototype.string = function (cb) {
     })
     return out;
 }
-            ",
+",
         "make_string_ts" =>
             "
 interface Array<T> {
@@ -668,7 +637,24 @@ if (typeof Array.prototype.string !== 'function') {
     return out;
   }
 }
-            ",
+",
+        "id_gen_ts" => "\
+class IdGen {
+    public static id = 0;
+
+    public static gen(): number {
+        return IdGen.id++
+    }
+}
+",
+        "id_gen" => "
+class IdGen {
+    static gen() {
+        return IdGen.id++;
+    }
+}
+IdGen.id = 0;
+",
         _ => {
             StdErr::exec(NotFound, &format!("Library {key} not found"));
             ""
