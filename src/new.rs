@@ -1,5 +1,6 @@
 use crate::input::std_input;
 use crate::std_err::{ErrType::OSError, StdErr};
+use crate::consts::NIL;
 use colored::Colorize;
 use std::env::consts::OS;
 use std::fs::{create_dir, File};
@@ -7,11 +8,11 @@ use std::io::Write;
 
 pub fn new(name: &String) {
     let input = std_input("Language for your project (nts): ", "nts");
-    let k = std_input("keywords: ", "");
-    let a = std_input("description: ", "");
-    let t = std_input("author: ", "");
+    let k = std_input("keywords: ", NIL);
+    let a = std_input("description: ", NIL);
+    let t = std_input("author: ", NIL);
     let is_mod = std_input("Project type (common/module): ", "common");
-    let d = std_input("title: ", "");
+    let d = std_input("title: ", NIL);
     let n = std_input(&format!("name ({name}): "), name);
 
     let ok = std_input("Ok to processed (y)?", "y");
@@ -30,7 +31,7 @@ pub fn new(name: &String) {
         let mut f = File::create(format!(
             "./{}/src/app.{input}{}",
             name,
-            if is_mod == "mod" { ".mod" } else { "" }
+            if is_mod == "mod" { ".mod" } else { NIL }
         ))
         .expect("File exists");
 

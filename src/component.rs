@@ -16,7 +16,7 @@ use crate::transpile_component::transpile_component;
 use crate::import_component::import_component;
 use crate::transpile_to_js::transpile_script;
 use crate::component_args::ComponentArgs;
-use crate::consts::{DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL};
+use crate::consts::{DOUBLE_QUOTE, IGNORE_STATE , NEW_LINE_CHAR, NIL};
 use crate::at_temp::at_temp;
 use crate::comment::comment;
 use crate::dsp_map::DspMap;
@@ -37,14 +37,6 @@ pub struct Component {
 }
 
 impl Component {
-    pub(crate) const EMPTY: Self = Self {
-        script: String::new(),
-        dyn_script: String::new(),
-        name: String::new(),
-        html: ComponentMarkUp::EMPTY,
-        dom_script: String::new()
-    };
-
     pub fn new(
         dom_script: String,
         script: String,
@@ -154,11 +146,11 @@ pub fn component(
     let mut html = template_mp.mp_val();
 
     let mut cmu = ComponentMarkUp::new(html.clone(), html.clone());
+    let imports = import_component(&mut app, &component_args);
     let mut ccm = BTreeMap::new();
     let mut scopes = Vec::new();
-    let mut imports = import_component(&mut app, &component_args);
-
     let mut dyn_script = script.clone();
+
     gen_id(
         &mut script,
         &mut dyn_script,
@@ -168,7 +160,7 @@ pub fn component(
         lang,
     );
 
-    extract_component(&mut ccm, imports, &mut script, &mut html);
+    extract_component(&mut ccm, &imports, &mut script, &mut html);
     router(
         &mut cmu,
         &mut script,
@@ -190,9 +182,9 @@ pub fn component(
     template(&mut cmu, &mut dom_script, scope, st);
     _state(&mut script, st);
 
-    script = script.replace(IGNORE_STATE, "").replace(".cam()", "");
+    script = script.replace(IGNORE_STATE, NIL).replace(".cam()", "");
 
-    UDT(&mut html, &mut script);
+    UDT(&mut html, &mut script, &imports);
     import_npm(&mut app, &mut script);
     scopify(&mut script, scopes, config, st);
 

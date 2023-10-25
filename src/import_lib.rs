@@ -1,3 +1,4 @@
+use crate::consts::{NEW_LINE, NIL};
 use crate::import_base::ImportBase;
 use crate::import_base::ImportType::Libs;
 use crate::js_lib::libs;
@@ -16,14 +17,14 @@ pub fn import_lib(app: &mut String, import_base: &mut ImportBase, script: &mut S
     while let Some(e) = app.find("import lib:") {
         let mut ci = e + 9;
 
-        while &app[ci..ci + 1] != "\n" {
+        while &app[ci..ci + 1] != NEW_LINE {
             ci += 1
         }
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();
 
-        app.replace_range(e..ci + 1, "");
+        app.replace_range(e..ci + 1, NIL);
 
         let mut pl = String::new();
 
@@ -31,7 +32,7 @@ pub fn import_lib(app: &mut String, import_base: &mut ImportBase, script: &mut S
             add_lib(&mut pl, import_base, name);
         }
 
-        app.replace_range(e..ci + 1, "");
+        app.replace_range(e..ci + 1, NIL);
         script.insert_str(0, &pl);
     }
 }
@@ -40,14 +41,14 @@ pub fn import_lib_bind(app: &mut String, import_base: &mut ImportBase) {
     while let Some(e) = app.find("import lib:") {
         let mut ci = e + 9;
 
-        while &app[ci..ci + 1] != "\n" {
+        while &app[ci..ci + 1] != NEW_LINE {
             ci += 1
         }
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();
 
-        app.replace_range(e..ci + 1, "");
+        app.replace_range(e..ci + 1, NIL);
 
         for name in names {
             let string_name = String::from(*name);

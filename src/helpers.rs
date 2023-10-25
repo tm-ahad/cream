@@ -9,5 +9,5 @@ pub mod javascript_string;
 pub mod merge_dom_script;
 pub mod router_script;
 pub mod script_in;
+pub mod find_component;
 pub mod wlt;
-pub mod clone_range;

@@ -4,11 +4,6 @@ pub struct ComponentMarkUp {
 }
 
 impl ComponentMarkUp {
-    pub const EMPTY: ComponentMarkUp = Self {
-        dynamic: String::new(),
-        stat: String::new(),
-    };
-
     pub fn new(dynamic: String, stat: String) -> Self {
         ComponentMarkUp { dynamic, stat }
     }

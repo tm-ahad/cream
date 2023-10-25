@@ -1,15 +1,17 @@
-use crate::consts::{SBF, SBS};
+use crate::component::Component;
+use crate::consts::{NEW_LINE, NIL, SBF, SBS, SPACE, UNTIL_TOKEN};
+use crate::helpers::find_component::find_component_by_name;
 use crate::id_gen::IdGen;
 use crate::pass::pass;
 
 #[allow(non_snake_case)]
-pub fn UDT<'a>(comp_html: &mut String, script: &mut String) {
+pub fn UDT<'a>(comp_html: &mut String, script: &mut String, imports: &Vec<Component>) {
     let first = true;
 
-    while let Some(e) = comp_html.find("<Until ") {
+    while let Some(e) = comp_html.find(UNTIL_TOKEN) {
         let mut fall = e;
 
-        while &comp_html[fall..fall + 1] != "\n" && fall > 0 {
+        while &comp_html[fall..fall + 1] != NEW_LINE && fall > 0 {
             fall -= 1;
         }
 
@@ -20,8 +22,8 @@ pub fn UDT<'a>(comp_html: &mut String, script: &mut String) {
             up += 1;
         }
 
-        let mut do_ = "";
-        let mut th = "";
+        let mut do_ = NIL;
+        let mut th = NIL;
 
         let bind = comp_html[fall..up].to_string();
         let li = bind.as_str();
@@ -31,9 +33,9 @@ pub fn UDT<'a>(comp_html: &mut String, script: &mut String) {
             Some(e) => {
                 let mut init = e + 5;
 
-                while &li[init..init + 1] != " "
+                while &li[init..init + 1] != SPACE
                     && &li[init..init + 1] != "/"
-                    && &li[init..init + 1] != "\n"
+                    && &li[init..init + 1] != NEW_LINE
                 {
                     init += 1
                 }
@@ -47,9 +49,9 @@ pub fn UDT<'a>(comp_html: &mut String, script: &mut String) {
             Some(e) => {
                 let mut init = e + 3;
 
-                while &li[init..init + 1] != " "
+                while &li[init..init + 1] != SPACE
                     && &li[init..init + 1] != "/"
-                    && &li[init..init + 1] != "\n"
+                    && &li[init..init + 1] != NEW_LINE
                 {
                     init += 1
                 }
@@ -61,7 +63,8 @@ pub fn UDT<'a>(comp_html: &mut String, script: &mut String) {
         let id;
 
         {
-            let mut do_comp = component_map.get(do_);
+            let do_comp = find_component_by_name(imports, do_.to_string())
+                .unwrap_or_else(|| panic!("Couldn't find component {}", th));
             id = IdGen::gen_string();
 
             comp_html.replace_range(
@@ -70,7 +73,8 @@ pub fn UDT<'a>(comp_html: &mut String, script: &mut String) {
             );
         }
 
-        let mut th_comp = component_map.get(th);
+        let th_comp = find_component_by_name(imports, th.to_string())
+            .unwrap_or_else(|| panic!("Couldn't find component {}", th));
 
         if first {
             script.push_str(

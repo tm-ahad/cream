@@ -1,4 +1,3 @@
-use std::collections::btree_map::{Iter, Keys};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 use std::marker::PhantomData;
@@ -37,9 +36,4 @@ impl<'a> DspMap<'a> {
             .get(prop)
             .unwrap_or_else(|| panic!("Property {prop} not found on configuration"))
     }
-
-    pub fn kv_pairs(&'a self) -> Iter<'_, String, String> {
-        self.0.iter()
-    }
-    pub fn keys(&'a self) -> Keys<'_, String, String> { self.0.keys() }
 }

@@ -55,6 +55,7 @@ use crate::std_err::StdErr;
 use crate::transpiler::transpile;
 use std::env;
 use std::process::Command;
+use crate::consts::CONFIG_FILE;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -75,7 +76,7 @@ fn main() {
             "new" => new(args.get(2).expect("Project name not provided")),
             "make" => {
                 map = DspMap::new();
-                map.load("./config.dsp");
+                map.load(CONFIG_FILE);
 
                 transpile(state_base, import_base, &map);
 

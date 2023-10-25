@@ -3,7 +3,7 @@ use crate::collect_scope::collect_scope;
 use crate::comment::comment;
 use crate::component_args::ComponentArgs;
 use crate::component_markup::ComponentMarkUp;
-use crate::consts::IGNORE_STATE;
+use crate::consts::{CAM, DEFAULT_COMPILATION_PATH, IGNORE_STATE, NIL};
 use crate::dsp_map::DspMap;
 use crate::extract_component::extract_component;
 use crate::gen_id::gen_id;
@@ -110,13 +110,10 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     let mut binding = v8::ContextScope::new(scope, context);
     let scope = &mut binding;
 
-    let mut pm = DspMap::new();
-    pm.load("./component_map.dsp");
-
     let component_args = ComponentArgs::new(transpile_command, config);
     let imports = import_component(&mut app, &component_args);
 
-    extract_component(&mut ccm, imports, &mut script, &mut comp_html);
+    extract_component(&mut ccm, &imports, &mut script, &mut comp_html);
     router(
         &mut cmu,
         &mut script,
@@ -126,7 +123,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     import_script(&mut app, &mut import_base, &mut script);
     module(&mut app, &mut import_base, &mut script);
 
-    let ben = &script.replace(".cam()", "");
+    let ben = &script.replace(CAM, NIL);
     let code = v8::String::new(scope, ben).unwrap();
 
     let mut _script = Script::compile(scope, code, None).unwrap();
@@ -136,14 +133,16 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     template(&mut cmu, &mut dom_script, scope, &mut state);
     _state(&mut script, &mut state);
 
-    script = script.replace(IGNORE_STATE, "").replace(".cam()", "");
+    script = script
+        .replace(IGNORE_STATE, NIL)
+        .replace(CAM, NIL);
 
-    UDT(&mut comp_html, &mut script);
+    UDT(&mut comp_html, &mut script, &imports);
     import_npm(&mut app, &mut script);
 
     transpile_component(ccm, &mut script, &mut app);
 
-    let binding = String::from("./build/dist.html");
+    let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);
 
     scopify(&mut script, scopes, config, &mut state);
