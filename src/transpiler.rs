@@ -28,6 +28,7 @@ use crate::udt::UDT;
 use rusty_v8::{self as v8, Script};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
+use crate::helpers::to_raw_parsable_format::to_raw_parsable_format;
 use crate::import_component::import_component;
 
 pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &DspMap) {
@@ -124,14 +125,11 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     module(&mut app, &mut import_base, &mut script);
 
     let ben = &script.replace(CAM, NIL);
+    println!("{}", ben);
     let code = v8::String::new(scope, ben).unwrap();
 
     let mut _script = Script::compile(scope, code, None).unwrap();
     let _ = _script.run(scope).unwrap();
-
-    at_temp(&mut comp_html, &mut dom_script, &mut state, scope);
-    template(&mut cmu, &mut dom_script, scope, &mut state);
-    _state(&mut script, &mut state);
 
     script = script
         .replace(IGNORE_STATE, NIL)
@@ -140,12 +138,26 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     UDT(&mut comp_html, &mut script, &imports);
     import_npm(&mut app, &mut script);
 
-    transpile_component(ccm, &mut script, &mut app);
+    at_temp(&mut comp_html, &mut dom_script, &mut state, scope);
+    template(&mut cmu, &mut dom_script, scope, &mut state);
+    _state(&mut script, &mut state);
+    scopify(&mut script, scopes, config, &mut state);
+
+    let script_writer_ptr = &mut script;
+    let html_writer_ptr = &mut comp_html;
+
+    transpile_component(
+        ccm,
+        script_writer_ptr,
+        html_writer_ptr,
+        to_raw_parsable_format(
+            &*script_writer_ptr,
+            &*html_writer_ptr
+        )
+    );
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);
-
-    scopify(&mut script, scopes, config, &mut state);
     merge_dom_script(&mut script, &dom_script);
 
     out(_app_html, comp_html, script, config);

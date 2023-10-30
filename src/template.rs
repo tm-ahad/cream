@@ -9,6 +9,7 @@ use crate::template_type::TemplateType;
 use crate::v8_parse::v8_parse;
 use crate::var_not_allowed::var_not_allowed;
 use rusty_v8::{ContextScope, HandleScope};
+use crate::consts::{NEW_LINE, NIL, SPACE};
 
 pub fn split_once(s: String, delimiter: char, sd: String) -> (String, String) {
     match s.find(delimiter) {
@@ -30,7 +31,7 @@ pub fn template(
     let mut repmap = Vec::new();
 
     'outer: for a in ao {
-        if &html[a - 1..a] == "\n" {
+        if &html[a - 1..a] == NEW_LINE {
             let mut ti = a;
             let mut id_f_d = a + 1;
 
@@ -42,13 +43,13 @@ pub fn template(
                 ti += 1;
             }
 
-            while &html[id_f_d..id_f_d + 1] != " " {
+            while &html[id_f_d..id_f_d + 1] != SPACE {
                 id_f_d += 1;
             }
 
             let mut id_x = id_f_d;
 
-            while &html[id_x..id_x + 1] == " " {
+            while &html[id_x..id_x + 1] == SPACE {
                 id_x += 1;
             }
 
@@ -61,9 +62,6 @@ pub fn template(
 
             let mut v = html[id_x..n].to_string();
 
-            //For dynamic html
-            dyn_html.replace_range(a..n + 1, &interpolate_string(&v));
-
             //For static html
 
             let temp_type = TemplateType::from_str(&html[a + 1..ti]);
@@ -74,6 +72,13 @@ pub fn template(
             let mut prop;
 
             (prop, v) = split_once(v, '=', String::from("innerText"));
+
+            //For dynamic html
+            dyn_html.replace_range(a..n + 1, &interpolate_string(&v
+                .replace('$', NIL)
+            ));
+            //done for dynamic html
+
             prop = match attr_prop_map.get(&*prop) {
                 Some(p) => p.to_string(),
                 None => prop,
@@ -111,11 +116,6 @@ pub fn template(
                 };
 
                 if is_dyn {
-                    js.push_str(&format!(
-                        "document.getElementById({id}).{prop}={};",
-                        &main_v
-                    ));
-
                     if !rep {
                         repmap.push(SingleReplacementMap::new(a..n + 1, String::new()));
                     }

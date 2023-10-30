@@ -43,6 +43,7 @@ mod udt;
 mod v8_parse;
 mod var_not_allowed;
 mod import_component;
+mod parsable_format;
 
 use crate::dsp_map::DspMap;
 use crate::import_base::ImportBase;
