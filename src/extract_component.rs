@@ -23,9 +23,6 @@ pub fn extract_component(
 
             ccm.insert(id, cl);
             html.replace_range(e..cde + 2, &component_call(id));
-
-            script.push('\n');
-            script.push_str(&comp.script)
         }
     }
 }

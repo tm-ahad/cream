@@ -125,7 +125,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     module(&mut app, &mut import_base, &mut script);
 
     let ben = &script.replace(CAM, NIL);
-    println!("{}", ben);
     let code = v8::String::new(scope, ben).unwrap();
 
     let mut _script = Script::compile(scope, code, None).unwrap();
@@ -155,6 +154,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
             &*html_writer_ptr
         )
     );
+    println!("{script}");
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);

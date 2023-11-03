@@ -8,8 +8,8 @@ use crate::state_base::_StateBase;
 use crate::template_type::TemplateType;
 use crate::v8_parse::v8_parse;
 use crate::var_not_allowed::var_not_allowed;
-use rusty_v8::{ContextScope, HandleScope};
 use crate::consts::{NEW_LINE, NIL, SPACE};
+use rusty_v8::{ContextScope, HandleScope};
 
 pub fn split_once(s: String, delimiter: char, sd: String) -> (String, String) {
     match s.find(delimiter) {
@@ -20,7 +20,7 @@ pub fn split_once(s: String, delimiter: char, sd: String) -> (String, String) {
 
 pub fn template(
     html: &mut ComponentMarkUp,
-    js: &mut String,
+    script: &mut String,
     scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
 ) {
@@ -123,6 +123,11 @@ pub fn template(
                     repmap.push(SingleReplacementMap::new(a..n + 1, v8_parse(scope, vn)));
                     rep = true;
                 }
+
+                script.push_str(&format!(
+                    "document.getElementById({id}).{prop}={};",
+                    &main_v
+                ));
 
                 base._set(
                     vn.to_string(),
