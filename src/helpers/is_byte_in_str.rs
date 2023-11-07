@@ -1,8 +1,4 @@
-use crate::consts::{
-    BACK_TICK, BACK_TICK_AS_STR, DOUBLE_QUOTE, DOUBLE_QUOTE_AS_STR, SINGLE_QUOTE,
-    SINGLE_QUOTE_AS_STR,
-};
-use crate::pass::pass;
+use crate::consts::{BACK_TICK, DOUBLE_QUOTE, NUL, SINGLE_QUOTE};
 use crate::quote_base::{Quote, QuotePool};
 
 pub fn is_byte_in_str(index: usize, str: &str) -> bool {
@@ -27,24 +23,32 @@ pub fn is_byte_in_str(index: usize, str: &str) -> bool {
 
 pub struct UpdateIBIS {
     curr: bool,
-    ch: char,
+    xw: bool,
+    st: char,
 }
 
 impl UpdateIBIS {
-    pub fn new(init_ch: char, curr: bool) -> Self {
-        Self { ch: init_ch, curr }
+    pub fn new(curr: bool) -> Self {
+        Self { curr, xw: false, st: NUL }
     }
 
     pub fn update(&mut self, s: &str) -> bool {
-        let mut b = self.curr;
+        let fc = s.chars().next().unwrap();
 
-        match (self.ch, s) {
-            (_, DOUBLE_QUOTE_AS_STR | SINGLE_QUOTE_AS_STR | BACK_TICK_AS_STR)
-            | (DOUBLE_QUOTE | SINGLE_QUOTE | BACK_TICK, _) => b = !b,
-            _ => pass(),
+        match (self.st, fc) {
+            (fc_, _) if fc_ == fc => {
+                self.curr ^= true
+            },
+            (NUL, SINGLE_QUOTE | DOUBLE_QUOTE | BACK_TICK) => {
+                self.curr = true;
+                self.st = fc
+            }
+            (_, _) => {
+                self.curr ^= self.xw;
+                self.xw = false;
+            }
         }
 
-        self.curr = b;
-        b
+        return self.curr
     }
 }

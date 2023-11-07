@@ -114,7 +114,7 @@ work.do(function() {SBF}
     ptr.innerHTML = `{}`
 {SBS})
         ",
-            th_comp.script, th_comp.html.stat
+            th_comp.dom_script, th_comp.html.stat
         ));
     }
 }

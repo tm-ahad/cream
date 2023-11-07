@@ -161,7 +161,7 @@ pub fn component(
         lang,
     );
 
-    extract_component(&mut ccm, &imports, &mut script, &mut html);
+    extract_component(&mut ccm, &imports, &mut html);
     router(
         &mut cmu,
         &mut script,
@@ -185,7 +185,6 @@ pub fn component(
     import_npm(&mut app, &mut script);
     scopify(&mut script, scopes, config, st);
 
-    at_temp(&mut html, &mut dom_script, st, scope);
     template(&mut cmu, &mut dom_script, scope, st);
     _state(&mut script, st);
 
@@ -201,6 +200,8 @@ pub fn component(
             &*html_writer_ptr
         )
     );
+
+    at_temp(&mut html, &mut dom_script, st, scope);
 
     Component::new(
         dom_script,

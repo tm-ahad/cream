@@ -1,9 +1,10 @@
 use crate::escape_string::escape_string;
 use crate::helpers::find_all_by_char::find_all_by_char;
-use crate::helpers::is_byte_in_str::is_byte_in_str;
+use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
+use crate::var_not_allowed::var_not_allowed;
 use crate::state_base::_StateBase;
 use crate::v8_parse::v8_parse;
-use crate::var_not_allowed::var_not_allowed;
+use crate::consts::SPACE;
 use rusty_v8::{ContextScope, HandleScope};
 
 pub fn at_temp(
@@ -15,19 +16,20 @@ pub fn at_temp(
     while let Some(a) = html.find("@temp:") {
         let mut id_f_d = a + 6;
 
-        while &html[id_f_d..id_f_d + 1] != " " {
+        while &html[id_f_d..id_f_d + 1] != SPACE {
             id_f_d += 1;
         }
 
         let mut id_x = id_f_d;
 
-        while &html[id_x..id_x + 1] == " " {
+        while &html[id_x..id_x + 1] == SPACE {
             id_x += 1;
         }
 
         let mut n = id_x;
+        let mut upd = UpdateIBIS::new(is_byte_in_str(n, html));
 
-        while &html[n..n + 1] != ";" || is_byte_in_str(n, html) {
+        while !(&html[n..n + 1] == ";" && !upd.update(&html[n..n + 1])) {
             n += 1;
         }
 

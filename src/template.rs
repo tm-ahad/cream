@@ -54,7 +54,7 @@ pub fn template(
             }
 
             let mut n = id_x;
-            let mut upd = UpdateIBIS::new(html.chars().nth(n).unwrap(), is_byte_in_str(n, html));
+            let mut upd = UpdateIBIS::new(is_byte_in_str(n, html));
 
             while &html[n..n + 1] != ";" || upd.update(&html[n..n + 1]) {
                 n += 1;

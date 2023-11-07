@@ -114,7 +114,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     let component_args = ComponentArgs::new(transpile_command, config);
     let imports = import_component(&mut app, &component_args);
 
-    extract_component(&mut ccm, &imports, &mut script, &mut comp_html);
+    extract_component(&mut ccm, &imports, &mut comp_html);
     router(
         &mut cmu,
         &mut script,
@@ -137,7 +137,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     UDT(&mut comp_html, &mut script, &imports);
     import_npm(&mut app, &mut script);
 
-    at_temp(&mut comp_html, &mut dom_script, &mut state, scope);
     template(&mut cmu, &mut dom_script, scope, &mut state);
     _state(&mut script, &mut state);
     scopify(&mut script, scopes, config, &mut state);
@@ -154,7 +153,8 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
             &*html_writer_ptr
         )
     );
-    println!("{script}");
+
+    at_temp(&mut comp_html, &mut dom_script, &mut state, scope);
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);

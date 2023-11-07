@@ -5,7 +5,6 @@ use std::collections::BTreeMap;
 pub fn extract_component(
     ccm: &mut BTreeMap<u32, Component>,
     imports: &Vec<Component>,
-    script: &mut String,
     html: &mut String,
 ) {
     for comp in imports {
