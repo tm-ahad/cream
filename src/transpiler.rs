@@ -14,7 +14,6 @@ use crate::import_lib::import_lib;
 use crate::import_npm::import_npm;
 use crate::import_script::import_script;
 use crate::matcher::Matcher;
-use crate::out::out;
 use crate::remove::remove;
 use crate::router::router;
 use crate::scope::{parse_scope, scopify};
@@ -24,12 +23,12 @@ use crate::state_base::_StateBase;
 use crate::template::template;
 use crate::transpile_component::transpile_component;
 use crate::transpile_to_js::transpile_script;
+use crate::import_component::import_component;
 use crate::udt::UDT;
+use crate::out::out;
 use rusty_v8::{self as v8, Script};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
-use crate::helpers::to_raw_parsable_format::to_raw_parsable_format;
-use crate::import_component::import_component;
 
 pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &DspMap) {
     let binding = String::from("script");
@@ -74,13 +73,13 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
 
     remove(&mut script);
 
-    let mut comp_html = expect_some(
+    let mut html = expect_some(
         collect_scope(&main_app, &Matcher::Template, false),
         "Template",
     )
     .mp_val();
 
-    let mut cmu = ComponentMarkUp::new(comp_html.clone(), comp_html.clone());
+    let mut cmu = ComponentMarkUp::new(html.clone(), html.clone());
 
     let mut scopes: Vec<String> = Vec::new();
 
@@ -114,7 +113,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     let component_args = ComponentArgs::new(transpile_command, config);
     let imports = import_component(&mut app, &component_args);
 
-    extract_component(&mut ccm, &imports, &mut comp_html);
+    extract_component(&mut ccm, &imports, &mut cmu);
     router(
         &mut cmu,
         &mut script,
@@ -134,31 +133,28 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
         .replace(IGNORE_STATE, NIL)
         .replace(CAM, NIL);
 
-    UDT(&mut comp_html, &mut script, &imports);
+    UDT(&mut html, &mut script, &imports);
     import_npm(&mut app, &mut script);
 
     template(&mut cmu, &mut dom_script, scope, &mut state);
-    _state(&mut script, &mut state);
     scopify(&mut script, scopes, config, &mut state);
 
-    let script_writer_ptr = &mut script;
-    let html_writer_ptr = &mut comp_html;
+    let script_writer_ptr = &mut dom_script;
+
+    at_temp(&mut cmu, script_writer_ptr, &mut state, scope);
+    _state(&mut script, &mut state);
 
     transpile_component(
         ccm,
         script_writer_ptr,
-        html_writer_ptr,
-        to_raw_parsable_format(
-            &*script_writer_ptr,
-            &*html_writer_ptr
-        )
+        &mut cmu,
     );
-
-    at_temp(&mut comp_html, &mut dom_script, &mut state, scope);
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);
     merge_dom_script(&mut script, &dom_script);
 
-    out(_app_html, comp_html, script, config);
+    println!("{:?}", state.map);
+
+    out(_app_html, cmu.stat, script, config);
 }

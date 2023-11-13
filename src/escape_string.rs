@@ -1,5 +1,9 @@
 use crate::helpers::is_byte_in_str::is_byte_in_str;
-pub fn escape_string(s: &mut String) {
+pub fn escape_string_mut(s: &mut String) {
+    *s = escape_string(s);
+}
+
+pub fn escape_string(s: &String) -> String {
     let mut escaped = String::new();
     let chars = s.chars();
 
@@ -16,5 +20,5 @@ pub fn escape_string(s: &mut String) {
         }
     }
 
-    *s = escaped;
+    escaped
 }

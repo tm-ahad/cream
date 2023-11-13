@@ -1,5 +1,5 @@
 use crate::component_markup::ComponentMarkUp;
-use crate::helpers::find_all_by_char::find_all_by_char;
+use crate::helpers::find_all_by_char::find_all;
 use crate::helpers::html_atrribute_dom_prop_map::html_attribute_dom_prop_map;
 use crate::helpers::interpolate_string::interpolate_string;
 use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
@@ -27,7 +27,7 @@ pub fn template(
     let dyn_html = &mut html.dynamic;
     let html = &mut html.stat;
 
-    let ao = find_all_by_char(html, '$');
+    let ao = find_all(html, "$");
     let mut repmap = Vec::new();
 
     'outer: for a in ao {

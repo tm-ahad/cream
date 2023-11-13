@@ -1,4 +1,4 @@
-use crate::pass::pass;
+use crate::helpers::rand_hex::rand_hex;
 use std::collections::HashMap;
 
 struct Rel(pub String, pub String, pub String);
@@ -35,22 +35,30 @@ impl _StateBase {
         let mut rels = Vec::new();
         let mut p = String::new();
 
+        let mut vn = String::new();
+
         match val {
             Some(l) => {
-                if l.1 == String::new() {
+                if l.1.is_empty() {
                     for (k, val) in &l.0 {
                         if k.trim() == key {
                             continue;
                         }
 
-                        rels.push(Rel(k.clone(), ext.clone(), val.clone()));
+                        vn = rand_hex();
+
+                        rels.push(Rel(
+                            k.clone(),
+                            ext.clone(),
+                            val.clone()
+                        ));
                     }
                 } else {
-                    l.1 = format!("   {}={}{}\n", key, v, ext);
+                    l.1 = format!("{}={}{}\n", key, v, ext);
                     return l.1.clone();
                 }
             }
-            None => pass(),
+            None => return vn,
         }
 
         for rel in rels {
@@ -58,12 +66,14 @@ impl _StateBase {
             let val = rel.1;
             let ext = rel.2;
 
-            let fmt = &format!("{}={}{}\n", key, val, ext);
+            let fmt = &format!("{}={}{}\n", key, vn, ext);
             p.push_str(fmt);
 
             p.push_str(&self.parse(&key, val, ext));
         }
 
-        p
+
+
+        format!("var {vn} = {v}\n{}", p)
     }
 }

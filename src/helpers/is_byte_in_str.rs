@@ -1,8 +1,11 @@
 use crate::consts::{BACK_TICK, DOUBLE_QUOTE, NUL, SINGLE_QUOTE};
 use crate::quote_base::{Quote, QuotePool};
+use crate::pass::pass;
 
 pub fn is_byte_in_str(index: usize, str: &str) -> bool {
-    let pattern = |&c: &char| c == '"' || c == '\'' || c == '`';
+    let pattern = |&c: &char| {
+        c == DOUBLE_QUOTE || c == SINGLE_QUOTE || c == BACK_TICK
+    };
 
     let start = &str[..index];
     let end = &str[index + 1..];
@@ -22,31 +25,31 @@ pub fn is_byte_in_str(index: usize, str: &str) -> bool {
 }
 
 pub struct UpdateIBIS {
-    curr: bool,
-    xw: bool,
+    pub curr: bool,
+    dx: bool,
     st: char,
 }
 
 impl UpdateIBIS {
     pub fn new(curr: bool) -> Self {
-        Self { curr, xw: false, st: NUL }
+        Self { curr, st: NUL, dx: false }
     }
 
     pub fn update(&mut self, s: &str) -> bool {
         let fc = s.chars().next().unwrap();
+
+        self.curr ^= self.dx;
+        self.dx = false;
 
         match (self.st, fc) {
             (fc_, _) if fc_ == fc => {
                 self.curr ^= true
             },
             (NUL, SINGLE_QUOTE | DOUBLE_QUOTE | BACK_TICK) => {
-                self.curr = true;
+                self.dx = true;
                 self.st = fc
-            }
-            (_, _) => {
-                self.curr ^= self.xw;
-                self.xw = false;
-            }
+            },
+            (_, _) => pass()
         }
 
         return self.curr

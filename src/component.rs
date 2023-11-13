@@ -27,7 +27,6 @@ use crate::udt::UDT;
 use rusty_v8::{self as v8, Script};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
-use crate::helpers::to_raw_parsable_format::to_raw_parsable_format;
 
 pub struct Component {
     pub html: ComponentMarkUp,
@@ -161,7 +160,7 @@ pub fn component(
         lang,
     );
 
-    extract_component(&mut ccm, &imports, &mut html);
+    extract_component(&mut ccm, &imports, &mut cmu);
     router(
         &mut cmu,
         &mut script,
@@ -186,22 +185,17 @@ pub fn component(
     scopify(&mut script, scopes, config, st);
 
     template(&mut cmu, &mut dom_script, scope, st);
-    _state(&mut script, st);
 
-    let script_writer_ptr = &mut script;
-    let html_writer_ptr = &mut html;
+    let script_writer_ptr = &mut dom_script;
+
+    at_temp(&mut cmu, script_writer_ptr, st, scope);
+    _state(&mut script, st);
 
     transpile_component(
         ccm,
         script_writer_ptr,
-        html_writer_ptr,
-        to_raw_parsable_format(
-            &*script_writer_ptr,
-            &*html_writer_ptr
-        )
+        &mut cmu
     );
-
-    at_temp(&mut html, &mut dom_script, st, scope);
 
     Component::new(
         dom_script,

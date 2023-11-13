@@ -17,6 +17,4 @@ pub fn sys_exec(command: String) {
     for ascii in chars {
         string_output.push(ascii as char);
     }
-
-    println!("{}", string_output);
 }

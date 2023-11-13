@@ -13,7 +13,7 @@ pub fn _state(script: &mut String, b: &mut _StateBase) {
         match li.find('=') {
             Some(e) => {
                 let z = &li[e..e + 2] != "=="
-                    && &li[e..e + 2] != "=>"
+                    && &li[e..e + 2] != ">="
                     && &li[e..e + 2] != "<="
                     && &li[e - 1..e + 1] != ">="
                     && &li[e - 1..e + 1] != "!="
@@ -42,7 +42,7 @@ pub fn _state(script: &mut String, b: &mut _StateBase) {
                         dl = true;
                         let char_array = var_not_allowed();
                         let mut idx = a;
-                        let ls = li[..a].to_string();
+                        let ls = li[..e].trim().to_string();
 
                         while idx + 1 < c.len()
                             && char_array.contains(&c.chars().nth(idx + 1).unwrap())
