@@ -2,13 +2,21 @@ use crate::consts::IGNORE_STATE;
 use crate::helpers::is_byte_in_str::is_byte_in_str;
 use crate::state_base::_StateBase;
 use crate::var_not_allowed::var_not_allowed;
+use std::collections::BTreeMap;
 
 pub fn _state(script: &mut String, b: &mut _StateBase) {
-    let spl = script.lines().map(|l| l.to_string());
+    let spl = script.split(";");
     let mut lines = vec![];
+    let mut i = 0;
 
-    for mut li in spl {
-        li = li.trim().to_string();
+    let mut am: BTreeMap<usize, (String, String)> = BTreeMap::new();
+
+    for li in spl {
+        let mut li = li.to_string();
+
+        if li.contains('\n') {
+            continue
+        };
 
         match li.find('=') {
             Some(e) => {
@@ -23,8 +31,6 @@ pub fn _state(script: &mut String, b: &mut _StateBase) {
                     && !li.ends_with(IGNORE_STATE)
                     && !is_byte_in_str(e, &li);
 
-                let mut htpol = true;
-
                 let (dol, found_dol) = match li.find('$') {
                     Some(i) => (i, true),
                     None => (0, false),
@@ -37,7 +43,7 @@ pub fn _state(script: &mut String, b: &mut _StateBase) {
                     let mut dl = false;
 
                     while let Some(a) = c.find('$') {
-                        li.remove(e + a + 2);
+                        li.remove(e + a + 1);
                         c.remove(a);
                         dl = true;
                         let char_array = var_not_allowed();
@@ -58,7 +64,7 @@ pub fn _state(script: &mut String, b: &mut _StateBase) {
 
                         b._set(vn.to_string(), li[..e].trim().to_string(), c.clone());
 
-                        let p = b.parse(&ls, String::new(), c.clone());
+                        let p = b.parse(&ls, String::new(), &c);
 
                         lines.push(p);
                         c.remove(a);
@@ -72,23 +78,29 @@ pub fn _state(script: &mut String, b: &mut _StateBase) {
                     lines.push(li[..l - 4].to_string());
 
                     continue;
-                } else if z {
-                    let ls = String::from(li[e + 1..li.len()].trim());
-                    let rs = String::from(li[..e].trim());
-
-                    let parsed = b.parse(&rs, String::new(), ls);
-
-                    htpol = false;
-                    lines.push(li.to_string());
-                    lines.push(parsed);
                 }
 
-                if htpol {
+                if z {
+                    let rs = String::from(li[e + 1..li.len()].trim());
+                    let ls = String::from(li[..e].trim());
+                    lines.insert(i, li.to_string());
+                    am.insert(i, (ls, rs));
+                } else {
                     lines.push(li.to_string());
                 }
             }
             None => lines.push(li.to_string()),
         }
+
+        i += 1;
+    }
+
+    for (i, p) in am {
+        let ls = p.0;
+        let rs = p.1;
+
+        let parsed = b.parse(&ls, rs, "");
+        lines.insert(i, parsed);
     }
 
     *script = lines.join("\n")

@@ -20,7 +20,7 @@ pub fn transpile_component(
             let is_static = is_in_temp(&ps.raw, idx);
 
             if is_static {
-                let scr = &parse_stat_component_script(&c.script, &c.dom_script);
+                let scr = &parse_stat_component_script(&c.script);
                 let s = &javascript_string(&c.html.stat);
                 let imo = idx-ps.temp_starts;
 

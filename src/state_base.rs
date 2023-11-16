@@ -1,7 +1,6 @@
-use crate::helpers::rand_hex::rand_hex;
 use std::collections::HashMap;
 
-struct Rel(pub String, pub String, pub String);
+struct Rel(pub String, pub String);
 
 pub struct _StateBase {
     pub map: HashMap<String, (HashMap<String, String>, String)>,
@@ -30,50 +29,39 @@ impl _StateBase {
         }
     }
 
-    pub fn parse(&mut self, key: &String, ext: String, v: String) -> String {
+    pub fn parse(&mut self, key: &str, v: String, ext: &str) -> String {
         let val = self.map.get_mut(key);
         let mut rels = Vec::new();
         let mut p = String::new();
-
-        let mut vn = String::new();
 
         match val {
             Some(l) => {
                 if l.1.is_empty() {
                     for (k, val) in &l.0 {
-                        if k.trim() == key {
-                            continue;
-                        }
-
-                        vn = rand_hex();
 
                         rels.push(Rel(
-                            k.clone(),
-                            ext.clone(),
-                            val.clone()
+                            k.to_string(),
+                            val.to_string()
                         ));
                     }
                 } else {
-                    l.1 = format!("{}={}{}\n", key, v, ext);
+                    l.1 = format!("{}={}{}\n", key, v , ext);
                     return l.1.clone();
                 }
             }
-            None => return vn,
+            None => return String::new(),
         }
 
         for rel in rels {
             let key = rel.0;
             let val = rel.1;
-            let ext = rel.2;
 
-            let fmt = &format!("{}={}{}\n", key, vn, ext);
+            let fmt = &format!("{}={}{}\n", key, val, ext);
             p.push_str(fmt);
 
             p.push_str(&self.parse(&key, val, ext));
         }
 
-
-
-        format!("var {vn} = {v}\n{}", p)
+        p
     }
 }

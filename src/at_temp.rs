@@ -2,7 +2,6 @@ use crate::escape_string::escape_string_mut;
 use crate::helpers::find_all_by_char::find_all;
 use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
 use crate::var_not_allowed::var_not_allowed;
-use crate::state_base::_StateBase;
 use crate::component_markup::ComponentMarkUp;
 use crate::helpers::interpolate_string::interpolate_string;
 use crate::v8_parse::v8_parse;
@@ -12,7 +11,6 @@ use rusty_v8::{ContextScope, HandleScope};
 pub fn at_temp(
     cmu: &mut ComponentMarkUp,
     script: &mut String,
-    base: &mut _StateBase,
     scope: &mut ContextScope<HandleScope>
 ) {
     let html = cmu.stat.clone();
@@ -42,12 +40,9 @@ pub fn at_temp(
         let mut v = html[id_x..n].to_string();
         let mut rep = false;
 
-        let mut diff: usize = 0;
-
         let ao = find_all(&v, "$");
 
-        for mut i in ao {
-            i -= diff;
+        for i in ao {
             let mut idx = i;
             let char_array: [char; 64] = var_not_allowed();
 
@@ -75,26 +70,19 @@ pub fn at_temp(
             }
 
             let id = &html[a + 6..id_f_d];
-
-            let c = v.chars().nth(1).unwrap();
-
-            let mut main_v = if c == '$' {
-                v[2..].to_string()
-            } else {
-                v[1..].to_string()
-            };
+            let mut main_v = v[1..].to_string();
 
             escape_string_mut(&mut main_v);
 
-            base._set(
-                vn.to_string(),
-                format!("document.getElementById({id}).innerHTML"),
-                main_v.clone(),
-            );
+            // base._set(
+            //     vn.to_string(),
+            //     format!("document.getElementById({id}).innerHTML"),
+            //     main_v.clone(),
+            // );
 
             if is_dyn {
                 script.push_str(&format!(
-                    "document.getElementById({id}).innerHTML={};",
+                    "\ndocument.getElementById({id}).innerHTML={};",
                     &main_v
                 ));
 
@@ -110,12 +98,6 @@ pub fn at_temp(
             }
 
             v.remove(i);
-
-            diff = 1;
-            if is_dyn {
-                diff += 1;
-                v.remove(i);
-            }
         }
     }
 }

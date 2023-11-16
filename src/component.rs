@@ -27,11 +27,11 @@ use crate::udt::UDT;
 use rusty_v8::{self as v8, Script};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
+use crate::helpers::merge_dom_script::merge_dom_script;
 
 pub struct Component {
     pub html: ComponentMarkUp,
     pub dyn_script: String,
-    pub dom_script: String,
     pub script: String,
     pub name: String,
 }
@@ -45,7 +45,6 @@ impl Component {
         name: String
     ) -> Self {
         Component {
-            dom_script,
             script,
             dyn_script,
             html,
@@ -71,7 +70,6 @@ impl Component {
 impl Clone for Component {
     fn clone(&self) -> Self {
         Self {
-            dom_script: self.dom_script.clone(),
             name: self.name.clone(),
             script: self.script.clone(),
             html: self.html.clone(),
@@ -188,14 +186,17 @@ pub fn component(
 
     let script_writer_ptr = &mut dom_script;
 
-    at_temp(&mut cmu, script_writer_ptr, st, scope);
-    _state(&mut script, st);
-
+    at_temp(&mut cmu, script_writer_ptr, scope);
     transpile_component(
         ccm,
         script_writer_ptr,
         &mut cmu
     );
+
+    merge_dom_script(&mut script, &dom_script);
+    println!("SENT: {}\n\n\n", script);
+
+    _state(&mut script, st);
 
     Component::new(
         dom_script,

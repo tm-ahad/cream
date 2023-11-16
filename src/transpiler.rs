@@ -141,20 +141,19 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
 
     let script_writer_ptr = &mut dom_script;
 
-    at_temp(&mut cmu, script_writer_ptr, &mut state, scope);
-    _state(&mut script, &mut state);
-
+    at_temp(&mut cmu, script_writer_ptr, scope);
     transpile_component(
         ccm,
         script_writer_ptr,
         &mut cmu,
     );
 
-    let binding = String::from(DEFAULT_COMPILATION_PATH);
-    let _app_html = config.get("_app_html").unwrap_or(&binding);
     merge_dom_script(&mut script, &dom_script);
 
-    println!("{:?}", state.map);
+    _state(&mut dom_script, &mut state);
+
+    let binding = String::from(DEFAULT_COMPILATION_PATH);
+    let _app_html = config.get("_app_html").unwrap_or(&binding);
 
     out(_app_html, cmu.stat, script, config);
 }
