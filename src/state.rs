@@ -1,107 +1,163 @@
-use crate::consts::IGNORE_STATE;
+use crate::consts::{IMP_STATE_SIGN, SIGN_LEN, NEW_LINE, NEW_LINE_CHAR, NIL};
+use crate::helpers::add_line::add_line;
 use crate::helpers::is_byte_in_str::is_byte_in_str;
-use crate::state_base::_StateBase;
+use crate::pass::pass;
 use crate::var_not_allowed::var_not_allowed;
-use std::collections::BTreeMap;
+use crate::state_base::_StateBase;
 
-pub fn _state(script: &mut String, b: &mut _StateBase) {
-    let spl = script.split(";");
-    let mut lines = vec![];
-    let mut i = 0;
+fn find_special_assignment(s: &str) -> Option<(usize, usize)> {
+    let col_f = s.find(":");
 
-    let mut am: BTreeMap<usize, (String, String)> = BTreeMap::new();
+    match col_f {
+        Some(col_f) => {
+            let col_e = s[col_f+1..].find("=");
 
-    for li in spl {
-        let mut li = li.to_string();
-
-        if li.contains('\n') {
-            continue
-        };
-
-        match li.find('=') {
-            Some(e) => {
-                let z = &li[e..e + 2] != "=="
-                    && &li[e..e + 2] != ">="
-                    && &li[e..e + 2] != "<="
-                    && &li[e - 1..e + 1] != ">="
-                    && &li[e - 1..e + 1] != "!="
-                    && !(li.starts_with("const ")
-                        || li.starts_with("let ")
-                        || li.starts_with("var "))
-                    && !li.ends_with(IGNORE_STATE)
-                    && !is_byte_in_str(e, &li);
-
-                let (dol, found_dol) = match li.find('$') {
-                    Some(i) => (i, true),
-                    None => (0, false),
-                };
-
-                if z && found_dol && !is_byte_in_str(dol, &li) {
-                    let len = li.len();
-                    let mut c = String::from(li[e + 1..len].trim());
-
-                    let mut dl = false;
-
-                    while let Some(a) = c.find('$') {
-                        li.remove(e + a + 1);
-                        c.remove(a);
-                        dl = true;
-                        let char_array = var_not_allowed();
-                        let mut idx = a;
-                        let ls = li[..e].trim().to_string();
-
-                        while idx + 1 < c.len()
-                            && char_array.contains(&c.chars().nth(idx + 1).unwrap())
-                        {
-                            idx += 1;
-                        }
-
-                        let vn = &c[a..idx + 1];
-
-                        if vn.chars().next().unwrap().is_ascii_digit() {
-                            panic!("Invalid variable name: {}", vn)
-                        }
-
-                        b._set(vn.to_string(), li[..e].trim().to_string(), c.clone());
-
-                        let p = b.parse(&ls, String::new(), &c);
-
-                        lines.push(p);
-                        c.remove(a);
-                    }
-
-                    if !dl {
-                        lines.push(li.to_string())
-                    }
-                } else if li.ends_with(IGNORE_STATE) {
-                    let l = li.len();
-                    lines.push(li[..l - 4].to_string());
-
-                    continue;
-                }
-
-                if z {
-                    let rs = String::from(li[e + 1..li.len()].trim());
-                    let ls = String::from(li[..e].trim());
-                    lines.insert(i, li.to_string());
-                    am.insert(i, (ls, rs));
-                } else {
-                    lines.push(li.to_string());
+            if let Some(col_e) = col_e {
+                if s[col_f+1..col_f+1+col_e].trim().is_empty() {
+                    return Some((col_f, col_f+1+col_e));
                 }
             }
-            None => lines.push(li.to_string()),
+
+        }
+        None => pass()
+    }
+
+    None
+}
+
+
+pub fn _state(scr: &mut String, b: &mut _StateBase) {
+    let mut res = String::new();
+
+    while let Some(i) = scr.find(IMP_STATE_SIGN) {
+        let line_start = i + SIGN_LEN;
+        let mut line_end = line_start;
+        let mut e = line_start;
+
+        let script_len = scr.len();
+
+        if line_start == script_len-2 {
+            scr.replace_range(i..line_start, NIL);
+            continue
         }
 
-        i += 1;
+        while !(
+            &scr[line_end..line_end+1] == ";" ||
+            line_end == script_len-2
+        )
+        {
+            line_end += 1;
+        }
+
+        while !(
+            &scr[e..e+1] == "=" ||
+            e == script_len-2
+        )
+        {
+            e += 1;
+        }
+
+        let mut c = String::from(scr[e+1..line_end+1].trim());
+        let mut flin = scr[line_start..line_end+1].to_string();
+
+        while let Some(a) = c.find('$') {
+            c.remove(a);
+            flin.remove(a+e+1-line_start);
+            let char_array = var_not_allowed();
+            let mut idx = a;
+            let ls = scr[line_start..e].trim().to_string();
+
+            while idx + 1 < c.len()
+                && char_array.contains(&c.chars().nth(idx + 1).unwrap())
+            {
+                idx += 1;
+            }
+
+            let vn = &c[a..idx + 1];
+
+            if vn.chars().next().unwrap().is_ascii_digit() {
+                panic!("Invalid variable name: {}", vn)
+            }
+
+            b._set(vn.to_string(), ls, c.clone());
+
+            add_line(&mut res,&flin);
+        }
+
+        scr.replace_range(line_start..line_end, NIL);
     }
 
-    for (i, p) in am {
-        let ls = p.0;
-        let rs = p.1;
+    let ao = scr.lines();
+    let script_len = scr.len();
 
-        let parsed = b.parse(&ls, rs, "");
-        lines.insert(i, parsed);
+    let mut ci: usize = 0;
+
+    for lin in ao {
+        if let Some((mut e, mut f)) = find_special_assignment(lin) {
+            e += ci;
+            f += ci;
+
+            if !is_byte_in_str(e, &scr) {
+                let mut line_start = e;
+
+                let mut line_end = f;
+
+                while !(
+                    line_end == script_len-2 ||
+                    &scr[line_end..line_end+1] == ";"
+                )
+                {
+                    line_end += 1;
+                    if line_end == script_len-1 {
+                        break
+                    }
+                }
+
+                while !(
+                    &scr[line_start-1..line_start] == NEW_LINE ||
+                    line_start == 1
+                )
+                {
+                    line_start -= 1;
+                    if line_start == 1 {
+                        break
+                    }
+                }
+
+                let mut c = String::from(scr[f+1..line_end].trim());
+                let ls = scr[line_start..e].trim().to_string();
+
+                while let Some(a) = c.find('$') {
+                    c.remove(a);
+                    let char_array = var_not_allowed();
+                    let mut idx = a;
+
+                    while idx + 1 < c.len()
+                        && char_array.contains(&c.chars().nth(idx + 1).unwrap())
+                    {
+                        idx += 1;
+                    }
+
+                    let vn = &c[a..idx + 1];
+
+                    if vn.chars().next().unwrap().is_ascii_digit() {
+                        panic!("Invalid variable name: {}", vn)
+                    }
+
+                    let p = b.parse(&ls, c.clone(), NIL);
+                    b._set(vn.to_string(), ls.clone(), c.clone());
+
+                    res.push_str(&p);
+                    res.push(NEW_LINE_CHAR);
+                    c.remove(a);
+                }
+            }
+        } else {
+            add_line(&mut res, &lin);
+        }
+
+        ci += lin.len()+1;
     }
 
-    *script = lines.join("\n")
+    *scr = res;
 }

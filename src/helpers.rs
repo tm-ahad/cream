@@ -13,3 +13,5 @@ pub mod find_component;
 pub mod wlt;
 pub mod to_raw_parsable_format;
 pub mod javascript_function_call;
+pub mod add_line;
+pub mod imp_sign;

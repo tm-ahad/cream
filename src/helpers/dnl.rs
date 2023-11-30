@@ -1,5 +1,5 @@
-pub fn dnl(n: &u32) -> u8 {
-    let mut res = 0;
+pub fn dnl(n: &u32) -> usize {
+    let mut res = 1;
     let mut n = *n;
 
     while n >= 10 {

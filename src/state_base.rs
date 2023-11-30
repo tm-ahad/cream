@@ -32,7 +32,7 @@ impl _StateBase {
     pub fn parse(&mut self, key: &str, v: String, ext: &str) -> String {
         let val = self.map.get_mut(key);
         let mut rels = Vec::new();
-        let mut p = String::new();
+        let mut p = format!("{key}={v}\n");
 
         match val {
             Some(l) => {

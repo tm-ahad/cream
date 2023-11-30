@@ -16,7 +16,7 @@ use crate::transpile_component::transpile_component;
 use crate::import_component::import_component;
 use crate::transpile_to_js::transpile_script;
 use crate::component_args::ComponentArgs;
-use crate::consts::{DOUBLE_QUOTE, IGNORE_STATE , NEW_LINE_CHAR, NIL};
+use crate::consts::{COMPONENT_CALL_SIGN, DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL, SIGN_LEN};
 use crate::at_temp::at_temp;
 use crate::comment::comment;
 use crate::dsp_map::DspMap;
@@ -38,7 +38,6 @@ pub struct Component {
 
 impl Component {
     pub fn new(
-        dom_script: String,
         script: String,
         dyn_script: String,
         html: ComponentMarkUp,
@@ -194,12 +193,9 @@ pub fn component(
     );
 
     merge_dom_script(&mut script, &dom_script);
-    println!("SENT: {}\n\n\n", script);
-
     _state(&mut script, st);
 
     Component::new(
-        dom_script,
         script,
         dyn_script,
         cmu,
@@ -208,9 +204,9 @@ pub fn component(
 }
 
 pub fn component_call(id: u32) -> String {
-    format!("//COMPONENT CALL: {id}")
+    format!("{}{id}", COMPONENT_CALL_SIGN)
 }
 
-pub fn component_call_len(dnl: u8) -> usize {
-    (18 + dnl) as usize
+pub fn component_call_len(dnl: usize) -> usize {
+    SIGN_LEN + dnl
 }

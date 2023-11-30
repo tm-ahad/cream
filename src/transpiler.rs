@@ -3,7 +3,7 @@ use crate::collect_scope::collect_scope;
 use crate::comment::comment;
 use crate::component_args::ComponentArgs;
 use crate::component_markup::ComponentMarkUp;
-use crate::consts::{CAM, DEFAULT_COMPILATION_PATH, IGNORE_STATE, NIL};
+use crate::consts::{CAM, DEFAULT_COMPILATION_PATH, IGNORE_STATE, NEW_LINE_CHAR, NIL};
 use crate::dsp_map::DspMap;
 use crate::extract_component::extract_component;
 use crate::gen_id::gen_id;
@@ -26,7 +26,7 @@ use crate::transpile_to_js::transpile_script;
 use crate::import_component::import_component;
 use crate::udt::UDT;
 use crate::out::out;
-use rusty_v8::{self as v8, Script};
+use rusty_v8::{self as v8};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 
@@ -64,12 +64,13 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
 
     for s in split {
         if s != t {
-            script.push('\n');
+            script.push(NEW_LINE_CHAR);
             script.push_str(s)
         } else {
             break;
         }
     }
+
 
     remove(&mut script);
 
@@ -123,11 +124,9 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     import_script(&mut app, &mut import_base, &mut script);
     module(&mut app, &mut import_base, &mut script);
 
-    let ben = &script.replace(CAM, NIL);
-    let code = v8::String::new(scope, ben).unwrap();
-
-    let mut _script = Script::compile(scope, code, None).unwrap();
-    let _ = _script.run(scope).unwrap();
+    //SUS LINE 131
+    //let mut _script = Script::compile(scope, code, None).unwrap();
+    //let _ = _script.run(scope).unwrap();
 
     script = script
         .replace(IGNORE_STATE, NIL)
@@ -149,8 +148,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     );
 
     merge_dom_script(&mut script, &dom_script);
-
-    _state(&mut dom_script, &mut state);
+    _state(&mut script, &mut state);
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);

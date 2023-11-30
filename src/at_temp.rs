@@ -1,9 +1,10 @@
 use crate::escape_string::escape_string_mut;
 use crate::helpers::find_all_by_char::find_all;
 use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
+use crate::helpers::interpolate_string::interpolate_string;
 use crate::var_not_allowed::var_not_allowed;
 use crate::component_markup::ComponentMarkUp;
-use crate::helpers::interpolate_string::interpolate_string;
+use crate::helpers::imp_sign::imp_sign;
 use crate::v8_parse::v8_parse;
 use crate::consts::{NIL, SPACE};
 use rusty_v8::{ContextScope, HandleScope};
@@ -81,10 +82,10 @@ pub fn at_temp(
             // );
 
             if is_dyn {
-                script.push_str(&format!(
-                    "\ndocument.getElementById({id}).innerHTML={};",
+                script.push_str(&imp_sign(format!(
+                    "document.getElementById({id}).innerHTML={};",
                     &main_v
-                ));
+                )));
 
                 if !rep {
                     cmu.dynamic.replace_range(a..n+1, &interpolate_string(&main_v));
