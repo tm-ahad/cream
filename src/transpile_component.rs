@@ -26,7 +26,7 @@ pub fn transpile_component(
 
                 html.stat.replace_range(imo..imo + end, &c.html.stat);
                 html.dynamic.replace_range(imo..imo + end,  s);
-                script.insert_str(0, scr);
+                script.push_str(scr);
             } else {
                 let s_scr = &parse_dyn_component(&c.dyn_script, &c.html.dynamic);
                 

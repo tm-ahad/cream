@@ -75,17 +75,12 @@ pub fn at_temp(
 
             escape_string_mut(&mut main_v);
 
-            // base._set(
-            //     vn.to_string(),
-            //     format!("document.getElementById({id}).innerHTML"),
-            //     main_v.clone(),
-            // );
-
             if is_dyn {
                 script.push_str(&imp_sign(format!(
                     "document.getElementById({id}).innerHTML={};",
                     &main_v
                 )));
+                println!("{main_v}");
 
                 if !rep {
                     cmu.dynamic.replace_range(a..n+1, &interpolate_string(&main_v));

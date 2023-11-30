@@ -36,7 +36,6 @@ pub fn new(name: &String) {
         .expect("File exists");
 
         let mut config = File::create(format!("./{}/config.dsp", name)).expect("File exists");
-
         let mut shell = File::create(format!("./{}/start{sh}", name)).expect("File exists");
 
         File::create("./build/error.html").unwrap_or_else(|e| panic!("{e}"));

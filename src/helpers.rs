@@ -10,7 +10,6 @@ pub mod merge_dom_script;
 pub mod router_script;
 pub mod script_in;
 pub mod find_component;
-pub mod wlt;
 pub mod to_raw_parsable_format;
 pub mod javascript_function_call;
 pub mod add_line;

@@ -16,7 +16,7 @@ use crate::transpile_component::transpile_component;
 use crate::import_component::import_component;
 use crate::transpile_to_js::transpile_script;
 use crate::component_args::ComponentArgs;
-use crate::consts::{COMPONENT_CALL_SIGN, DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL, SIGN_LEN};
+use crate::consts::{COMPONENT_CALL_SIGN, COMPONENT_CALL_SIGN_LEN, DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL};
 use crate::at_temp::at_temp;
 use crate::comment::comment;
 use crate::dsp_map::DspMap;
@@ -24,10 +24,10 @@ use crate::gen_id::gen_id;
 use crate::router::router;
 use crate::state::_state;
 use crate::udt::UDT;
+use crate::helpers::merge_dom_script::merge_dom_script;
 use rusty_v8::{self as v8, Script};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
-use crate::helpers::merge_dom_script::merge_dom_script;
 
 pub struct Component {
     pub html: ComponentMarkUp,
@@ -208,5 +208,5 @@ pub fn component_call(id: u32) -> String {
 }
 
 pub fn component_call_len(dnl: usize) -> usize {
-    SIGN_LEN + dnl
+    COMPONENT_CALL_SIGN_LEN + dnl
 }

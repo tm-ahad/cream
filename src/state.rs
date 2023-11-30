@@ -1,4 +1,4 @@
-use crate::consts::{IMP_STATE_SIGN, SIGN_LEN, NEW_LINE, NEW_LINE_CHAR, NIL};
+use crate::consts::{IMP_STATE_SIGN, IMP_STATE_SIGN_LEN, NEW_LINE, NEW_LINE_CHAR, NIL};
 use crate::helpers::add_line::add_line;
 use crate::helpers::is_byte_in_str::is_byte_in_str;
 use crate::pass::pass;
@@ -28,41 +28,42 @@ fn find_special_assignment(s: &str) -> Option<(usize, usize)> {
 
 pub fn _state(scr: &mut String, b: &mut _StateBase) {
     let mut res = String::new();
+    let mut end = String::new();
 
     while let Some(i) = scr.find(IMP_STATE_SIGN) {
-        let line_start = i + SIGN_LEN;
+        let line_start = i + IMP_STATE_SIGN_LEN;
         let mut line_end = line_start;
         let mut e = line_start;
 
         let script_len = scr.len();
 
-        if line_start == script_len-2 {
+        if line_start == script_len - 1 {
             scr.replace_range(i..line_start, NIL);
             continue
         }
 
         while !(
-            &scr[line_end..line_end+1] == ";" ||
-            line_end == script_len-2
+            &scr[line_end..line_end + 1] == ";" ||
+            line_end == script_len - 1
         )
         {
             line_end += 1;
         }
 
         while !(
-            &scr[e..e+1] == "=" ||
-            e == script_len-2
+            &scr[e..e + 1] == "=" ||
+            e == script_len - 1
         )
         {
             e += 1;
         }
 
-        let mut c = String::from(scr[e+1..line_end+1].trim());
-        let mut flin = scr[line_start..line_end+1].to_string();
+        let mut c = String::from(scr[e + 1..line_end + 1].trim());
+        let mut flin = scr[line_start..line_end].to_string();
 
         while let Some(a) = c.find('$') {
             c.remove(a);
-            flin.remove(a+e+1-line_start);
+            flin.remove(a + e + 1 - line_start);
             let char_array = var_not_allowed();
             let mut idx = a;
             let ls = scr[line_start..e].trim().to_string();
@@ -80,11 +81,10 @@ pub fn _state(scr: &mut String, b: &mut _StateBase) {
             }
 
             b._set(vn.to_string(), ls, c.clone());
-
-            add_line(&mut res,&flin);
         }
 
-        scr.replace_range(line_start..line_end, NIL);
+        add_line(&mut end, &flin);
+        scr.replace_range(i..line_end+1, NIL);
     }
 
     let ao = scr.lines();
@@ -103,7 +103,7 @@ pub fn _state(scr: &mut String, b: &mut _StateBase) {
                 let mut line_end = f;
 
                 while !(
-                    line_end == script_len-2 ||
+                    line_end == script_len-1 ||
                     &scr[line_end..line_end+1] == ";"
                 )
                 {
@@ -159,5 +159,5 @@ pub fn _state(scr: &mut String, b: &mut _StateBase) {
         ci += lin.len()+1;
     }
 
-    *scr = res;
+    *scr = format!("{res}\n{end}");
 }

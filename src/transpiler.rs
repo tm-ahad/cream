@@ -124,10 +124,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     import_script(&mut app, &mut import_base, &mut script);
     module(&mut app, &mut import_base, &mut script);
 
-    //SUS LINE 131
-    //let mut _script = Script::compile(scope, code, None).unwrap();
-    //let _ = _script.run(scope).unwrap();
-
     script = script
         .replace(IGNORE_STATE, NIL)
         .replace(CAM, NIL);

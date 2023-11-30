@@ -53,7 +53,6 @@ pub fn gen_id(
             id + 7
         };
 
-
         html.stat.replace_range(id..rep, &javascript_string(&gen_id));
 
         if named {
@@ -67,7 +66,6 @@ pub fn gen_id(
             };
 
             add_lib(script, import_base, lib);
-
             html.dynamic.replace_range(id..rep, &javascript_function_call("gen_id"));
         }
     }

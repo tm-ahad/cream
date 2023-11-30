@@ -1,13 +1,15 @@
 use crate::import_base::ImportBase;
 use crate::import_base::ImportType::Mods;
 use crate::import_lib::import_lib_bind;
+
+use crate::consts::NEW_LINE;
 use std::fs::read_to_string;
 
-pub fn module(app: &mut String, import_base: &mut ImportBase, js: &mut String) {
+pub fn module(app: &mut String, import_base: &mut ImportBase, script: &mut String) {
     while let Some(e) = app.find("import mod:") {
         let mut ci = e + 9;
 
-        while &app[ci..ci + 1] != "\n" {
+        while &app[ci..ci + 1] != NEW_LINE {
             ci += 1
         }
 
@@ -23,7 +25,7 @@ pub fn module(app: &mut String, import_base: &mut ImportBase, js: &mut String) {
                 import_base.push(Mods, name.to_string());
 
                 import_lib_bind(&mut module, import_base);
-                js.insert_str(0, &module.clone())
+                script.insert_str(0, &module.clone())
             }
         }
     }
