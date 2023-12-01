@@ -5,7 +5,6 @@ pub struct ComponentArgs<'a> {
     pub config: &'a DspMap<'a>,     //Config map
 }
 
-
 impl<'a> ComponentArgs<'a> {
     pub fn new(transpile_command: &'a str, config: &'a DspMap<'a>) -> Self {
         ComponentArgs {
