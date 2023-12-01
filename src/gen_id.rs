@@ -31,11 +31,7 @@ pub fn gen_id(
             }
 
             gen_id = IdGen::gen_string();
-            let lib = match lang {
-                "js" => "id_gen",
-                "ts" => "id_gen_ts",
-                _ => todo!(),
-            };
+            let lib = &format!("id_gen.{lang}");
 
             add_lib(script, import_base, lib);
             name = (&html.stat[id_p_8..end]).to_string();
@@ -59,11 +55,7 @@ pub fn gen_id(
             html.dynamic.replace_range(id..rep, &name);
         } else {
             gen_id = IdGen::gen_string();
-            let lib = match lang {
-                "js" => "id_gen",
-                "ts" => "id_gen_ts",
-                _ => todo!(),
-            };
+            let lib = &format!("id_gen.{lang}");
 
             add_lib(script, import_base, lib);
             html.dynamic.replace_range(id..rep, &javascript_function_call("gen_id"));

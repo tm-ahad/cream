@@ -98,7 +98,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
 
     import_lib(&mut app, &mut import_base, &mut script);
     parse_scope(&mut script, &mut scopes);
-
     transpile_script(lang, transpile_command, &mut script);
 
     let isolate = &mut v8::Isolate::new(Default::default());

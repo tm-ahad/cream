@@ -1,5 +1,5 @@
 use crate::consts::NEW_LINE_CHAR;
-use crate::std_err::ErrType::PackageError;
+use crate::std_err::ErrType::LibraryError;
 use crate::std_err::StdErr;
 use ureq::{get, Response};
 
@@ -7,7 +7,7 @@ pub fn libs(name: &str) -> String {
     let url = format!("https://raw.githubusercontent.com/tm-ahad/cream/master/libs/{name}");
 
     let resp = get(&url).call().unwrap_or_else(|e| {
-        StdErr::exec(PackageError, &e.to_string());
+        StdErr::exec(LibraryError, &e.to_string());
         Response::new(404, "PackageError", "").unwrap()
     });
 
@@ -16,7 +16,7 @@ pub fn libs(name: &str) -> String {
         pack.push(NEW_LINE_CHAR);
         pack
     } else {
-        StdErr::exec(PackageError, &format!("Package {pkg} not found"));
+        StdErr::exec(LibraryError, &format!("Package {name} not found"));
         todo!()
     }
 }

@@ -5,16 +5,16 @@ pub struct StdErr;
 
 pub enum ErrType {
     OSError,
-    NotFound,
     PackageError,
+    LibraryError,
 }
 
 impl ToString for ErrType {
     fn to_string(&self) -> String {
         String::from(match self {
             ErrType::OSError => "OSError",
-            ErrType::NotFound => "NotFound",
             ErrType::PackageError => "PackageError",
+            ErrType::LibraryError => "LibraryError",
         })
     }
 }

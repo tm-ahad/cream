@@ -23,7 +23,7 @@ pub fn module(app: &mut String, import_base: &mut ImportBase, script: &mut Strin
         for name in names {
             if import_base.validate(Mods, name.to_string()) {
                 let mut module = read_to_string(format!("./{name}.mod.cts"))
-                    .unwrap_or_else(|_| panic!("Module {name} not found"));
+                    .unwrap_or_else(|_| panic!("Module {name}.mod.cts not found"));
                 import_base.push(Mods, name.to_string());
 
                 import_lib_bind(&mut module, import_base);

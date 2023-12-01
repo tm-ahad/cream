@@ -8,8 +8,9 @@ features
 - Very small js script with zero dependencies
 - Stdlib for fetch, catch, extract, hash and cycle data
 - Build full stack web apps with any backend framework
-- Relatively newer syntax
+- No node_modules required for running cream 
 - Blazingly fast and memory safe cause build with **Rust**
+- Relatively newer syntax
 - No bundler
 
 Installaion:
