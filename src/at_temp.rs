@@ -80,7 +80,6 @@ pub fn at_temp(
                     "document.getElementById({id}).innerHTML={};",
                     &main_v
                 )));
-                println!("{main_v}");
 
                 if !rep {
                     cmu.dynamic.replace_range(a..n+1, &interpolate_string(&main_v));

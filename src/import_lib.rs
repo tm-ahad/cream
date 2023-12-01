@@ -15,7 +15,7 @@ pub fn add_lib(script: &mut String, import_base: &mut ImportBase, lib_name: &str
 
 pub fn import_lib(app: &mut String, import_base: &mut ImportBase, script: &mut String) {
     while let Some(e) = app.find("import lib:") {
-        let mut ci = e + 9;
+        let mut ci = e + 11;
 
         while &app[ci..ci + 1] != NEW_LINE {
             ci += 1
@@ -23,8 +23,6 @@ pub fn import_lib(app: &mut String, import_base: &mut ImportBase, script: &mut S
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();
-
-        app.replace_range(e..ci + 1, NIL);
 
         let mut pl = String::new();
 

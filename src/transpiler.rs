@@ -71,7 +71,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
         }
     }
 
-
     remove(&mut script);
 
     let mut html = expect_some(

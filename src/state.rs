@@ -63,18 +63,22 @@ pub fn _state(scr: &mut String, b: &mut _StateBase) {
 
         while let Some(a) = c.find('$') {
             c.remove(a);
-            flin.remove(a + e + 1 - line_start);
             let char_array = var_not_allowed();
             let mut idx = a;
             let ls = scr[line_start..e].trim().to_string();
 
             while idx + 1 < c.len()
-                && char_array.contains(&c.chars().nth(idx + 1).unwrap())
+                && char_array.contains(&c.chars().nth(idx).unwrap())
             {
                 idx += 1;
             }
 
-            let vn = &c[a..idx + 1];
+            let vn = &c[a..idx];
+
+            if vn.is_empty() {
+                continue
+            }
+            flin.remove(a + e + 1 - line_start);
 
             if vn.chars().next().unwrap().is_ascii_digit() {
                 panic!("Invalid variable name: {}", vn)
