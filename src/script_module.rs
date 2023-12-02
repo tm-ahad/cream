@@ -3,15 +3,18 @@ use crate::import_base::ImportType::Mods;
 use crate::import_lib::import_lib_bind;
 
 use crate::consts::NEW_LINE;
+use crate::helpers::component_part::ComponentPart;
+use crate::helpers::read_until::read_until;
 use std::fs::read_to_string;
 
-pub fn module(app: &mut String, import_base: &mut ImportBase, script: &mut String) {
+pub fn module(
+    app: &mut String,
+    import_base: &mut ImportBase,
+    script: &mut String,
+    f_name: &str,
+) {
     while let Some(e) = app.find("import mod:") {
-        let mut ci = e + 11;
-
-        while &app[ci..ci + 1] != NEW_LINE {
-            ci += 1
-        }
+        let ci = read_until(&app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci]
@@ -26,7 +29,7 @@ pub fn module(app: &mut String, import_base: &mut ImportBase, script: &mut Strin
                     .unwrap_or_else(|_| panic!("Module {name}.mod.cts not found"));
                 import_base.push(Mods, name.to_string());
 
-                import_lib_bind(&mut module, import_base);
+                import_lib_bind(&mut module, import_base, f_name);
                 script.insert_str(0, &format!("{module}{NEW_LINE}"));
             }
         }

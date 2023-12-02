@@ -1,6 +1,8 @@
 use crate::consts::{IMP_STATE_SIGN, IMP_STATE_SIGN_LEN, NEW_LINE, NEW_LINE_CHAR, NIL};
 use crate::helpers::add_line::add_line;
+use crate::helpers::component_part::ComponentPart;
 use crate::helpers::is_byte_in_str::is_byte_in_str;
+use crate::helpers::read_until::read_until;
 use crate::pass::pass;
 use crate::var_not_allowed::var_not_allowed;
 use crate::state_base::_StateBase;
@@ -26,36 +28,20 @@ fn find_special_assignment(s: &str) -> Option<(usize, usize)> {
 }
 
 
-pub fn _state(scr: &mut String, b: &mut _StateBase) {
+pub fn _state(scr: &mut String, b: &mut _StateBase, f_name: &str) {
     let mut res = String::new();
     let mut end = String::new();
 
     while let Some(i) = scr.find(IMP_STATE_SIGN) {
         let line_start = i + IMP_STATE_SIGN_LEN;
-        let mut line_end = line_start;
-        let mut e = line_start;
+        let e = read_until(&scr, line_start, "=", f_name, ComponentPart::Script);
+        let line_end = read_until(&scr, e, ";", f_name, ComponentPart::Script);
 
         let script_len = scr.len();
 
         if line_start == script_len - 1 {
             scr.replace_range(i..line_start, NIL);
             continue
-        }
-
-        while !(
-            &scr[line_end..line_end + 1] == ";" ||
-            line_end == script_len - 1
-        )
-        {
-            line_end += 1;
-        }
-
-        while !(
-            &scr[e..e + 1] == "=" ||
-            e == script_len - 1
-        )
-        {
-            e += 1;
         }
 
         let mut c = String::from(scr[e + 1..line_end + 1].trim());
@@ -92,7 +78,6 @@ pub fn _state(scr: &mut String, b: &mut _StateBase) {
     }
 
     let ao = scr.lines();
-    let script_len = scr.len();
 
     let mut ci: usize = 0;
 
@@ -103,19 +88,7 @@ pub fn _state(scr: &mut String, b: &mut _StateBase) {
 
             if !is_byte_in_str(e, scr) {
                 let mut line_start = e;
-
-                let mut line_end = f;
-
-                while !(
-                    line_end == script_len-1 ||
-                    &scr[line_end..line_end+1] == ";"
-                )
-                {
-                    line_end += 1;
-                    if line_end == script_len-1 {
-                        break
-                    }
-                }
+                let line_end = read_until(&scr, f, ";", f_name, ComponentPart::Script);
 
                 while !(
                     &scr[line_start-1..line_start] == NEW_LINE ||

@@ -70,7 +70,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
         }
     }
 
-    remove(&mut script);
+    remove(&mut script, src);
 
     let mut html = expect_some(
         collect_scope(&main_app, &Matcher::Template, false),
@@ -88,39 +88,40 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
         &mut import_base,
         false,
         lang,
+        src
     );
 
-    import_lib(&mut app, &mut import_base, &mut script);
-    parse_scope(&mut script, &mut scopes);
+    import_lib(&mut app, &mut import_base, &mut script, src);
     transpile_script(lang, transpile_command, &mut script);
+    parse_scope(&mut script, &mut scopes);
 
     let component_args = ComponentArgs::new(transpile_command, config);
-    let imports = import_component(&mut app, &component_args);
+    let imports = import_component(&mut app, &component_args, src);
 
-    extract_component(&mut ccm, &imports, &mut cmu);
+    extract_component(&mut ccm, &imports, &mut cmu, src);
     router(
         &mut cmu,
         &mut script,
         &component_args,
+        src
     );
 
-    import_script(&mut app, &mut import_base, &mut script);
-    module(&mut app, &mut import_base, &mut script);
+    import_script(&mut app, &mut import_base, &mut script, src);
+    module(&mut app, &mut import_base, &mut script, src);
 
     script = script
         .replace(IGNORE_STATE, NIL)
         .replace(CAM, NIL);
 
-    UDT(&mut html, &mut script, &imports);
-    import_npm(&mut app, &mut script);
+    UDT(&mut html, &mut script, &imports, src);
+    import_npm(&mut app, &mut script, src);
 
-
-    template(&mut cmu, &mut dom_script, &mut state);
-    scopify(&mut script, scopes, config, &mut state);
+    template(&mut cmu, &mut dom_script, &mut state, src);
+    scopify(&mut script, scopes, config, &mut state, src);
 
     let script_writer_ptr = &mut dom_script;
 
-    at_temp(&mut cmu, script_writer_ptr);
+    at_temp(&mut cmu, script_writer_ptr, src);
     transpile_component(
         ccm,
         script_writer_ptr,
@@ -128,7 +129,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     );
 
     merge_dom_script(&mut script, &dom_script);
-    _state(&mut script, &mut state);
+    _state(&mut script, &mut state, src);
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);

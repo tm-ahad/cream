@@ -1,12 +1,23 @@
 use crate::component::Component;
 use crate::consts::{NEW_LINE, NIL, SBF, SBS, SPACE, UNTIL_TOKEN};
+use crate::helpers::component_part::ComponentPart;
 use crate::helpers::find_component::find_component_by_name;
+use crate::helpers::read_until::read_until;
+use crate::std_err::ErrType::SyntaxError;
 use crate::id_gen::IdGen;
+use crate::js_lib::private_work_lib;
+use crate::std_err::StdErr;
 use crate::pass::pass;
 
 #[allow(non_snake_case)]
-pub fn UDT(comp_html: &mut String, script: &mut String, imports: &Vec<Component>) {
+pub fn UDT(
+    comp_html: &mut String,
+    script: &mut String,
+    imports: &Vec<Component>,
+    f_name: &str
+) {
     let first = true;
+    let ch_len = comp_html.len();
 
     while let Some(e) = comp_html.find(UNTIL_TOKEN) {
         let mut fall = e;
@@ -16,7 +27,7 @@ pub fn UDT(comp_html: &mut String, script: &mut String, imports: &Vec<Component>
         }
 
         let mut up = e + 7;
-        let len = comp_html.len();
+        let len = read_until(&comp_html, ch_len, ">", f_name, ComponentPart::Template);
 
         while &comp_html[up..up + 1] != ">" && up < len {
             up += 1;
@@ -27,16 +38,21 @@ pub fn UDT(comp_html: &mut String, script: &mut String, imports: &Vec<Component>
 
         let bind = comp_html[fall..up].to_string();
         let li = bind.as_str();
+        let li_len = li.len();
 
         match li.find("that=") {
             None => return,
             Some(e) => {
+
                 let mut init = e + 5;
 
                 while &li[init..init + 1] != SPACE
                     && &li[init..init + 1] != "/"
                     && &li[init..init + 1] != NEW_LINE
                 {
+                    if init == li_len-2 {
+                        StdErr::exec(SyntaxError, &format!("'{SPACE}' or '/' or '\\n' expected in template ({f_name})"))
+                    }
                     init += 1
                 }
 
@@ -53,6 +69,9 @@ pub fn UDT(comp_html: &mut String, script: &mut String, imports: &Vec<Component>
                     && &li[init..init + 1] != "/"
                     && &li[init..init + 1] != NEW_LINE
                 {
+                    if init == li_len-2 {
+                        StdErr::exec(SyntaxError, &format!("'{SPACE}' or '/' or '\\n' expected in template ({f_name})"))
+                    }
                     init += 1
                 }
 
@@ -77,31 +96,7 @@ pub fn UDT(comp_html: &mut String, script: &mut String, imports: &Vec<Component>
             .unwrap_or_else(|| panic!("Couldn't find component {}", th));
 
         if first {
-            script.push_str(
-                "
-class Work {
-    #value;
-    constructor(init) {
-        this.#value = init;
-    }
-
-    do(then) {
-        try {
-            let _res = this.#value();
-
-            let res = then({
-                state: \"done\",
-                error: null,
-                value: _res
-            });
-
-            return res;
-        } catch (e) {
-           throw e;
-        }
-    }
-}\n",
-            )
+            script.push_str(&private_work_lib())
         }
         script.push_str(&format!(
             "\

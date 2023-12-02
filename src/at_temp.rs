@@ -1,43 +1,41 @@
 use crate::escape_string::escape_string_mut;
-use crate::helpers::find_all_by_char::find_all;
+use crate::helpers::find_all::find_all;
 use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
 use crate::helpers::interpolate_string::interpolate_string;
 use crate::var_not_allowed::var_not_allowed;
 use crate::component_markup::ComponentMarkUp;
 use crate::helpers::imp_sign::imp_sign;
 use crate::consts::{NIL, SPACE};
+use crate::helpers::component_part::ComponentPart;
+use crate::helpers::read_until::read_until;
+use crate::std_err::ErrType::SyntaxError;
+use crate::std_err::StdErr;
 
 pub fn at_temp(
     cmu: &mut ComponentMarkUp,
-    script: &mut String
+    script: &mut String,
+    f_name: &str,
 ) {
     let html = cmu.stat.clone();
-    let ao = find_all(&html, "@temp:");
+    let html_len = html.len();
+    let ao = find_all(&html, "@temp:", f_name);
 
     for a in ao {
-        let mut id_f_d = a + 6;
-
-        while &html[id_f_d..id_f_d + 1] != SPACE {
-            id_f_d += 1;
-        }
-
-        let mut id_x = id_f_d;
-
-        while &html[id_x..id_x + 1] == SPACE {
-            id_x += 1;
-        }
+        let id_f_d = read_until(&html, a+6, SPACE, f_name, ComponentPart::Template);
+        let id_x = read_until(&html, id_f_d, SPACE, f_name, ComponentPart::Template);
 
         let mut n = id_x;
         let mut upd = UpdateIBIS::new(is_byte_in_str(n, &html));
 
-
         while &html[n..n + 1] != ";" || upd.update(&html[n..n + 1]) {
+            if n == html_len-2 {
+                StdErr::exec(SyntaxError, &format!("; expected in template ({f_name})"))
+            }
             n += 1;
         }
 
         let mut v = html[id_x..n].to_string();
-
-        let ao = find_all(&v, "$");
+        let ao = find_all(&v, "$", f_name);
 
         for i in ao {
             let mut idx = i;

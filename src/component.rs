@@ -133,7 +133,7 @@ pub fn component(
     let mut html = template_mp.mp_val();
 
     let mut cmu = ComponentMarkUp::new(html.clone(), html.clone());
-    let imports = import_component(&mut app, &component_args);
+    let imports = import_component(&mut app, &component_args, f_name);
     let mut ccm = BTreeMap::new();
     let mut scopes = Vec::new();
     let mut dyn_script = script.clone();
@@ -145,33 +145,35 @@ pub fn component(
         import_base,
         true,
         lang,
+        f_name
     );
 
-    extract_component(&mut ccm, &imports, &mut cmu);
+    extract_component(&mut ccm, &imports, &mut cmu, f_name);
     router(
         &mut cmu,
         &mut script,
-        &component_args
+        &component_args,
+        f_name
     );
 
-    import_lib(&mut app, import_base, &mut script);
-    module(&mut app, import_base, &mut script);
-    import_script(&mut app, import_base, &mut script);
+    import_lib(&mut app, import_base, &mut script, f_name);
+    module(&mut app, import_base, &mut script, f_name);
+    import_script(&mut app, import_base, &mut script, f_name);
     parse_scope(&mut script, &mut scopes);
 
     transpile_script(lang, transpile_command, &mut script);
 
     script = script.replace(IGNORE_STATE, NIL).replace(".cam()", "");
 
-    UDT(&mut html, &mut script, &imports);
-    import_npm(&mut app, &mut script);
-    scopify(&mut script, scopes, config, st);
+    UDT(&mut html, &mut script, &imports, f_name);
+    import_npm(&mut app, &mut script, f_name);
+    scopify(&mut script, scopes, config, st, f_name);
 
-    template(&mut cmu, &mut dom_script, st);
+    template(&mut cmu, &mut dom_script, st, f_name);
 
     let script_writer_ptr = &mut dom_script;
 
-    at_temp(&mut cmu, script_writer_ptr);
+    at_temp(&mut cmu, script_writer_ptr, f_name);
     transpile_component(
         ccm,
         script_writer_ptr,
@@ -179,7 +181,7 @@ pub fn component(
     );
 
     merge_dom_script(&mut script, &dom_script);
-    _state(&mut script, st);
+    _state(&mut script, st, f_name);
 
     Component::new(
         script,

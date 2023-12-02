@@ -1,4 +1,6 @@
 use crate::consts::{NEW_LINE, NIL};
+use crate::helpers::component_part::ComponentPart;
+use crate::helpers::read_until::read_until;
 use crate::import_base::ImportBase;
 use crate::import_base::ImportType::Libs;
 use crate::js_lib::libs;
@@ -13,13 +15,14 @@ pub fn add_lib(script: &mut String, import_base: &mut ImportBase, lib_name: &str
     }
 }
 
-pub fn import_lib(app: &mut String, import_base: &mut ImportBase, script: &mut String) {
+pub fn import_lib(
+    app: &mut String,
+    import_base: &mut ImportBase,
+    script: &mut String,
+    f_name: &str
+) {
     while let Some(e) = app.find("import lib:") {
-        let mut ci = e + 11;
-
-        while &app[ci..ci + 1] != NEW_LINE {
-            ci += 1
-        }
+        let ci = read_until(&app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();
@@ -35,13 +38,9 @@ pub fn import_lib(app: &mut String, import_base: &mut ImportBase, script: &mut S
     }
 }
 
-pub fn import_lib_bind(app: &mut String, import_base: &mut ImportBase) {
+pub fn import_lib_bind(app: &mut String, import_base: &mut ImportBase, f_name: &str) {
     while let Some(e) = app.find("import lib:") {
-        let mut ci = e + 9;
-
-        while &app[ci..ci + 1] != NEW_LINE {
-            ci += 1
-        }
+        let ci = read_until(&app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();

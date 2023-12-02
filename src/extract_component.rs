@@ -1,5 +1,7 @@
 use crate::component::{component_call, Component};
 use crate::component_markup::ComponentMarkUp;
+use crate::helpers::component_part::ComponentPart;
+use crate::helpers::read_until::read_until;
 use crate::id_gen::IdGen;
 use std::collections::BTreeMap;
 
@@ -7,17 +9,13 @@ pub fn extract_component(
     ccm: &mut BTreeMap<u32, Component>,
     imports: &Vec<Component>,
     cmu: &mut ComponentMarkUp,
+    f_name: &str
 ) {
     for comp in imports {
         let m = &format!("<{}", comp.name);
 
         if let Some(e) = cmu.stat.find(m) {
-            let mut cde = e + comp.name.len();
-
-            while &cmu.stat[cde..cde + 2] != "/>" {
-                cde += 1;
-            }
-
+            let cde = read_until(&cmu.stat, e+comp.name.len(), "/>", f_name, ComponentPart::Unknown);
             let id = IdGen::gen_u32();
             let cl = comp.clone();
 

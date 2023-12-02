@@ -4,25 +4,29 @@ use std::process::exit;
 pub struct StdErr;
 
 pub enum ErrType {
-    OSError,
     PackageError,
     LibraryError,
+    SyntaxError,
+    OSError,
 }
 
 impl ToString for ErrType {
     fn to_string(&self) -> String {
         String::from(match self {
-            ErrType::OSError => "OSError",
             ErrType::PackageError => "PackageError",
             ErrType::LibraryError => "LibraryError",
+            ErrType::SyntaxError => "SyntaxError",
+            ErrType::OSError => "OSError",
         })
     }
 }
 
 impl StdErr {
     pub fn exec(type_: ErrType, err: &str) {
-        eprintln!("{}: {}", type_.to_string(), err.truecolor(242, 53, 19));
+        let (r, g, b) = (242, 53, 19);
+        let error = err.truecolor(r, g, b);
 
-        exit(400);
+        eprintln!("{}: {}", type_.to_string(), error);
+        exit(1);
     }
 }

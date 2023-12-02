@@ -1,19 +1,16 @@
 use crate::component::{Component, component};
 use crate::component_args::ComponentArgs;
 use crate::consts::{FROM_TOKEN, FROM_TOKEN_LEN, IC_TOKEN, IC_TOKEN_LEN, NEW_LINE};
+use crate::helpers::component_part::ComponentPart;
+use crate::helpers::read_until::read_until;
 use crate::pass::pass;
 
-pub fn import_component(app: &mut str, component_args: &ComponentArgs) -> Vec<Component> {
+pub fn import_component(app: &mut str, component_args: &ComponentArgs, f_name: &str) -> Vec<Component> {
     let mut ret = Vec::new();
 
     match app.find(IC_TOKEN) {
         Some(a) => {
-            let mut n = a+IC_TOKEN_LEN;
-
-            while &app[n..n+1] != NEW_LINE {
-                n += 1;
-            }
-
+            let n = read_until(app, a+IC_TOKEN_LEN, NEW_LINE, f_name, ComponentPart::Unknown);
             let r_c_meta_data = &app[a+IC_TOKEN_LEN..n];
 
             if let Some(i) = r_c_meta_data.find(FROM_TOKEN) {

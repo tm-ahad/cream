@@ -1,5 +1,5 @@
 use crate::component_markup::ComponentMarkUp;
-use crate::helpers::find_all_by_char::find_all;
+use crate::helpers::find_all::find_all;
 use crate::helpers::html_atrribute_dom_prop_map::html_attribute_dom_prop_map;
 use crate::helpers::interpolate_string::interpolate_string;
 use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
@@ -8,6 +8,10 @@ use crate::state_base::_StateBase;
 use crate::template_type::TemplateType;
 use crate::var_not_allowed::var_not_allowed;
 use crate::consts::{NEW_LINE, NIL, SPACE};
+use crate::helpers::component_part::ComponentPart;
+use crate::helpers::read_until::read_until;
+use crate::std_err::ErrType::SyntaxError;
+use crate::std_err::StdErr;
 
 
 pub fn split_once(s: String, delimiter: char, sd: String) -> (String, String) {
@@ -21,17 +25,19 @@ pub fn template(
     html: &mut ComponentMarkUp,
     script: &mut String,
     base: &mut _StateBase,
+    f_name: &str,
 ) {
     let dyn_html = &mut html.dynamic;
     let html = &mut html.stat;
+    let html_len = html.len();
 
-    let ao = find_all(html, "$");
+    let ao = find_all(html, "$", f_name);
     let mut repmap = Vec::new();
 
     'outer: for a in ao {
         if &html[a - 1..a] == NEW_LINE {
             let mut ti = a;
-            let mut id_f_d = a + 1;
+            let id_f_d = read_until(&html, a+1, SPACE, f_name, ComponentPart::Unknown);
 
             while &html[ti..ti + 1] != ":" {
                 if ti == a + 5 {
@@ -41,20 +47,15 @@ pub fn template(
                 ti += 1;
             }
 
-            while &html[id_f_d..id_f_d + 1] != SPACE {
-                id_f_d += 1;
-            }
-
-            let mut id_x = id_f_d;
-
-            while &html[id_x..id_x + 1] == SPACE {
-                id_x += 1;
-            }
+            let id_x = read_until(&html, id_f_d, SPACE, f_name, ComponentPart::Unknown);
 
             let mut n = id_x;
             let mut upd = UpdateIBIS::new(is_byte_in_str(n, html));
 
             while &html[n..n + 1] != ";" || upd.update(&html[n..n + 1]) {
+                if n == html_len-2 {
+                    StdErr::exec(SyntaxError, &format!("; expected in template ({f_name})"))
+                }
                 n += 1;
             }
 

@@ -1,15 +1,12 @@
 use crate::std_err::{ErrType::PackageError, StdErr};
 use crate::consts::{NEW_LINE, NEW_LINE_CHAR, NIL};
+use crate::helpers::component_part::ComponentPart;
+use crate::helpers::read_until::read_until;
 use ureq::{get, Response};
 
-pub fn import_npm(app: &mut String, script: &mut String) {
+pub fn import_npm(app: &mut String, script: &mut String, f_name: &str) {
     while let Some(i) = app.find("import npm:") {
-        let mut end = i + 11;
-
-        while &app[end..end + 1] != NEW_LINE {
-            end += 1;
-        }
-
+        let end = read_until(&app, i+11, NEW_LINE, f_name, ComponentPart::Unknown);
         let pkg = &app[i + 11..end];
 
         let url = format!(
