@@ -52,6 +52,6 @@ impl UpdateIBIS {
             (_, _) => pass()
         }
 
-        return self.curr
+        self.curr
     }
 }

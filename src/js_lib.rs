@@ -11,7 +11,7 @@ pub fn libs(name: &str) -> String {
         Response::new(404, "PackageError", "").unwrap()
     });
 
-    return if resp.status() == 200 {
+    if resp.status() == 200 {
         let mut pack = resp.into_string().unwrap_or_else(|e| panic!("{e}"));
         pack.push(NEW_LINE_CHAR);
         pack

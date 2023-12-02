@@ -5,7 +5,7 @@ use crate::id_gen::IdGen;
 use crate::pass::pass;
 
 #[allow(non_snake_case)]
-pub fn UDT<'a>(comp_html: &mut String, script: &mut String, imports: &Vec<Component>) {
+pub fn UDT(comp_html: &mut String, script: &mut String, imports: &Vec<Component>) {
     let first = true;
 
     while let Some(e) = comp_html.find(UNTIL_TOKEN) {
@@ -29,7 +29,7 @@ pub fn UDT<'a>(comp_html: &mut String, script: &mut String, imports: &Vec<Compon
         let li = bind.as_str();
 
         match li.find("that=") {
-            None => {return ()},
+            None => return,
             Some(e) => {
                 let mut init = e + 5;
 

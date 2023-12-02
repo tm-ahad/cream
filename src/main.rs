@@ -40,7 +40,6 @@ mod transpile_component;
 mod transpile_to_js;
 mod transpiler;
 mod udt;
-mod v8_parse;
 mod var_not_allowed;
 mod import_component;
 mod parsable_format;

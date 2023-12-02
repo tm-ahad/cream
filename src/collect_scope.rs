@@ -38,12 +38,12 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
                         } else {
                             collect_scope(
                                 &toks[s + ss..],
-                                &Matcher::Component(&matchr.to_string()),
+                                &Matcher::Component(matchr),
                                 i_s,
                             )
                         }
                     }
-                    None => collect_scope(remain, &Matcher::Component(&matchr.to_string()), i_s),
+                    None => collect_scope(remain, &Matcher::Component(matchr), i_s),
                 };
             }
             Matcher::Template => {
@@ -52,10 +52,10 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
 
                     match remain.find("</temp>") {
                         Some(a) => {
-                            if !is_byte_in_str(a, toks) {
-                                return Some(Mp::new(remain[6..a].to_string(), s + 6, None));
+                            return if !is_byte_in_str(a, toks) {
+                                Some(Mp::new(remain[6..a].to_string(), s + 6, None))
                             } else {
-                                return collect_scope(remain, &Matcher::Template, i_s);
+                                collect_scope(remain, &Matcher::Template, i_s)
                             }
                         }
                         None => panic!("</temp> expected to end the template scope"),
@@ -64,9 +64,9 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
 
                 collect_scope(&toks[s..], &Matcher::Template, i_s)
             }
-            Matcher::Dom => collect_scope(toks, &Matcher::Component(&"dom".to_string()), i_s),
-            Matcher::Sin => collect_scope(toks, &Matcher::Component(&"sin".to_string()), i_s),
-            Matcher::Cam => collect_scope(toks, &Matcher::Component(&"cam".to_string()), i_s),
+            Matcher::Dom => collect_scope(toks, &Matcher::Component("dom"), i_s),
+            Matcher::Sin => collect_scope(toks, &Matcher::Component("sin"), i_s),
+            Matcher::Cam => collect_scope(toks, &Matcher::Component("cam"), i_s),
         },
         None => None,
     };

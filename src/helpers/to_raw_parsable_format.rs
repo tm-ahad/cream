@@ -8,6 +8,6 @@ pub fn to_raw_parsable_format(script: &String, html: &String) -> ParsableFormat 
 </temp>
     ");
 
-    let temp_starts = script.len() + 8;
+    let temp_starts = script.len() + 9;
     ParsableFormat::new(raw, temp_starts)
 }

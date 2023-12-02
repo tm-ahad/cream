@@ -5,14 +5,11 @@ use crate::helpers::interpolate_string::interpolate_string;
 use crate::var_not_allowed::var_not_allowed;
 use crate::component_markup::ComponentMarkUp;
 use crate::helpers::imp_sign::imp_sign;
-use crate::v8_parse::v8_parse;
 use crate::consts::{NIL, SPACE};
-use rusty_v8::{ContextScope, HandleScope};
 
 pub fn at_temp(
     cmu: &mut ComponentMarkUp,
-    script: &mut String,
-    scope: &mut ContextScope<HandleScope>
+    script: &mut String
 ) {
     let html = cmu.stat.clone();
     let ao = find_all(&html, "@temp:");
@@ -34,12 +31,11 @@ pub fn at_temp(
         let mut upd = UpdateIBIS::new(is_byte_in_str(n, &html));
 
 
-        while !(&html[n..n + 1] == ";" && !upd.update(&html[n..n + 1])) {
+        while &html[n..n + 1] != ";" || upd.update(&html[n..n + 1]) {
             n += 1;
         }
 
         let mut v = html[id_x..n].to_string();
-        let mut rep = false;
 
         let ao = find_all(&v, "$");
 
@@ -54,13 +50,7 @@ pub fn at_temp(
                 idx += 1;
             }
 
-            let mut vn = &v[i..idx];
-            let mut is_dyn = false;
-
-            if vn.starts_with('$') {
-                vn = &vn[1..];
-                is_dyn = true;
-            }
+            let vn = &v[i+1..idx];
 
             if vn.is_empty() {
                 continue;
@@ -75,22 +65,13 @@ pub fn at_temp(
 
             escape_string_mut(&mut main_v);
 
-            if is_dyn {
-                script.push_str(&imp_sign(format!(
-                    "document.getElementById({id}).innerHTML={};",
-                    &main_v
-                )));
+            script.push_str(&imp_sign(format!(
+                "document.getElementById({id}).innerHTML={};",
+                &main_v
+            )));
 
-                if !rep {
-                    cmu.dynamic.replace_range(a..n+1, &interpolate_string(&main_v));
-                    cmu.stat.replace_range(a..n+1, NIL);
-                    rep = true;
-                }
-            } else if !rep && !is_dyn {
-                cmu.stat.replace_range(a..n+1, &v8_parse(scope, vn));
-                cmu.dynamic.replace_range(a..n+1, &v8_parse(scope, vn));
-                rep = true;
-            }
+            cmu.dynamic.replace_range(a..n+1, &interpolate_string(&main_v));
+            cmu.stat.replace_range(a..n+1, NIL);
 
             v.remove(i);
         }

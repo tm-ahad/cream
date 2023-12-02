@@ -17,6 +17,7 @@ use crate::import_component::import_component;
 use crate::transpile_to_js::transpile_script;
 use crate::component_args::ComponentArgs;
 use crate::consts::{COMPONENT_CALL_SIGN, COMPONENT_CALL_SIGN_LEN, DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL};
+use crate::helpers::merge_dom_script::merge_dom_script;
 use crate::at_temp::at_temp;
 use crate::comment::comment;
 use crate::dsp_map::DspMap;
@@ -24,8 +25,6 @@ use crate::gen_id::gen_id;
 use crate::router::router;
 use crate::state::_state;
 use crate::udt::UDT;
-use crate::helpers::merge_dom_script::merge_dom_script;
-use rusty_v8::{self as v8, Script};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 
@@ -83,15 +82,6 @@ pub fn component(
     transpile_command: &str,
     config: &DspMap,
 ) -> Component {
-    let isolate = &mut v8::Isolate::new(Default::default());
-
-    let mut binding = v8::HandleScope::new(isolate);
-    let scope = &mut binding;
-    let context = v8::Context::new(scope);
-
-    let mut binding = v8::ContextScope::new(scope, context);
-    let scope = &mut binding;
-
     let import_base = &mut ImportBase::new();
     let st = &mut _StateBase::new();
 
@@ -115,7 +105,7 @@ pub fn component(
     comment(&mut app);
 
     let macher = Matcher::Component(c_name);
-    let pat = expect_some(collect_scope(&app, &macher, false), &c_name);
+    let pat = expect_some(collect_scope(&app, &macher, false), c_name);
     let main_app = pat.mp_val();
     let mut dom_script = String::new();
 
@@ -171,21 +161,17 @@ pub fn component(
 
     transpile_script(lang, transpile_command, &mut script);
 
-    let string = v8::String::new(scope, &script).unwrap();
-    let scr = Script::compile(scope, string, None).unwrap();
-    let _ = scr.run(scope);
-
     script = script.replace(IGNORE_STATE, NIL).replace(".cam()", "");
 
     UDT(&mut html, &mut script, &imports);
     import_npm(&mut app, &mut script);
     scopify(&mut script, scopes, config, st);
 
-    template(&mut cmu, &mut dom_script, scope, st);
+    template(&mut cmu, &mut dom_script, st);
 
     let script_writer_ptr = &mut dom_script;
 
-    at_temp(&mut cmu, script_writer_ptr, scope);
+    at_temp(&mut cmu, script_writer_ptr);
     transpile_component(
         ccm,
         script_writer_ptr,

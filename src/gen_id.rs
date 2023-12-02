@@ -34,7 +34,7 @@ pub fn gen_id(
             let lib = &format!("id_gen.{lang}");
 
             add_lib(script, import_base, lib);
-            name = (&html.stat[id_p_8..end]).to_string();
+            name = html.stat[id_p_8..end].to_string();
 
             script.insert_str(0, &format!("var {}={}\n", name, javascript_string(&gen_id)));
 

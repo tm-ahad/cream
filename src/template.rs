@@ -6,10 +6,9 @@ use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
 use crate::replacement_flag::SingleReplacementMap;
 use crate::state_base::_StateBase;
 use crate::template_type::TemplateType;
-use crate::v8_parse::v8_parse;
 use crate::var_not_allowed::var_not_allowed;
 use crate::consts::{NEW_LINE, NIL, SPACE};
-use rusty_v8::{ContextScope, HandleScope};
+
 
 pub fn split_once(s: String, delimiter: char, sd: String) -> (String, String) {
     match s.find(delimiter) {
@@ -21,7 +20,6 @@ pub fn split_once(s: String, delimiter: char, sd: String) -> (String, String) {
 pub fn template(
     html: &mut ComponentMarkUp,
     script: &mut String,
-    scope: &mut ContextScope<HandleScope>,
     base: &mut _StateBase,
 ) {
     let dyn_html = &mut html.dynamic;
@@ -67,7 +65,6 @@ pub fn template(
             let temp_type = TemplateType::from_str(&html[a + 1..ti]);
             let attr_prop_map = html_attribute_dom_prop_map();
             let is_dyn = temp_type.is_dynamic();
-            let mut rep = false;
 
             let mut prop;
 
@@ -115,14 +112,7 @@ pub fn template(
                     v[1..].to_string()
                 };
 
-                if is_dyn {
-                    if !rep {
-                        repmap.push(SingleReplacementMap::new(a..n + 1, String::new()));
-                    }
-                } else if !rep && !is_dyn {
-                    repmap.push(SingleReplacementMap::new(a..n + 1, v8_parse(scope, vn)));
-                    rep = true;
-                }
+                repmap.push(SingleReplacementMap::new(a..n + 1, String::new()));
 
                 script.push_str(&format!(
                     "document.getElementById({id}).{prop}={};",

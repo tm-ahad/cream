@@ -3,7 +3,7 @@ pub fn escape_string_mut(s: &mut String) {
     *s = escape_string(s);
 }
 
-pub fn escape_string(s: &String) -> String {
+pub fn escape_string(s: &str) -> String {
     let mut escaped = String::new();
     let chars = s.chars();
 

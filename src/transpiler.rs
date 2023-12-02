@@ -1,32 +1,31 @@
+use crate::consts::{CAM, DEFAULT_COMPILATION_PATH, IGNORE_STATE, NEW_LINE_CHAR, NIL};
 use crate::at_temp::at_temp;
 use crate::collect_scope::collect_scope;
 use crate::comment::comment;
 use crate::component_args::ComponentArgs;
 use crate::component_markup::ComponentMarkUp;
-use crate::consts::{CAM, DEFAULT_COMPILATION_PATH, IGNORE_STATE, NEW_LINE_CHAR, NIL};
 use crate::dsp_map::DspMap;
 use crate::extract_component::extract_component;
 use crate::gen_id::gen_id;
 use crate::helpers::expected::expect_some;
 use crate::helpers::merge_dom_script::merge_dom_script;
-use crate::import_base::ImportBase;
-use crate::import_lib::import_lib;
-use crate::import_npm::import_npm;
-use crate::import_script::import_script;
-use crate::matcher::Matcher;
-use crate::remove::remove;
-use crate::router::router;
-use crate::scope::{parse_scope, scopify};
-use crate::script_module::module;
-use crate::state::_state;
-use crate::state_base::_StateBase;
-use crate::template::template;
 use crate::transpile_component::transpile_component;
 use crate::transpile_to_js::transpile_script;
 use crate::import_component::import_component;
+use crate::import_script::import_script;
+use crate::scope::{parse_scope, scopify};
+use crate::import_base::ImportBase;
+use crate::import_lib::import_lib;
+use crate::import_npm::import_npm;
+use crate::remove::remove;
+use crate::router::router;
+use crate::script_module::module;
+use crate::state_base::_StateBase;
+use crate::template::template;
+use crate::matcher::Matcher;
+use crate::state::_state;
 use crate::udt::UDT;
 use crate::out::out;
-use rusty_v8::{self as v8};
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 
@@ -82,11 +81,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     let mut cmu = ComponentMarkUp::new(html.clone(), html.clone());
 
     let mut scopes: Vec<String> = Vec::new();
-
-    let platform = v8::new_default_platform(0, false).make_shared();
-    v8::V8::initialize_platform(platform);
-    v8::V8::initialize();
-
     gen_id(
         &mut script,
         &mut String::new(),
@@ -99,15 +93,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     import_lib(&mut app, &mut import_base, &mut script);
     parse_scope(&mut script, &mut scopes);
     transpile_script(lang, transpile_command, &mut script);
-
-    let isolate = &mut v8::Isolate::new(Default::default());
-
-    let mut binding = v8::HandleScope::new(isolate);
-    let scope = &mut binding;
-    let context = v8::Context::new(scope);
-
-    let mut binding = v8::ContextScope::new(scope, context);
-    let scope = &mut binding;
 
     let component_args = ComponentArgs::new(transpile_command, config);
     let imports = import_component(&mut app, &component_args);
@@ -129,12 +114,13 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     UDT(&mut html, &mut script, &imports);
     import_npm(&mut app, &mut script);
 
-    template(&mut cmu, &mut dom_script, scope, &mut state);
+
+    template(&mut cmu, &mut dom_script, &mut state);
     scopify(&mut script, scopes, config, &mut state);
 
     let script_writer_ptr = &mut dom_script;
 
-    at_temp(&mut cmu, script_writer_ptr, scope);
+    at_temp(&mut cmu, script_writer_ptr);
     transpile_component(
         ccm,
         script_writer_ptr,

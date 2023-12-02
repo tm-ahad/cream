@@ -6,11 +6,11 @@ use crate::var_not_allowed::var_not_allowed;
 use crate::state_base::_StateBase;
 
 fn find_special_assignment(s: &str) -> Option<(usize, usize)> {
-    let col_f = s.find(":");
+    let col_f = s.find(':');
 
     match col_f {
         Some(col_f) => {
-            let col_e = s[col_f+1..].find("=");
+            let col_e = s[col_f+1..].find('=');
 
             if let Some(col_e) = col_e {
                 if s[col_f+1..col_f+1+col_e].trim().is_empty() {
@@ -101,7 +101,7 @@ pub fn _state(scr: &mut String, b: &mut _StateBase) {
             e += ci;
             f += ci;
 
-            if !is_byte_in_str(e, &scr) {
+            if !is_byte_in_str(e, scr) {
                 let mut line_start = e;
 
                 let mut line_end = f;
@@ -157,7 +157,7 @@ pub fn _state(scr: &mut String, b: &mut _StateBase) {
                 }
             }
         } else {
-            add_line(&mut res, &lin);
+            add_line(&mut res, lin);
         }
 
         ci += lin.len()+1;
