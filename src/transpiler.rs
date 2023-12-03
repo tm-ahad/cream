@@ -7,22 +7,25 @@ use crate::component_markup::ComponentMarkUp;
 use crate::dsp_map::DspMap;
 use crate::extract_component::extract_component;
 use crate::gen_id::gen_id;
-use crate::helpers::expected::expect_some;
 use crate::helpers::merge_dom_script::merge_dom_script;
 use crate::transpile_component::transpile_component;
 use crate::transpile_to_js::transpile_script;
 use crate::import_component::import_component;
+use crate::import_template::import_template;
+use crate::helpers::expected::expect_some;
 use crate::import_script::import_script;
 use crate::scope::{parse_scope, scopify};
+use crate::import_html::import_html;
 use crate::import_base::ImportBase;
 use crate::import_lib::import_lib;
 use crate::import_npm::import_npm;
-use crate::remove::remove;
-use crate::router::router;
 use crate::script_module::module;
 use crate::state_base::_StateBase;
+use crate::import_ext::import_ext;
 use crate::template::template;
 use crate::matcher::Matcher;
+use crate::remove::remove;
+use crate::router::router;
 use crate::state::_state;
 use crate::udt::UDT;
 use crate::out::out;
@@ -70,13 +73,15 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
         }
     }
 
-    remove(&mut script, src);
-
     let mut html = expect_some(
         collect_scope(&main_app, &Matcher::Template, false),
         "Template",
     )
     .mp_val();
+
+    remove(&mut script, src);
+    import_script(&mut app, &mut import_base, &mut script, src);
+    import_template(&mut app, src, &mut html);
 
     let mut cmu = ComponentMarkUp::new(html.clone(), html.clone());
 
@@ -105,8 +110,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
         &component_args,
         src
     );
-
-    import_script(&mut app, &mut import_base, &mut script, src);
     module(&mut app, &mut import_base, &mut script, src);
 
     script = script
@@ -130,6 +133,8 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
 
     merge_dom_script(&mut script, &dom_script);
     _state(&mut script, &mut state, src);
+    import_ext(&mut app, src, &mut script);
+    import_html(&mut app, src, &mut html);
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);

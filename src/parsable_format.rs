@@ -1,4 +1,3 @@
-
 pub struct ParsableFormat {
     pub script_starts: usize,
     pub temp_starts: usize,

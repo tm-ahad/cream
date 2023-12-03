@@ -18,6 +18,9 @@ use crate::transpile_to_js::transpile_script;
 use crate::component_args::ComponentArgs;
 use crate::consts::{COMPONENT_CALL_SIGN, COMPONENT_CALL_SIGN_LEN, DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL};
 use crate::helpers::merge_dom_script::merge_dom_script;
+use crate::import_template::import_template;
+use crate::import_html::import_html;
+use crate::import_ext::import_ext;
 use crate::at_temp::at_temp;
 use crate::comment::comment;
 use crate::dsp_map::DspMap;
@@ -132,6 +135,9 @@ pub fn component(
 
     let mut html = template_mp.mp_val();
 
+    import_script(&mut app, import_base, &mut script, f_name);
+    import_template(&mut app, f_name, &mut html);
+
     let mut cmu = ComponentMarkUp::new(html.clone(), html.clone());
     let imports = import_component(&mut app, &component_args, f_name);
     let mut ccm = BTreeMap::new();
@@ -158,7 +164,6 @@ pub fn component(
 
     import_lib(&mut app, import_base, &mut script, f_name);
     module(&mut app, import_base, &mut script, f_name);
-    import_script(&mut app, import_base, &mut script, f_name);
     parse_scope(&mut script, &mut scopes);
 
     transpile_script(lang, transpile_command, &mut script);
@@ -182,6 +187,8 @@ pub fn component(
 
     merge_dom_script(&mut script, &dom_script);
     _state(&mut script, st, f_name);
+    import_ext(&mut app, f_name, &mut script);
+    import_html(&mut app, f_name, &mut html);
 
     Component::new(
         script,

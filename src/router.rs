@@ -53,7 +53,6 @@ pub fn router(
 
                 html.stat.replace_range(a..idx + 2, "")
             } else {
-
                 let not_found = match component_args.config.get("404") {
                     Some(e) => {
                         component(

@@ -29,7 +29,6 @@ mod replacement_flag;
 mod router;
 mod scope;
 mod script_module;
-mod serve;
 mod state;
 mod state_base;
 mod std_err;
@@ -43,19 +42,21 @@ mod udt;
 mod var_not_allowed;
 mod import_component;
 mod parsable_format;
+mod import_ext;
+mod import_template;
+mod import_html;
 
 use crate::dsp_map::DspMap;
 use crate::import_base::ImportBase;
-use crate::new::new;
-use crate::pass::pass;
-use crate::serve::serve;
 use crate::state_base::_StateBase;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
 use crate::transpiler::transpile;
+use crate::consts::{CONFIG_FILE, SPACE};
+use crate::new::new;
+use crate::pass::pass;
 use std::env;
 use std::process::Command;
-use crate::consts::CONFIG_FILE;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -82,7 +83,7 @@ fn main() {
 
                 match map.get("pre_make") {
                     Some(c) => {
-                        let mut com = c.split(' ').collect::<Vec<&str>>();
+                        let mut com = c.split(SPACE).collect::<Vec<&str>>();
                         com.retain(|x| !x.is_empty());
 
                         if !com.is_empty() {
@@ -99,12 +100,6 @@ fn main() {
                     }
                     None => pass(),
                 }
-            }
-            "serve" => {
-                map = DspMap::new();
-                map.load("./config.dsp");
-
-                serve(map)
             }
             &_ => pass(),
         }
