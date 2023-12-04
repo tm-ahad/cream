@@ -94,8 +94,8 @@ pub fn component(
     let lang = config.get("lang").unwrap_or(__script__);
     let path = format!("./{f_name}").replace(DOUBLE_QUOTE, NIL);
 
-    let mut app = read_to_string(path).unwrap_or_else(|e| {
-        StdErr::exec(OSError, &e.to_string());
+    let mut app = read_to_string(path.clone()).unwrap_or_else(|e| {
+        StdErr::exec(OSError, &format!("{path}: {}", &e));
         todo!()
     });
 

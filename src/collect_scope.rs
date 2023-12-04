@@ -1,4 +1,3 @@
-use crate::brace_pool::BracePool;
 use crate::helpers::is_byte_in_str::is_byte_in_str;
 use crate::matcher::Matcher;
 use crate::mp::Mp;
@@ -17,27 +16,18 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
                         let dif = &remain[..ss];
 
                         if dif.trim().is_empty() {
-                            let mut pool = BracePool::new();
-
-                            for (cidx, c) in remain.chars().enumerate() {
-                                if c == '{' {
-                                    pool.push(c);
-                                } else if c == '}'
-                                    && pool.push('}')
-                                    && !is_byte_in_str(cidx, remain)
-                                {
-                                    return Some(Mp::new(
-                                        remain[ss + 1..cidx - 1].to_string(),
-                                        if i_s { s } else { s + ss + matchr.len() },
-                                        if i_s { Some(s + len + ss + cidx) } else { None },
-                                    ));
-                                }
+                            if let Some(i) = remain.rfind("}") {
+                                return Some(Mp::new(
+                                    remain[ss + 1..i - 1].to_string(),
+                                    if i_s { s } else { s + ss + matchr.len() },
+                                    if i_s { Some(s + len + ss + i) } else { None },
+                                ));
                             }
 
                             None
                         } else {
                             collect_scope(
-                                &toks[s + ss..],
+                                &toks[s + len..],
                                 &Matcher::Component(matchr),
                                 i_s,
                             )

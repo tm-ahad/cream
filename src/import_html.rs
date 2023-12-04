@@ -16,8 +16,9 @@ pub fn import_html(app: &mut String, f_name: &str, html: &mut String) {
         app.replace_range(i..ci + 1, "");
 
         for name in names {
-            let fmt = format!("./src/{name}");
-            let resp = read_to_string(&fmt).unwrap_or_else(|_| panic!("Script {name} not found"));
+            let fmt = format!("./{name}");
+            let resp = read_to_string(&fmt)
+                .unwrap_or_else(|_| panic!("Script '{fmt}' not found"));
 
             html.insert_str(0, &resp)
         }

@@ -1,5 +1,4 @@
 mod at_temp;
-mod brace_pool;
 mod collect_scope;
 mod comment;
 mod component;
@@ -45,6 +44,7 @@ mod parsable_format;
 mod import_ext;
 mod import_template;
 mod import_html;
+mod serve;
 
 use crate::dsp_map::DspMap;
 use crate::import_base::ImportBase;
@@ -53,6 +53,7 @@ use crate::std_err::ErrType::OSError;
 use crate::std_err::StdErr;
 use crate::transpiler::transpile;
 use crate::consts::{CONFIG_FILE, SPACE};
+use crate::serve::serve;
 use crate::new::new;
 use crate::pass::pass;
 use std::env;
@@ -100,6 +101,11 @@ fn main() {
                     }
                     None => pass(),
                 }
+            },
+            "serve" => {
+                map = DspMap::new();
+                map.load(CONFIG_FILE);
+                serve(map)
             }
             &_ => pass(),
         }
