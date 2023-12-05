@@ -25,7 +25,6 @@ use crate::at_temp::at_temp;
 use crate::comment::comment;
 use crate::dsp_map::DspMap;
 use crate::gen_id::gen_id;
-use crate::router::router;
 use crate::state::_state;
 use crate::udt::UDT;
 use std::collections::BTreeMap;
@@ -155,12 +154,6 @@ pub fn component(
     );
 
     extract_component(&mut ccm, &imports, &mut cmu, f_name);
-    router(
-        &mut cmu,
-        &mut script,
-        &component_args,
-        f_name
-    );
 
     import_lib(&mut app, import_base, &mut script, f_name);
     module(&mut app, import_base, &mut script, f_name);

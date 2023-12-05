@@ -104,12 +104,6 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     let imports = import_component(&mut app, &component_args, src);
 
     extract_component(&mut ccm, &imports, &mut cmu, src);
-    router(
-        &mut cmu,
-        &mut script,
-        &component_args,
-        src
-    );
     module(&mut app, &mut import_base, &mut script, src);
 
     script = script
@@ -135,6 +129,8 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     _state(&mut script, &mut state, src);
     import_ext(&mut app, src, &mut script);
     import_html(&mut app, src, &mut html);
+
+    script.push_str(&router(config));
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);

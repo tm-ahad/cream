@@ -38,11 +38,13 @@ pub fn new(name: &String) {
         create_file(format!("./{}/build/.$.js", name));
         create_file(format!("./{}/build/.$.ts", name));
 
+        create_file(format!("./{}/routes.json", name));
+
         config
             .write_all(
                 format!(
                     "\
-home$/
+routes$routes.json
 static_dir$
 static_dir_render$
 name${n}

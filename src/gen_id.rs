@@ -53,7 +53,7 @@ pub fn gen_id(
             let lib = &format!("id_gen.{lang}");
 
             add_lib(script, import_base, lib);
-            html.dynamic.replace_range(id..rep+1, &javascript_function_call("gen_id"));
+            html.dynamic.replace_range(id..rep+1, &javascript_function_call("gen_id", vec![]));
         }
     }
 }

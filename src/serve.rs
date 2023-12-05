@@ -31,14 +31,7 @@ pub fn serve(map: DspMap) {
                             let static_dir_render = map.get("static_dir_render")
                                 .unwrap_or_else(|| panic!("Static dir render not found"));
 
-                            let (resp_type, content) = if path == "/" {
-                                let _app_html = map.get("_app_html").unwrap_or_else(|| panic!("_app_html not found"));
-
-                                match fs::read_to_string(format!("./{}", _app_html)) {
-                                    Ok(content) => ("HTTP/1.1 200 OK\r\n", content),
-                                    Err(_) => ("HTTP/1.1 404 Not Found\r\n", String::from("404 Page Not Found")),
-                                }
-                            } else {
+                            let (resp_type, content) = if path.starts_with(static_dir_render) {
                                 let static_dir = map.get("static_dir").unwrap_or_else(|| panic!("Static dir not found"));
                                 let len = static_dir_render.len();
                                 let mut file_path = static_dir.to_string();
@@ -47,6 +40,20 @@ pub fn serve(map: DspMap) {
                                 file_path.push_str(&path[len..]);
 
                                 match fs::read_to_string(&file_path) {
+                                    Ok(content) => ("HTTP/1.1 200 OK\r\n", content),
+                                    Err(_) => {
+                                        let _app_html = map.get("_app_html").unwrap_or_else(|| panic!("_app_html not found"));
+
+                                        match fs::read_to_string(format!("./{}", _app_html)) {
+                                            Ok(content) => ("HTTP/1.1 200 OK\r\n", content),
+                                            Err(_) => ("HTTP/1.1 404 Not Found\r\n", String::from("404 Page Not Found")),
+                                        }
+                                    },
+                                }
+                            } else {
+                                let _app_html = map.get("_app_html").unwrap_or_else(|| panic!("_app_html not found"));
+
+                                match fs::read_to_string(format!("./{}", _app_html)) {
                                     Ok(content) => ("HTTP/1.1 200 OK\r\n", content),
                                     Err(_) => ("HTTP/1.1 404 Not Found\r\n", String::from("404 Page Not Found")),
                                 }
