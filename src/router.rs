@@ -28,7 +28,7 @@ pub fn router(config: &DspMap) -> String{
         let mut scr = resp.into_string().unwrap_or_else(|e| panic!("{e}"));
         scr.push(NEW_LINE_CHAR);
 
-        format!("{}{}",
+        format!("{}\n{}\n",
             scr,
             javascript_function_call("router", vec![raw])
         )

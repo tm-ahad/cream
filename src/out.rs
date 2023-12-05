@@ -1,4 +1,4 @@
-use crate::consts::{NEW_LINE, NIL, NOT_FOUND_RESPONSE_FILE};
+use crate::consts::{NEW_LINE, NIL};
 use crate::dsp_map::DspMap;
 use std::fs::{OpenOptions, read_to_string};
 use std::io::Write;
@@ -47,14 +47,4 @@ pub fn out(path: &str, html: String, script: String, config: &DspMap) {
         .as_bytes(),
     )
     .unwrap_or_else(|e| panic!("{}", e));
-}
-
-pub fn out_to_error(error_page: &str) {
-    let mut file = OpenOptions::new()
-        .write(true)
-        .open(NOT_FOUND_RESPONSE_FILE)
-        .unwrap_or_else(|e| panic!("{}", e));
-
-    file.write_all(error_page.as_bytes())
-        .unwrap_or_else(|e| panic!("{}", e));
 }

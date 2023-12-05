@@ -7,7 +7,6 @@ pub mod is_byte_in_str;
 pub mod is_in_temp;
 pub mod javascript_string;
 pub mod merge_dom_script;
-pub mod router_script;
 pub mod script_in;
 pub mod find_component;
 pub mod to_raw_parsable_format;

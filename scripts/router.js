@@ -1,6 +1,10 @@
 function router(map) {
     var p = map[window.location.pathname];
-    var err = p["error"];
+    var err = map["error"];
+
+    if (window.location.search == "/") {
+        return
+    }
 
     if (p != null) {
         window.location.replace(p);

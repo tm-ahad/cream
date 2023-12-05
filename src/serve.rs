@@ -53,6 +53,8 @@ pub fn serve(map: DspMap) {
                             } else {
                                 let _app_html = map.get("_app_html").unwrap_or_else(|| panic!("_app_html not found"));
 
+                                println!("HERE BUDDY");
+
                                 match fs::read_to_string(format!("./{}", _app_html)) {
                                     Ok(content) => ("HTTP/1.1 200 OK\r\n", content),
                                     Err(_) => ("HTTP/1.1 404 Not Found\r\n", String::from("404 Page Not Found")),
