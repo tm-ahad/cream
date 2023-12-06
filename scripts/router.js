@@ -7,8 +7,8 @@ function router(map) {
     }
 
     if (p != null) {
-        window.location.replace(p);
+        document.body.innerHTML = p
     } else {
-        window.location.replace(err);
+        document.body.innerHTML = err;
     }
 }
