@@ -1,11 +1,12 @@
-use std::collections::HashMap;
 use crate::dsp_map::DspMap;
 use crate::consts::{NEW_LINE, NEW_LINE_CHAR, NIL};
 use crate::helpers::javascript_function_call::javascript_function_call;
 use crate::std_err::ErrType::PackageError;
 use crate::component::component;
 use crate::std_err::StdErr;
+use std::collections::HashMap;
 use std::fs::read_to_string;
+use serde_json::ser::Compound::Map;
 use serde_json::Value;
 use ureq::{get, Response};
 
@@ -22,23 +23,25 @@ pub fn router(config: &DspMap) -> String{
     };
 
     if let Value::Object(map) = val {
-        let mut cmap = HashMap::new();
+        let mut cmap = Map::new();
 
         for (key, value) in map {
             if let Value::String(value) = value {
-                cmap.insert(key, component(
+                let comp = component(
                     &value,
                     "Page",
                     config.expect("build"),
                     config
-                )
-                    .static_transpiled()
-                    .replace(NEW_LINE, NIL)
                 );
+
+                let script = component.script.replace("\n\n", NIL);
+                let html = component.html.stat.replace("\n\n", NIL);
+
+                cmap.insert(key, Value::Array(vec![html, script]));
             }
         }
 
-        let enc = format!("{:?}", cmap);
+        let enc = serde_json::to_string(&cmap).unwrap();
         let url = "https://raw.githubusercontent.com/tm-ahad/cream/master/scripts/router.js";
 
         let resp = get(&url).call().unwrap_or_else(|e| {
@@ -51,8 +54,8 @@ pub fn router(config: &DspMap) -> String{
             scr.push(NEW_LINE_CHAR);
 
             format!("{}\n{}\n",
-                    scr,
-                    javascript_function_call("router", vec![enc])
+                scr,
+                javascript_function_call("router", vec![enc])
             )
         } else {
             StdErr::exec(PackageError, &format!("{url} not found"));

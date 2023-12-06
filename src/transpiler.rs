@@ -131,6 +131,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     import_html(&mut app, src, &mut html);
 
     script.insert_str(0, &router(config));
+    println!("{}", script);
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);

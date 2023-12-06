@@ -52,16 +52,32 @@ impl Component {
         }
     }
 
-    pub fn static_transpiled(&self) -> String {
+    pub fn static_transpiled(&self, route: bool) -> String {
         let mu = &self.html.stat;
         let script = &self.script;
 
+        let scr = if !route {
+            format!(
+            "
+<script>
+{script}
+</script>
+            "
+            )
+        } else {
+            format!(
+                "
+&lt;script&gt;
+{script}
+&lt;/script&gt;
+"
+            )
+        };
+
         format!(
             "\
-            {mu}
-            <script>
-                {script}
-            </script>
+{mu}
+{scr}
         "
         )
     }

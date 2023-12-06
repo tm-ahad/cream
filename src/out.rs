@@ -3,7 +3,12 @@ use crate::dsp_map::DspMap;
 use std::fs::{OpenOptions, read_to_string};
 use std::io::Write;
 
-pub fn out(path: &str, html: String, script: String, config: &DspMap) {
+pub fn out(
+    path: &str,
+    html: String,
+    script: String,
+    config: &DspMap
+) {
     let head_prefix = format!("./{}", config.expect("head_prefix"));
     let head = read_to_string(head_prefix.clone())
         .unwrap_or_else(|e| panic!("{head_prefix}: {e}"));
@@ -34,7 +39,7 @@ pub fn out(path: &str, html: String, script: String, config: &DspMap) {
 <body>
 {html}
 <script>
-    {script}
+{script}
 </script>
 <body>
 </html>
