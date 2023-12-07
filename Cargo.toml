@@ -1,13 +1,13 @@
 [package]
 name = "cream"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 
 [dependencies]
 serde_json = "1.0.104"
+httparse = "1.8.0"
 colored = "2.0.4"
 ureq = "2.7.1"
-httparse = "1.8.0"
 
 [profile.release]
 codegen-units = 1

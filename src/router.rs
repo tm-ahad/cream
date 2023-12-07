@@ -1,13 +1,11 @@
 use crate::dsp_map::DspMap;
-use crate::consts::{NEW_LINE, NEW_LINE_CHAR, NIL};
+use crate::consts::{NEW_LINE_CHAR, NIL};
 use crate::helpers::javascript_function_call::javascript_function_call;
 use crate::std_err::ErrType::PackageError;
 use crate::component::component;
 use crate::std_err::StdErr;
-use std::collections::HashMap;
 use std::fs::read_to_string;
-use serde_json::ser::Compound::Map;
-use serde_json::Value;
+use serde_json::{Map, Value};
 use ureq::{get, Response};
 
 pub fn router(config: &DspMap) -> String{
@@ -34,10 +32,10 @@ pub fn router(config: &DspMap) -> String{
                     config
                 );
 
-                let script = component.script.replace("\n\n", NIL);
-                let html = component.html.stat.replace("\n\n", NIL);
+                let script = comp.script.replace("\n\n", NIL);
+                let html = comp.html.stat.replace("\n\n", NIL);
 
-                cmap.insert(key, Value::Array(vec![html, script]));
+                cmap.insert(key, Value::Array(vec![Value::String(html), Value::String(script)]));
             }
         }
 

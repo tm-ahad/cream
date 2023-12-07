@@ -51,36 +51,6 @@ impl Component {
             name
         }
     }
-
-    pub fn static_transpiled(&self, route: bool) -> String {
-        let mu = &self.html.stat;
-        let script = &self.script;
-
-        let scr = if !route {
-            format!(
-            "
-<script>
-{script}
-</script>
-            "
-            )
-        } else {
-            format!(
-                "
-&lt;script&gt;
-{script}
-&lt;/script&gt;
-"
-            )
-        };
-
-        format!(
-            "\
-{mu}
-{scr}
-        "
-        )
-    }
 }
 
 impl Clone for Component {

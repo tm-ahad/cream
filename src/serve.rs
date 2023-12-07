@@ -1,9 +1,23 @@
 use crate::dsp_map::DspMap;
-use std::io::{Read, Write};
-use std::net::{TcpListener};
+use std::collections::BTreeMap;
 use httparse::Request;
 use httparse;
 use std::fs;
+use std::io::{Error, Read, Write};
+use std::net::TcpListener;
+
+static CACHE: BTreeMap<String, String> = BTreeMap::new();
+
+pub fn read(path: &str) -> Result<String, Error> {
+    return if CACHE.contains_key(path) {
+        Ok(CACHE.get(path).unwrap().to_string())
+    } else {
+        match fs::read_to_string(&path) {
+            Ok(content) => Ok(content),
+            Err(e) => Err(e),
+        }
+    }
+}
 
 pub fn serve(map: DspMap) {
     let port = map.get("port").unwrap_or_else(|| panic!("Port not found on config.dsp"));
@@ -16,10 +30,6 @@ pub fn serve(map: DspMap) {
             let mut buffer = [0; 2048];
 
             if let Ok(_) = stream.read(&mut buffer) {
-                if buffer.is_empty() {
-                    continue
-                }
-
                 let mut headers = [httparse::EMPTY_HEADER; 16];
                 let mut req = Request::new(&mut headers);
 
@@ -39,8 +49,8 @@ pub fn serve(map: DspMap) {
                                 file_path.push('/');
                                 file_path.push_str(&path[len..]);
 
-                                match fs::read_to_string(&file_path) {
-                                    Ok(content) => ("HTTP/1.1 200 OK\r\n", content),
+                                match read(&file_path) {
+                                    Ok(content) => ("HTTP/1.1 200 OK\r\n", content.to_string()),
                                     Err(_) => {
                                         let _app_html = map.get("_app_html").unwrap_or_else(|| panic!("_app_html not found"));
 
