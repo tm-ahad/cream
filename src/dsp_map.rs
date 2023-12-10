@@ -1,3 +1,4 @@
+use crate::pass::pass;
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 use std::marker::PhantomData;
@@ -17,7 +18,7 @@ impl<'a> DspMap<'a> {
         for lin in lines {
             let (k, v) = match lin.split_once('$') {
                 Some(a) => (String::from(a.0), String::from(a.1)),
-                None => panic!("Invalid pair"),
+                None => pass(),
             };
 
             self.0.insert(k, v);
