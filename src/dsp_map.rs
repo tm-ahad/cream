@@ -16,12 +16,18 @@ impl<'a> DspMap<'a> {
         let lines = cont.lines();
 
         for lin in lines {
-            let (k, v) = match lin.split_once('$') {
-                Some(a) => (String::from(a.0), String::from(a.1)),
+            let k;
+            let v;
+
+            match lin.split_once('$') {
+                Some(a) => {
+                    k = String::from(a.0);
+                    v = String::from(a.1);
+
+                    self.0.insert(k, v);
+                },
                 None => pass(),
             };
-
-            self.0.insert(k, v);
         }
     }
 
