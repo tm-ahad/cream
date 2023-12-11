@@ -1,6 +1,6 @@
 function mapConcat(arr, cb) {
     let out = '';
-    this.forEach((i) => {
+    arr.forEach((i) => {
         out += cb(i)
     })
     return out;
