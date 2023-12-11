@@ -1,4 +1,4 @@
-Array.prototype.string = function (cb) {
+function mapConcat(arr, cb) {
     let out = '';
     this.forEach((i) => {
         out += cb(i)
