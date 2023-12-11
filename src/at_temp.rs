@@ -34,7 +34,7 @@ pub fn at_temp(
             n += 1;
         }
 
-        let mut v = html[id_x..n].to_string();
+        let mut v = html[id_x+1..n].to_string();
         let ao = find_all(&v, "$", f_name);
 
         for i in ao {
@@ -48,7 +48,7 @@ pub fn at_temp(
                 idx += 1;
             }
 
-            let vn = &v[i+1..idx];
+            let vn = &v[i..idx];
 
             if vn.is_empty() {
                 continue;

@@ -14,10 +14,6 @@ pub fn out(
         .unwrap_or_else(|e| panic!("{head_prefix}: {e}"));
 
     let html = html.replace(NEW_LINE, NIL);
-    let script = script.replace(
-        &format!("{NEW_LINE}{NEW_LINE}"),
-        NIL
-    );
 
     let mut file = OpenOptions::new()
         .write(true)

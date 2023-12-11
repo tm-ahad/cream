@@ -117,8 +117,8 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     scopify(&mut script, scopes, config, &mut state, src);
 
     let script_writer_ptr = &mut dom_script;
-
     at_temp(&mut cmu, script_writer_ptr, src);
+
     transpile_component(
         ccm,
         script_writer_ptr,
