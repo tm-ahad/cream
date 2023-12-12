@@ -1,9 +1,7 @@
 use crate::component_markup::ComponentMarkUp;
-use crate::helpers::find_all::find_all;
 use crate::helpers::html_atrribute_dom_prop_map::html_attribute_dom_prop_map;
 use crate::helpers::interpolate_string::interpolate_string;
 use crate::helpers::is_byte_in_str::{is_byte_in_str, UpdateIBIS};
-use crate::replacement_flag::SingleReplacementMap;
 use crate::state_base::_StateBase;
 use crate::template_type::TemplateType;
 use crate::var_not_allowed::var_not_allowed;
@@ -31,10 +29,7 @@ pub fn template(
     let html = &mut html.stat;
     let html_len = html.len();
 
-    let ao = find_all(html, "$", f_name);
-    let mut repmap = Vec::new();
-
-    'outer: for a in ao {
+    'outer: while let Some(a) = html.find('$') {
         if &html[a - 1..a] == NEW_LINE {
             let mut ti = a;
             let id_f_d = read_until(&html, a+1, SPACE, f_name, ComponentPart::Unknown);
@@ -99,12 +94,6 @@ pub fn template(
                     panic!("Invalid variable name: {}", vn)
                 }
 
-                let id = if is_dyn {
-                    &html[a + 5..id_f_d]
-                } else {
-                    &html[a + 2..id_f_d]
-                };
-
                 let c = v.chars().nth(1).unwrap();
 
                 let main_v = if c == '$' {
@@ -113,7 +102,11 @@ pub fn template(
                     v[1..].to_string()
                 };
 
-                repmap.push(SingleReplacementMap::new(a..n + 1, String::new()));
+                let id = if is_dyn {
+                    &html[a + 5..id_f_d]
+                } else {
+                    &html[a + 2..id_f_d]
+                };
 
                 script.push_str(&format!(
                     "document.getElementById({id}).{prop}={};",
@@ -126,16 +119,11 @@ pub fn template(
                     main_v.clone(),
                 );
 
+                html.replace_range(a..n+1, "");
                 v.remove(i);
             }
         } else {
             continue;
         }
-    }
-
-    for r in repmap {
-        let (range, replace_with) = r.to_tuple();
-
-        html.replace_range(range, &replace_with);
     }
 }
