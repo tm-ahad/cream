@@ -8,7 +8,7 @@ use std::fs::read_to_string;
 use serde_json::{Map, Value};
 use ureq::{get, Response};
 
-pub fn router(config: &DspMap) -> String{
+pub fn router(config: &DspMap) -> String {
     let path = format!("./{}", config.expect("routes"));
     let raw = match read_to_string(path) {
         Ok(content) => content,

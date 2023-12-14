@@ -17,13 +17,13 @@ pub fn gen_id(
     f_name: &str,
 ) {
     while let Some(id) = html.stat.find("@gen") {
-        let id_p_8 = id + 8;
+        let id_p_8 = id + 5;
         let mut gen_id = String::new();
         let mut name = String::new();
 
         let mut named = false;
 
-        let rep = if &html.stat[id + 7..id_p_8] == ":" {
+        let rep = if &html.stat[id + 4..id_p_8] == ":" {
             let end = read_until(&html.stat, id_p_8, ";", f_name, ComponentPart::Template);
 
             gen_id = IdGen::gen_string();
@@ -33,6 +33,7 @@ pub fn gen_id(
             name = html.stat[id_p_8..end].to_string();
 
             script.insert_str(0, &format!("var {}={}\n", name, javascript_string(&gen_id)));
+            println!("{}", script);
 
             if comp {
                 dyn_script.insert_str(0, &format!("var {}=gen_id()\n", name));
@@ -41,7 +42,7 @@ pub fn gen_id(
             named = true;
             end
         } else {
-            id + 7
+            id + 4
         };
 
         html.stat.replace_range(id..rep+1, &javascript_string(&gen_id));
