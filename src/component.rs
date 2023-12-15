@@ -14,7 +14,6 @@ use crate::std_err::{ErrType::OSError, StdErr};
 use crate::template::template;
 use crate::transpile_component::transpile_component;
 use crate::import_component::import_component;
-use crate::transpile_to_js::transpile_script;
 use crate::component_args::ComponentArgs;
 use crate::consts::{COMPONENT_CALL_SIGN, COMPONENT_CALL_SIGN_LEN, DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL};
 use crate::helpers::merge_dom_script::merge_dom_script;
@@ -144,8 +143,6 @@ pub fn component(
     import_lib(&mut app, import_base, &mut script, f_name);
     module(&mut app, import_base, &mut script, f_name);
     parse_scope(&mut script, &mut scopes);
-
-    transpile_script(lang, transpile_command, &mut script);
 
     script = script.replace(IGNORE_STATE, NIL).replace(".cam()", "");
 

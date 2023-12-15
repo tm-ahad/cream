@@ -97,14 +97,13 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     );
 
     import_lib(&mut app, &mut import_base, &mut script, src);
-    transpile_script(lang, transpile_command, &mut script);
+    module(&mut app, &mut import_base, &mut script, src);
     parse_scope(&mut script, &mut scopes);
 
     let component_args = ComponentArgs::new(transpile_command, config);
     let imports = import_component(&mut app, &component_args, src);
 
     extract_component(&mut ccm, &imports, &mut cmu, src);
-    module(&mut app, &mut import_base, &mut script, src);
 
     script = script
         .replace(IGNORE_STATE, NIL)
@@ -130,6 +129,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     import_ext(&mut app, src, &mut script);
     import_html(&mut app, src, &mut html);
 
+    transpile_script(lang, transpile_command, &mut script);
     script.insert_str(0, &router(config));
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);

@@ -33,7 +33,6 @@ pub fn gen_id(
             name = html.stat[id_p_8..end].to_string();
 
             script.insert_str(0, &format!("var {}={}\n", name, javascript_string(&gen_id)));
-            println!("{}", script);
 
             if comp {
                 dyn_script.insert_str(0, &format!("var {}=gen_id()\n", name));
