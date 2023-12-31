@@ -17,6 +17,7 @@ pub fn out(
 
     let mut file = OpenOptions::new()
         .write(true)
+        .truncate(true)
         .open(path)
         .unwrap_or_else(|e| panic!("{}", e));
 
