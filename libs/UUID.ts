@@ -1,16 +1,7 @@
 function utilUUID(): string {
-   let hash = String(Math.random())
-   let map = new Map([
-      ['1', 'a'],
-      ['2', 'b'],
-      ['3', 'c'],
-      ['4', 'd'],
-      ['5', 'e'],
-      ['6', 'f'],
-      ['7', 'g'],
-      ['8', 'h'],
-      ['9', 'i']
-   ])
-   for (let [k, v] of map) { hash = hash.replace(k, v); }
-   return hash.substring(2)
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0,
+    v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
