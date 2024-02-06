@@ -34,6 +34,7 @@ To install the latest version of cream on macOS, Linux, or Windows (using MSYS),
 
 ```bash
 curl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.bash | bash
+```
 
 ## Getting Started
 
