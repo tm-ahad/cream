@@ -37,8 +37,8 @@ curl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install
 ```
 
 And to install the latest version of cream on windows, run the following command in your terminal:
-```
-irl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.ps1 | iex
+```pwsh
+irm https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.ps1 | iex
 ```
 
 ## Getting Started
