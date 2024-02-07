@@ -30,10 +30,15 @@ Cream simplifies frontend development by providing a straightforward way to writ
 
 ## Installation
 
-To install the latest version of cream on macOS, Linux, or Windows (using MSYS), run the following command in your terminal:
+To install the latest version of cream on macOS or Linux, run the following command in your terminal:
 
 ```bash
 curl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.bash | bash
+```
+
+And to install the latest version of cream on windows, run the following command in your terminal:
+```
+irl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.ps1 | iex
 ```
 
 ## Getting Started
