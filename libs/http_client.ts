@@ -8,15 +8,30 @@ class Status {
     }
 }
 
-interface HttpResponse {
+class HttpResponse {
     type: XMLHttpRequestResponseType;
     request: XMLHttpRequest;
-    error: boolean;
-    ok: boolean;
-    url: string;
     headers: object;
     response: string;
     status: Status;
+    error: boolean;
+    ok: boolean;
+    url: string;
+
+    constructor(data)
+    {
+        this.response = data.response
+        this.request = data.request
+        this.headers = data.headers
+        this.error = data.error
+        this.type = data.type
+        this.url = data.url
+        this.ok = data.ok
+    }
+
+    json<T>(): T {
+        return JSON.parse(this.response)
+    }
 }
 
 class HttpClient {
@@ -84,7 +99,7 @@ class HttpClient {
             parsed_header[pair[0]] = pair[1].substring(1);
         }
 
-        return {
+        return new HttpResponse({
             headers: parsed_header,
             type: xhr.responseType,
             response: data.config["parseResponse"](xhr.response),
@@ -93,7 +108,7 @@ class HttpClient {
             error: status === 404,
             ok: status === 200,
             status: new Status(status, xhr.statusText)
-        };
+        });
     }
 
     get(url: string | URL = "", config: object = {}) {

@@ -7,9 +7,17 @@ class Status {
 
 class HttpResponse {
     constructor(data) {
-        for (let key in data) {
-            this[key] = data[key];
-        }
+        this.response = data.response
+        this.request = data.request
+        this.headers = data.headers
+        this.error = data.error
+        this.type = data.type
+        this.url = data.url
+        this.ok = data.ok
+    }
+
+    json() {
+        return JSON.parse(this.response)
     }
 }
 
