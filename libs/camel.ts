@@ -1,6 +1,6 @@
 class Camel {
   static toString(data: string): string {
-    let result = \"\"
+    let result = ""
     for (const [key, value] of Object.entries(data)) {
       if (Array.isArray(value)) {
         result += `${key}^${value.join(",")}\n`
@@ -8,7 +8,7 @@ class Camel {
         const entries = Object.entries(value)
         const serializedEntries = entries
           .map(([entryKey, entryValue]) => `${entryKey} ${entryValue}`)
-          .join(\" \")
+          .join(" ")
         result += `${key}#${serializedEntries}\n`
       } else {
         result += `${key}$${value}\n`

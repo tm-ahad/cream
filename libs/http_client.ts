@@ -1,6 +1,11 @@
-interface Status {
+class Status {
     code: number;
     text: string;
+   
+    constructor(code, text) {
+       this.text = text
+       this.code = code
+    }
 }
 
 interface HttpResponse {
@@ -15,8 +20,8 @@ interface HttpResponse {
 }
 
 class HttpClient {
-    #point: string | URL;
-    #config: object;
+    private point: string | URL = "";
+    private config: object = {};
 
     static methods = [
         'GET',
@@ -31,11 +36,11 @@ class HttpClient {
     ];
 
     constructor(url: string | URL, config: object = {}) {
-        this.#point = url;
-        this.#config = config;
+        this.point = url;
+        this.config = config;
     }
 
-    #fetch(data: {
+    private fetch(data: {
         config: object,
         url: string | URL,
         body: string | null,
@@ -53,7 +58,7 @@ class HttpClient {
         let xhr = new XMLHttpRequest();
         let { config } = data;
 
-        config = { ...config, ...this.#config };
+        config = { ...config, ...this.config };
         let headers = config['headers'];
 
         for (let key in config) {
@@ -63,7 +68,7 @@ class HttpClient {
             xhr.setRequestHeader(key, headers[key]);
         }
 
-        xhr.open(data.method, `${this.#point}${data.url}`, false);
+        xhr.open(data.method, `${this.point}${data.url}`, false);
         xhr.send(data.body);
 
         let status = xhr.status;
@@ -92,7 +97,7 @@ class HttpClient {
     }
 
     get(url: string | URL = "", config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: null,
@@ -101,7 +106,7 @@ class HttpClient {
     }
 
     post(url: string | URL = "", body: string | null = "", config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: body,
@@ -110,7 +115,7 @@ class HttpClient {
     }
 
     patch(url: string | URL = "", body: string | null = '', config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: body,
@@ -119,7 +124,7 @@ class HttpClient {
     }
 
     delete(url: string | URL = '', body: string | null = '', config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: body,
@@ -128,7 +133,7 @@ class HttpClient {
     }
 
     connect(url: string | URL = "", body: string | null = '', config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: body,
@@ -137,7 +142,7 @@ class HttpClient {
     }
 
     head(url: string | URL = "", config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: null,
@@ -146,7 +151,7 @@ class HttpClient {
     }
 
     options(url: string | URL = '', config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: null,
@@ -155,7 +160,7 @@ class HttpClient {
     }
 
     put(url: string | URL = "", body: string | null = '', config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: body,
@@ -164,7 +169,7 @@ class HttpClient {
     }
 
     trace(url: string | URL = "", config: object = {}) {
-        return this.#fetch({
+        return this.fetch({
             config,
             url: url,
             body: null,
