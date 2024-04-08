@@ -1,5 +1,5 @@
 #[cfg(not(windows))]
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::{self, PermissionsExt};
 #[cfg(windows)]
 use std::os::windows::fs::OpenOptionsExt;
 
