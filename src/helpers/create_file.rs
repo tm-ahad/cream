@@ -3,7 +3,7 @@ use std::os::unix::fs::PermissionsExt;
 #[cfg(windows)]
 use std::os::windows::fs::OpenOptionsExt;
 
-use std::fs::{self, OpenOptions};
+use std::fs::OpenOptions;
 
 pub fn create_file(path: String) {
     let mut options = OpenOptions::new();

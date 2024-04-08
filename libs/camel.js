@@ -1,59 +1,111 @@
+const NUM_SPLIT = "\x99"
+const STR_SPLIT = "\x88"
+const BOOL_SPLIT = "\x81"
+const ARR_SPLIT = "\x94"
+const OBJ_SPLIT = "\x84"
+const NUL_SPLIT = "\x79"
+
 class Camel {
-  static toString(data) {
-    let result = ""
-    for (const [key, value] of Object.entries(data)) {
-      if (Array.isArray(value)) {
-        result += `${key}^${value.join(",")}\n`
-      } else if (typeof value === "object") {
-        const entries = Object.entries(value)
-        const serializedEntries = entries
-          .map(([entryKey, entryValue]) => `${entryKey} ${entryValue}`)
-          .join(" ")
-        result += `${key}#${serializedEntries}\n`
-      } else {
-        result += `${key}$${value}\n`
-      }
-    }
-    return result;
-  }
-  static parse(data) {
-    const map = {}
-    const lines = data.split("\n")
-    for (let line of lines) {
-      let $dol = line.indexOf("$")
-      let hash = line.indexOf("#")
-      let arr = line.indexOf("^")
-      const prim_parse = (val) => {
-        switch (val) {
-          case "1": return true
-          case "0": return false
-          case "": return null
-          default:
-            let num_test = Number(val)
-            return isNaN(num_test) ? val: num_test
+    static toString(data) {
+        if (data == null)
+        {
+            return NUL_SPLIT
         }
-      };
-      if ($dol != -1) {
-        let key = line.substring(0, $dol)
-        let val = prim_parse(line.substr($dol+1))
-        map[key] = val;
-      }
-      else if (arr != -1) {
-        let key = line.substring(0, arr)
-        let val = line.substring(arr+1)
-        map[key] = val.split(",").map((v) => prim_parse(v))
-      }
-      else if (hash != -1) {
-        let obj = {};
-        let entries = line.substring(hash + 1)
-          .split(" ");
-        let len = entries.length - 1;
-        for (let i = 0; i < len; i+=2) {
-          obj[entries[i]] = entries[i+1]
+
+        switch (typeof data)
+        {
+            case 'string': return STR_SPLIT + data
+            case 'number': return NUM_SPLIT + data
+            case 'boolean': return BOOL_SPLIT + data
         }
-        map[line.substring(0, hash)] = obj
-      }
+
+        if (Array.isArray(data))
+        {
+            return data.reduce((f, d) => f + this.toString(d))
+        }
+
+        let serialized = '';
+        for (let key in data) {
+            if (data.hasOwnProperty(key)) {
+                let value = data[key];
+                if (value === null) {
+                    serialized += key + NUL_SPLIT;
+                } else if (typeof value === 'object') {
+                    serialized += key + OBJ_SPLIT + Camel.toString(value) + '\n';
+                } else if (Array.isArray(value)) {
+                    serialized += key + ARR_SPLIT + value.map(item => {
+                        if (item === null) {
+                            return NUL_SPLIT;
+                        } else if (typeof item === 'object') {
+                            return OBJ_SPLIT + Camel.toString(item);
+                        } else {
+                            return item.toString();
+                        }
+                    }).join(' ') + '\n';
+                } else if (typeof value === 'number') {
+                    serialized += key + NUM_SPLIT + value + '\n';
+                } else if (typeof value === 'boolean') {
+                    serialized += key + BOOL_SPLIT + (value ? '1' : '0') + '\n';
+                } else {
+                    serialized += key + STR_SPLIT + value + '\n';
+                }
+            }
+        }
+        return serialized;
     }
-    return map;
-  }
+
+    static parse(data) {
+        const map = {};
+        const lines = data.split("\n");
+        for (let line of lines) {
+            let num = line.indexOf(NUM_SPLIT);
+            let str = line.indexOf(STR_SPLIT);
+            let bool = line.indexOf(BOOL_SPLIT);
+            let hash = line.indexOf(OBJ_SPLIT);
+            let arr = line.indexOf(ARR_SPLIT);
+            let nullInd = line.indexOf(NUL_SPLIT);
+       
+            const prim_parse = (val) => {
+                val = val.substring(1);
+          
+                switch (val.substring(0, 1)) {
+                    case OBJ_SPLIT: return Camel.parse(val);
+                    case NUM_SPLIT: return Number(val);
+                    case NUL_SPLIT: return null;
+                    case ARR_SPLIT: return val.split(" ").map(s => prim_parse(s));
+                    case STR_SPLIT: return val;
+                    case BOOL_SPLIT: return Number(Boolean(val));
+                    default:
+                        let num_test = Number(val);
+                        return isNaN(num_test) ? val : num_test;
+                }
+            };
+       
+            switch (true) {
+                case num != -1:
+                    var key = line.substring(0, num);
+                    var val = Number(line.substr(num + 1));
+                    map[key] = val;
+                case str != -1:
+                    var key = line.substring(0, str);
+                    var val = line.substr(str + 1);
+                    map[key] = val == "" ? null : val;
+                case bool != -1:
+                    var key = line.substring(0, bool);
+                    var val = Boolean(Number(line.substr(bool + 1)));
+                    map[key] = val;
+                case hash != -1:
+                    var key = line.substring(0, hash);
+                    map[key] = Camel.parse(line.substring(hash + 1));
+                case arr != -1:
+                    let key = line.substring(0, arr);
+                    let val = line.substring(arr + 1);
+                    map[key] = Camel.parse(line.substring(hash + 1));
+                case nullInd:
+                    map[key] = null;
+            }
+      
+            return map;
+        }
+    }
 }

@@ -1,0 +1,19 @@
+{
+  "class": "className",
+  "data-id": "dataset.id",
+  "readonly": "readOnly",
+  "checked": "checked",
+  "placeholder": "placeholder",
+  "maxlength": "maxLength",
+  "accept-charset": "acceptCharset",
+  "contenteditable": "contentEditable",
+  "enctype": "enctype",
+  "for": "htmlFor",
+  "http-equiv": "httpEquiv",
+  "ismap": "isMap",
+  "maxlength": "maxLength",
+  "radiogroup": "radioGroup",
+  "rowspan": "rowSpan",
+  "tabindex": "tabIndex",
+  "usemap": "useMap"
+}

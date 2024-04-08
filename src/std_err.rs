@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use colored::Colorize;
 use std::process::exit;
 
@@ -7,17 +8,21 @@ pub enum ErrType {
     PackageError,
     LibraryError,
     SyntaxError,
-    OSError,
+    NetError,
+    OSError
 }
 
-impl ToString for ErrType {
-    fn to_string(&self) -> String {
-        String::from(match self {
+impl Display for ErrType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = String::from(match self {
             ErrType::PackageError => "PackageError",
             ErrType::LibraryError => "LibraryError",
             ErrType::SyntaxError => "SyntaxError",
-            ErrType::OSError => "OSError",
-        })
+            ErrType::NetError => "NetError",
+            ErrType::OSError => "OSError"
+        });
+
+        write!(f, "{}", str)
     }
 }
 
