@@ -1,8 +1,8 @@
 #[cfg(not(windows))]
-use std::os::unix::fs::{self, PermissionsExt};
+use std::os::unix::fs::PermissionsExt;
+use std::fs;
 #[cfg(windows)]
 use std::os::windows::fs::OpenOptionsExt;
-
 use std::fs::OpenOptions;
 
 pub fn create_file(path: String) {
