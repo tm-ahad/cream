@@ -40,7 +40,6 @@ pub fn template(
     base: &mut _StateBase,
     f_name: &str,
 ) {
-    println!("started");
     let dyn_html = &mut html.dynamic;
     let html = &mut html.stat;
     let html_len = html.len();
@@ -95,7 +94,6 @@ pub fn template(
 
             let mut main_v = v.clone();
             delete_template_dollars(&mut main_v);
-            println!("{}", main_v);
 
             let id = if is_dyn {
                 &html[a + 5..id_f_d]

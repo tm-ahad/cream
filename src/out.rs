@@ -6,12 +6,14 @@ use std::io::Write;
 pub fn out(
     path: &str,
     html: String,
-    script: String,
+    mut script: String,
     config: &DspMap
 ) {
     let head_prefix = format!("./{}", config.expect("head_prefix"));
     let head = read_to_string(head_prefix.clone())
         .unwrap_or_else(|e| panic!("{head_prefix}: {e}"));
+
+    script = script.replace("\n\n", ";");
 
     let html = html.replace(NEW_LINE, NIL);
 

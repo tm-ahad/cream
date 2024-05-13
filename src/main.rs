@@ -57,6 +57,28 @@ use crate::helpers::version::version;
 use std::env;
 use std::process::Command;
 
+fn exec_command(command: Option<&str>) {
+    match command {
+        Some(c) => {
+            let mut com = c.split(SPACE).collect::<Vec<&str>>();
+            com.retain(|x| !x.is_empty());
+
+            if !com.is_empty() {
+                let a = match Command::new(com[0]).args(com[1..].to_vec()).output() {
+                    Ok(e) => e.stdout,
+                    Err(e) => {
+                        StdErr::exec(OSError, &format!("{}: {}", com[0], &e.to_string()));
+                        Vec::new()
+                    }
+                };
+
+                println!("{}", String::from_utf8_lossy(&a));
+            }
+        }
+        None => pass(),
+    }
+}
+
 fn main() {
     let args = env::args().collect::<Vec<String>>();
     let state_base = _StateBase::new();
@@ -79,27 +101,9 @@ fn main() {
                 map = DspMap::new();
                 map.load(CONFIG_FILE);
 
+                exec_command(map.get("pre_make"));
                 transpile(state_base, import_base, &map);
-
-                match map.get("pre_make") {
-                    Some(c) => {
-                        let mut com = c.split(SPACE).collect::<Vec<&str>>();
-                        com.retain(|x| !x.is_empty());
-
-                        if !com.is_empty() {
-                            let a = match Command::new(com[0]).args(com[1..].to_vec()).output() {
-                                Ok(e) => e.stdout,
-                                Err(e) => {
-                                    StdErr::exec(OSError, &e.to_string());
-                                    Vec::new()
-                                }
-                            };
-
-                            println!("{}", String::from_utf8_lossy(&a));
-                        }
-                    }
-                    None => pass(),
-                }
+                exec_command(map.get("after_make"));
             },
             "serve" => {
                 map = DspMap::new();

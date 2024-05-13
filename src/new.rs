@@ -57,6 +57,7 @@ name${n}
 lang${lang}
 head_prefix$head_prefix.html
 pre_make$
+after_make$
 build${build}
 pre_start$
 keywords${k}
