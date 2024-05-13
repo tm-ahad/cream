@@ -3,10 +3,9 @@ use crate::helpers::add_line::add_line;
 use crate::helpers::component_part::ComponentPart;
 use crate::helpers::is_byte_in_str::is_byte_in_str;
 use crate::helpers::read_until::read_until;
-use crate::pass::pass;
 use crate::var_not_allowed::var_not_allowed;
 use crate::state_base::_StateBase;
-
+use crate::pass::pass;
 fn find_special_assignment(s: &str) -> Option<(usize, usize)> {
     let col_f = s.find(':');
 
@@ -64,8 +63,8 @@ pub fn _state(scr: &mut String, b: &mut _StateBase, f_name: &str) {
             if vn.is_empty() {
                 continue
             }
-            flin.remove(a + e + 1 - line_start);
 
+            flin.remove(a + e + 1 - line_start);
             if vn.chars().next().unwrap().is_ascii_digit() {
                 panic!("Invalid variable name: {}", vn)
             }
@@ -78,7 +77,6 @@ pub fn _state(scr: &mut String, b: &mut _StateBase, f_name: &str) {
     }
 
     let ao = scr.lines();
-
     let mut ci: usize = 0;
 
     for lin in ao {

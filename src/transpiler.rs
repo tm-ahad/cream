@@ -1,5 +1,4 @@
 use crate::consts::{CAM, DEFAULT_COMPILATION_PATH, IGNORE_STATE, NEW_LINE_CHAR, NIL};
-use crate::at_temp::at_temp;
 use crate::collect_scope::collect_scope;
 use crate::comment::comment;
 use crate::component_args::ComponentArgs;
@@ -111,12 +110,10 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
 
     UDT(&mut html, &mut script, &imports, src);
     import_npm(&mut app, &mut script, src);
-
-    template(&mut cmu, &mut dom_script, &mut state, src);
     scopify(&mut script, scopes, config, &mut state, src);
 
     let script_writer_ptr = &mut dom_script;
-    at_temp(&mut cmu, script_writer_ptr, src);
+    template(&mut cmu, script_writer_ptr, &mut state, src);
 
     transpile_component(
         ccm,

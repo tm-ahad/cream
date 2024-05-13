@@ -38,7 +38,6 @@ impl _StateBase {
             Some(l) => {
                 if l.1.is_empty() {
                     for (k, val) in &l.0 {
-
                         rels.push(Rel(
                             k.to_string(),
                             val.to_string()

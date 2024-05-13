@@ -20,7 +20,6 @@ use crate::helpers::merge_dom_script::merge_dom_script;
 use crate::import_template::import_template;
 use crate::import_html::import_html;
 use crate::import_ext::import_ext;
-use crate::at_temp::at_temp;
 use crate::comment::comment;
 use crate::dsp_map::DspMap;
 use crate::gen_id::gen_id;
@@ -153,8 +152,6 @@ pub fn component(
     template(&mut cmu, &mut dom_script, st, f_name);
 
     let script_writer_ptr = &mut dom_script;
-
-    at_temp(&mut cmu, script_writer_ptr, f_name);
     transpile_component(
         ccm,
         script_writer_ptr,

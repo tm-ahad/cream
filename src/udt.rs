@@ -5,7 +5,7 @@ use crate::helpers::find_component::find_component_by_name;
 use crate::helpers::read_until::read_until;
 use crate::std_err::ErrType::SyntaxError;
 use crate::id_gen::IdGen;
-use crate::js_lib::private_work_lib;
+use crate::javascript_lib::private_work_lib;
 use crate::std_err::StdErr;
 use crate::pass::pass;
 
@@ -81,16 +81,14 @@ pub fn UDT(
 
         let id;
 
-        {
-            let do_comp = find_component_by_name(imports, do_.to_string())
-                .unwrap_or_else(|| panic!("Couldn't find component {}", th));
-            id = IdGen::gen_string();
+        let do_comp = find_component_by_name(imports, do_.to_string())
+            .unwrap_or_else(|| panic!("Couldn't find component {}", th));
+        id = IdGen::gen_string();
 
-            comp_html.replace_range(
-                fall..up,
-                &format!("<div id={}>{}</div>", id, do_comp.html.stat),
-            );
-        }
+        comp_html.replace_range(
+            fall..up,
+            &format!("<div id={}>{}</div>", id, do_comp.html.stat),
+        );
 
         let th_comp = find_component_by_name(imports, th.to_string())
             .unwrap_or_else(|| panic!("Couldn't find component {}", th));

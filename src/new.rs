@@ -1,10 +1,10 @@
 use crate::input::std_input;
 use crate::std_err::{ErrType::OSError, StdErr};
 use crate::consts::NIL;
-use colored::Colorize;
+use crate::helpers::create_file::create_file;
+use crate::helpers::format_colored::format_colored;
 use std::fs::{create_dir, File};
 use std::io::Write;
-use crate::helpers::create_file::create_file;
 
 pub fn new(name: &String) {
     let lang = std_input("Language for your project (js/ts): ", "js");
@@ -30,13 +30,11 @@ pub fn new(name: &String) {
         let mut config = File::create(format!("./{}/config.dsp", name)).expect("File exists");
         let (build, inst) = if lang == "ts" {
             (
-                "npx tsc", "Now setup typescript with node js".
-                truecolor(255, 204, 000).
-                bold().
-                to_string()
+                "npx tsc",
+                format_colored("Now setup typescript with node js", 255, 204, 000)
             )
         } else {
-            (NIL, format!("{} ✨", "Done".green().bold()))
+            (NIL, format!("{} ✨", format_colored("Done", 0, 255, 0)))
         };
 
         create_file(format!("./{}/build/error.html", name));

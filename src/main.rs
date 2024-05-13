@@ -1,4 +1,3 @@
-mod at_temp;
 mod collect_scope;
 mod comment;
 mod component;
@@ -6,7 +5,6 @@ mod component_args;
 mod component_markup;
 mod consts;
 mod dsp_map;
-mod escape_string;
 mod extract_component;
 mod gen_id;
 mod helpers;
@@ -16,7 +14,7 @@ mod import_lib;
 mod import_npm;
 mod import_script;
 mod input;
-mod js_lib;
+mod javascript_lib;
 mod matcher;
 mod mp;
 mod new;
@@ -55,20 +53,22 @@ use crate::consts::{CONFIG_FILE, SPACE};
 use crate::serve::serve;
 use crate::new::new;
 use crate::pass::pass;
+use crate::helpers::version::version;
 use std::env;
 use std::process::Command;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
     let state_base = _StateBase::new();
-
     let import_base = ImportBase::new();
 
     if args.len() == 1 {
         let ne = "cream new {project_name} - Create a new project";
         let build = "cream make - Build your project";
+        let serve = "cream serve - Serve or run your project";
+        let vers = "cream version - Output's cream's version that is currently installed";
 
-        let inst = format!("{ne}\n{build}");
+        let inst = format!("{ne}\n{build}\n{serve}\n{vers}");
         println!("{inst}");
     } else {
         let mut map;
@@ -105,7 +105,8 @@ fn main() {
                 map = DspMap::new();
                 map.load(CONFIG_FILE);
                 serve(map)
-            }
+            },
+            "version" => println!("{}", version()),
             &_ => pass(),
         }
     }

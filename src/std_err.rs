@@ -1,5 +1,5 @@
+use crate::helpers::format_colored::format_colored;
 use std::fmt::Display;
-use colored::Colorize;
 use std::process::exit;
 
 pub struct StdErr;
@@ -29,7 +29,7 @@ impl Display for ErrType {
 impl StdErr {
     pub fn exec(type_: ErrType, err: &str) {
         let (r, g, b) = (242, 53, 19);
-        let error = err.truecolor(r, g, b);
+        let error = format_colored(err, r, g, b);
 
         eprintln!("{}: {}", type_.to_string(), error);
         exit(1);

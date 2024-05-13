@@ -3,13 +3,13 @@ use crate::helpers::component_part::ComponentPart;
 use crate::helpers::read_until::read_until;
 use crate::import_base::ImportBase;
 use crate::import_base::ImportType::Libs;
-use crate::js_lib::libs;
+use crate::javascript_lib::libs;
 
 pub fn add_lib(script: &mut String, import_base: &mut ImportBase, lib_name: &str) {
     let string_name = String::from(lib_name);
 
     if import_base.validate(Libs, string_name.clone()) {
-        let resp = libs(lib_name);
+        let resp = libs(lib_name, false);
         import_base.push(Libs, string_name);
         script.insert_str(0, &resp);
     }
@@ -51,7 +51,7 @@ pub fn import_lib_bind(app: &mut String, import_base: &mut ImportBase, f_name: &
             let string_name = String::from(*name);
 
             if import_base.validate(Libs, string_name.clone()) {
-                let resp = libs(name);
+                let resp = libs(name, false);
                 import_base.push(Libs, string_name);
 
                 app.insert_str(0, &resp)
