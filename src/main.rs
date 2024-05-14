@@ -46,38 +46,13 @@ mod serve;
 use crate::dsp_map::DspMap;
 use crate::import_base::ImportBase;
 use crate::state_base::_StateBase;
-use crate::std_err::ErrType::OSError;
-use crate::std_err::StdErr;
 use crate::transpiler::transpile;
-use crate::consts::{CONFIG_FILE, SPACE};
+use crate::consts::{CONFIG_FILE};
+use crate::helpers::version::version;
 use crate::serve::serve;
 use crate::new::new;
 use crate::pass::pass;
-use crate::helpers::version::version;
 use std::env;
-use std::process::Command;
-
-fn exec_command(command: Option<&str>) {
-    match command {
-        Some(c) => {
-            let mut com = c.split(SPACE).collect::<Vec<&str>>();
-            com.retain(|x| !x.is_empty());
-
-            if !com.is_empty() {
-                let a = match Command::new(com[0]).args(com[1..].to_vec()).output() {
-                    Ok(e) => e.stdout,
-                    Err(e) => {
-                        StdErr::exec(OSError, &format!("{}: {}", com[0], &e.to_string()));
-                        Vec::new()
-                    }
-                };
-
-                println!("{}", String::from_utf8_lossy(&a));
-            }
-        }
-        None => pass(),
-    }
-}
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
@@ -100,10 +75,7 @@ fn main() {
             "make" => {
                 map = DspMap::new();
                 map.load(CONFIG_FILE);
-
-                exec_command(map.get("pre_make"));
                 transpile(state_base, import_base, &map);
-                exec_command(map.get("after_make"));
             },
             "serve" => {
                 map = DspMap::new();

@@ -27,7 +27,14 @@ pub fn new(name: &String) {
         ))
         .expect("File exists");
 
-        let mut config = File::create(format!("./{}/config.dsp", name)).expect("File exists");
+        #[cfg(windows)]
+        let shell = "ps1";
+        #[cfg(not(windows))]
+        let shell = "sh";
+
+        let mut make_file = create_file(format!("./{name}/make.{shell}"));
+        let mut config = create_file(format!("./{name}/config.dsp"));
+
         let (build, inst) = if lang == "ts" {
             (
                 "npx tsc",
@@ -37,12 +44,12 @@ pub fn new(name: &String) {
             (NIL, format!("{} ✨", format_colored("Done", 0, 255, 0)))
         };
 
-        create_file(format!("./{}/build/error.html", name));
-        create_file(format!("./{}/build/index.html", name));
-        create_file(format!("./{}/head_prefix.html", name));
+        create_file(format!("./{name}/build/error.html"));
+        create_file(format!("./{name}/build/index.html"));
+        create_file(format!("./{name}/head_prefix.html"));
 
-        create_file(format!("./{}/build/.$.js", name));
-        create_file(format!("./{}/build/.$.ts", name));
+        create_file(format!("./{name}/build/.$.js"));
+        create_file(format!("./{name}/build/.$.ts"));
 
         create_file(format!("./{}/routes.json", name));
 
@@ -56,8 +63,6 @@ static_dir_render$
 name${n}
 lang${lang}
 head_prefix$head_prefix.html
-pre_make$
-after_make$
 build${build}
 pre_start$
 keywords${k}
@@ -83,7 +88,7 @@ app {
         )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
-
+        let _ = make_file.write("cream make\n".as_bytes());
         println!("{inst}");
     }
 }

@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 serde_json = "1.0.104"
 tinyget = { version = "1.0.2", features = ["https"] }
-openssl = { version = "0.10", features = ["vendored"] }
 httparse = "1.8.0"
 
 [profile.release]
