@@ -11,22 +11,21 @@ use crate::scope::{parse_scope, scopify};
 use crate::script_module::module;
 use crate::state_base::_StateBase;
 use crate::std_err::{ErrType::OSError, StdErr};
-use crate::template::template;
 use crate::transpile_component::transpile_component;
 use crate::import_component::import_component;
-use crate::component_args::ComponentArgs;
 use crate::consts::{COMPONENT_CALL_SIGN, COMPONENT_CALL_SIGN_LEN, DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL};
 use crate::helpers::merge_dom_script::merge_dom_script;
 use crate::import_template::import_template;
 use crate::import_html::import_html;
 use crate::import_ext::import_ext;
+use crate::template::template;
 use crate::comment::comment;
-use crate::dsp_map::DspMap;
 use crate::gen_id::gen_id;
 use crate::state::_state;
 use crate::udt::UDT;
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
+use crate::component_map::ComponentMap;
 
 pub struct Component {
     pub html: ComponentMarkUp,
@@ -63,15 +62,13 @@ impl Clone for Component {
 }
 
 pub fn component(
-    f_name: &str,
-    c_name: &str,
-    transpile_command: &str,
-    config: &DspMap,
+    f_name: String,
+    c_name: String,
+    component_map: &mut ComponentMap
 ) -> Component {
     let import_base = &mut ImportBase::new();
     let st = &mut _StateBase::new();
-
-    let component_args = ComponentArgs::new(transpile_command, config);
+    let config = component_map.config();
 
     let __script__ = &String::from("script");
     let lang = config.get("lang").unwrap_or(__script__);
@@ -80,18 +77,15 @@ pub fn component(
     let mut app = read_to_string(path.clone()).unwrap_or_else(|e| {
         StdErr::exec(OSError, &format!("{path}: {}", &e));
         todo!()
-    });
-
-    app = app
-        .lines()
-        .map(|e| e.trim())
-        .collect::<Vec<&str>>()
-        .join("\n");
+    }).lines()
+      .map(|e| e.trim())
+      .collect::<Vec<&str>>()
+      .join("\n");
 
     comment(&mut app);
 
-    let macher = Matcher::Component(c_name);
-    let pat = expect_some(collect_scope(&app, &macher, false), c_name);
+    let macher = Matcher::Component(&c_name);
+    let pat = expect_some(collect_scope(app.as_str(), &macher, false), &c_name);
     let main_app = pat.mp_val();
     let mut dom_script = String::new();
 
@@ -118,11 +112,10 @@ pub fn component(
 
     let mut html = template_mp.mp_val();
 
-    import_script(&mut app, import_base, &mut script, f_name);
-    import_template(&mut app, f_name, &mut html);
+    import_script(&mut app, import_base, &mut script, &f_name);
+    import_template(&mut app, &f_name, &mut html);
 
     let mut cmu = ComponentMarkUp::new(html.clone(), html.clone());
-    let imports = import_component(&mut app, &component_args, f_name);
     let mut ccm = BTreeMap::new();
     let mut scopes = Vec::new();
     let mut dyn_script = script.clone();
@@ -134,22 +127,23 @@ pub fn component(
         import_base,
         true,
         lang,
-        f_name
+        &f_name
     );
 
-    extract_component(&mut ccm, &imports, &mut cmu, f_name);
-
-    import_lib(&mut app, import_base, &mut script, f_name);
-    module(&mut app, import_base, &mut script, f_name);
+    import_lib(&mut app, import_base, &mut script, &f_name);
+    module(&mut app, import_base, &mut script, &f_name);
     parse_scope(&mut script, &mut scopes);
 
     script = script.replace(IGNORE_STATE, NIL).replace(".cam()", "");
 
-    UDT(&mut html, &mut script, &imports, f_name);
-    import_npm(&mut app, &mut script, f_name);
-    scopify(&mut script, scopes, config, st, f_name);
+    import_npm(&mut app, &mut script, &f_name);
+    scopify(&mut script, scopes, config, st, &f_name);
 
-    template(&mut cmu, &mut dom_script, st, f_name);
+    let imports = import_component(&app, f_name.clone(), component_map);
+    extract_component(&mut ccm, &imports, &mut cmu, &f_name);
+    UDT(&mut html, &mut script, &imports, &f_name);
+
+    template(&mut cmu, &mut dom_script, st, &f_name);
 
     let script_writer_ptr = &mut dom_script;
     transpile_component(
@@ -159,9 +153,9 @@ pub fn component(
     );
 
     merge_dom_script(&mut script, &dom_script);
-    _state(&mut script, st, f_name);
-    import_ext(&mut app, f_name, &mut script);
-    import_html(&mut app, f_name, &mut html);
+    _state(&mut script, st, &f_name);
+    import_ext(&mut app, &f_name, &mut script);
+    import_html(&mut app, &f_name, &mut html);
 
     Component::new(
         script,

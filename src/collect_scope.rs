@@ -5,13 +5,13 @@ use crate::mp::Mp;
 pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
     let matchr = matcher.as_str();
 
-    return match toks.find(matchr) {
+    match toks.find(matchr) {
         Some(s) => match matcher {
             Matcher::Component(_) => {
                 let len = matchr.len();
                 let remain = &toks[s + len..];
 
-                return match remain.find('{') {
+                match remain.find('{') {
                     Some(ss) => {
                         let dif = &remain[..ss];
 
@@ -34,7 +34,7 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
                         }
                     }
                     None => collect_scope(remain, &Matcher::Component(matchr), i_s),
-                };
+                }
             }
             Matcher::Template => {
                 if !is_byte_in_str(s, toks) {
@@ -59,5 +59,5 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
             Matcher::Cam => collect_scope(toks, &Matcher::Component("cam"), i_s),
         },
         None => None,
-    };
+    }
 }

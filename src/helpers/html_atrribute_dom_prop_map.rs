@@ -17,7 +17,7 @@ pub fn html_attribute_dom_prop_map() -> BTreeMap<String, Value> {
     let binding = response.unwrap();
     let content = binding.as_str().unwrap();
 
-    let json: Value = serde_json::from_str(&content).unwrap();
+    let json: Value = serde_json::from_str(content).unwrap();
 
     if let Value::Object(map) = json {
         map.into_iter().collect()

@@ -22,7 +22,7 @@ pub fn import_lib(
     f_name: &str
 ) {
     while let Some(e) = app.find("import lib:") {
-        let ci = read_until(&app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
+        let ci = read_until(app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();
@@ -40,7 +40,7 @@ pub fn import_lib(
 
 pub fn import_lib_bind(app: &mut String, import_base: &mut ImportBase, f_name: &str) {
     while let Some(e) = app.find("import lib:") {
-        let ci = read_until(&app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
+        let ci = read_until(app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci].split(',').collect::<Vec<&str>>();

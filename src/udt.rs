@@ -27,7 +27,7 @@ pub fn UDT(
         }
 
         let mut up = e + 7;
-        let len = read_until(&comp_html, ch_len, ">", f_name, ComponentPart::Template);
+        let len = read_until(comp_html, ch_len, ">", f_name, ComponentPart::Template);
 
         while &comp_html[up..up + 1] != ">" && up < len {
             up += 1;
@@ -79,11 +79,11 @@ pub fn UDT(
             }
         }
 
-        let id;
+        
 
         let do_comp = find_component_by_name(imports, do_.to_string())
             .unwrap_or_else(|| panic!("Couldn't find component {}", th));
-        id = IdGen::gen_string();
+        let id = IdGen::gen_string();
 
         comp_html.replace_range(
             fall..up,

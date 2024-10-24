@@ -47,7 +47,7 @@ pub fn template(
     'outer: while let Some(a) = html.find('$') {
         if &html[a - 1..a] == NEW_LINE {
             let mut ti = a;
-            let id_f_d = read_until(&html, a+1, SPACE, f_name, ComponentPart::Unknown);
+            let id_f_d = read_until(html, a+1, SPACE, f_name, ComponentPart::Unknown);
 
             while &html[ti..ti + 1] != ":" {
                 if ti == a + 5 {
@@ -57,7 +57,7 @@ pub fn template(
                 ti += 1;
             }
 
-            let id_x = read_until(&html, id_f_d, SPACE, f_name, ComponentPart::Unknown);
+            let id_x = read_until(html, id_f_d, SPACE, f_name, ComponentPart::Unknown);
 
             let mut n = id_x;
             let mut upd = UpdateIBIS::new(is_byte_in_str(n, html));

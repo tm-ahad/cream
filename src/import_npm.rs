@@ -3,10 +3,11 @@ use crate::consts::{NEW_LINE, NEW_LINE_CHAR, NIL};
 use crate::helpers::component_part::ComponentPart;
 use crate::helpers::read_until::read_until;
 use tinyget::get;
+use crate::std_err::ErrType::NotFound;
 
 pub fn import_npm(app: &mut String, script: &mut String, f_name: &str) {
     while let Some(i) = app.find("import npm:") {
-        let end = read_until(&app, i+11, NEW_LINE, f_name, ComponentPart::Unknown);
+        let end = read_until(app, i+11, NEW_LINE, f_name, ComponentPart::Unknown);
         let pkg = &app[i + 11..end];
 
         let url = format!(
@@ -25,7 +26,7 @@ pub fn import_npm(app: &mut String, script: &mut String, f_name: &str) {
 
             script.insert_str(0, &pack)
         } else {
-            StdErr::exec(PackageError, &format!("Package {pkg} not found"));
+            StdErr::exec(NotFound, &format!("Package {pkg} not found"));
         }
 
         app.replace_range(i..end + 1, NIL)

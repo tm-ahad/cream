@@ -8,7 +8,7 @@ pub fn import_html(app: &mut String, f_name: &str, html: &mut String) {
 
     while let Some(i) = app.find(pat) {
         let start = i+pat.len();
-        let ci = read_until(&app, start, NEW_LINE, f_name, ComponentPart::Unknown);
+        let ci = read_until(app, start, NEW_LINE, f_name, ComponentPart::Unknown);
 
         let cloned = app.clone();
 

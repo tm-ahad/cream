@@ -3,11 +3,12 @@ use std::collections::BTreeMap;
 use std::fs::read_to_string;
 use std::marker::PhantomData;
 
-pub struct DspMap<'a>(BTreeMap<String, String>, &'a PhantomData<*const bool>);
+//PhantomData<&'a *const bool> has no uses it's just fancy ✨
+pub struct DspMap<'a>(BTreeMap<String, String>, PhantomData<&'a *const bool>);
 
 impl<'a> DspMap<'a> {
     pub fn new() -> DspMap<'a> {
-        DspMap(BTreeMap::new(), &PhantomData::<*const bool>)
+        DspMap(BTreeMap::new(), PhantomData::<&*const bool>)
     }
 
     pub fn load(&mut self, path: &str) {

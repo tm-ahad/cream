@@ -1,5 +1,5 @@
 use crate::std_err::{ErrType, StdErr};
-use std::fs::{File, OpenOptions, self};
+use std::fs::{File, OpenOptions};
 
 #[cfg(not(windows))]
 use std::os::unix::fs::PermissionsExt;
@@ -21,8 +21,8 @@ pub fn create_file(path: String) -> File {
         let _ = fs::set_permissions(path.clone(), permissions);
     }
 
-    return options.open(path.clone()).unwrap_or_else(|e| {
+    options.open(path.clone()).unwrap_or_else(|e| {
         StdErr::exec(ErrType::OSError, &format!("Error create file {path}: {e}"));
         todo!()
-    });
+    })
 }

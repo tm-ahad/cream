@@ -20,6 +20,7 @@ pub fn new(name: &String) {
         create_dir(format!("./{}", name)).expect("Directory Exists");
         create_dir(format!("./{}/src", name)).expect("Directory Exists");
         create_dir(format!("./{}/build", name)).expect("Directory Exists");
+        create_dir(format!("./{}/build/routes", name)).expect("Directory Exists");
 
         let mut f = File::create(format!(
             "./{}/src/app.{lang}",
@@ -27,43 +28,24 @@ pub fn new(name: &String) {
         ))
         .expect("File exists");
 
-        #[cfg(windows)]
-        let shell = "ps1";
-        #[cfg(not(windows))]
-        let shell = "sh";
-
-        let mut make_file = create_file(format!("./{name}/make.{shell}"));
         let mut config = create_file(format!("./{name}/config.dsp"));
-
-        let (build, inst) = if lang == "ts" {
-            (
-                "npx tsc",
-                format_colored("Now setup typescript with node js", 255, 204, 000)
-            )
-        } else {
-            (NIL, format!("{} ✨", format_colored("Done", 0, 255, 0)))
-        };
+        let inst = format!("{} ✨", format_colored("Done", 0, 255, 0));
 
         create_file(format!("./{name}/build/error.html"));
         create_file(format!("./{name}/build/index.html"));
         create_file(format!("./{name}/head_prefix.html"));
 
-        create_file(format!("./{name}/build/.$.js"));
-        create_file(format!("./{name}/build/.$.ts"));
-
-        create_file(format!("./{}/routes.json", name));
+        create_file(format!("./src/{}/routes.json", name));
 
         config
             .write_all(
                 format!(
                     "\
-routes$src/routes.json
 static_dir$
 static_dir_render$
 name${n}
 lang${lang}
 head_prefix$head_prefix.html
-build${build}
 pre_start$
 keywords${k}
 author${a}
@@ -87,8 +69,6 @@ app {
             .as_bytes(),
         )
         .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
-
-        let _ = make_file.write("cream make\n".as_bytes());
         println!("{inst}");
     }
 }

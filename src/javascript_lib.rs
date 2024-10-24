@@ -1,5 +1,5 @@
 use crate::consts::NEW_LINE_CHAR;
-use crate::std_err::ErrType::LibraryError;
+use crate::std_err::ErrType::{LibraryError, NotFound};
 use crate::std_err::StdErr;
 use tinyget::get;
 
@@ -17,11 +17,11 @@ pub fn libs(name: &str, is_script: bool) -> String {
         res.push(NEW_LINE_CHAR);
         res
     } else {
-        StdErr::exec(LibraryError, &format!("Package {name} not found"));
+        StdErr::exec(NotFound, &format!("Package {name} not found"));
         todo!()
     }
 }
 
 pub fn private_work_lib() -> String {
-    return libs("private_work_lib.js", true)
+    libs("private_work_lib.js", true)
 }

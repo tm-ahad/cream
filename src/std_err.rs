@@ -9,6 +9,7 @@ pub enum ErrType {
     LibraryError,
     SyntaxError,
     NetError,
+    NotFound,
     OSError
 }
 
@@ -19,7 +20,8 @@ impl Display for ErrType {
             ErrType::LibraryError => "LibraryError",
             ErrType::SyntaxError => "SyntaxError",
             ErrType::NetError => "NetError",
-            ErrType::OSError => "OSError"
+            ErrType::OSError => "OSError",
+            ErrType::NotFound => "NotFound",
         });
 
         write!(f, "{}", str)
@@ -31,7 +33,7 @@ impl StdErr {
         let (r, g, b) = (242, 53, 19);
         let error = format_colored(err, r, g, b);
 
-        eprintln!("{}: {}", type_.to_string(), error);
+        eprintln!("{}: {}", type_, error);
         exit(1);
     }
 }

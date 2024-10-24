@@ -1,6 +1,7 @@
 use crate::consts::{NEW_LINE, NIL};
 
 pub fn comment(app: &mut String) {
+
     while let Some(a) = app.find("//") {
         let mut n = a + 2;
 

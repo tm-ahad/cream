@@ -23,7 +23,7 @@ impl QuotePool {
     }
 
     pub fn push(&mut self, q: Quote) {
-        return match self.0.last() {
+        match self.0.last() {
             Some(a) => {
                 if a.eq(&q) {
                     let len = self.0.len();
@@ -33,7 +33,7 @@ impl QuotePool {
                 }
             }
             None => self.0.push(q),
-        };
+        }
     }
 
     pub fn is_valid(&self) -> bool {

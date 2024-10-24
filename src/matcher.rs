@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 pub enum Matcher<'a> {
     Component(&'a str),
     Template,
@@ -6,15 +8,17 @@ pub enum Matcher<'a> {
     Cam,
 }
 
-impl<'a> ToString for Matcher<'a> {
-    fn to_string(&self) -> String {
-        String::from(match self {
-            Matcher::Template => "<temp>",
-            Matcher::Cam => "cam",
-            Matcher::Sin => "sin",
-            Matcher::Dom => "dom",
-            Matcher::Component(s) => return format!("{s} {}", "{"),
-        })
+impl<'a> Display for Matcher<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Matcher::Template => String::from("<temp>"),
+            Matcher::Cam => String::from("cam"),
+            Matcher::Sin => String::from("sin"),
+            Matcher::Dom => String::from("dom"),
+            Matcher::Component(s) => format!("{s} {}", "{"),
+        };
+
+        write!(f, "{}", str)
     }
 }
 

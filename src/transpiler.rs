@@ -8,7 +8,7 @@ use crate::extract_component::extract_component;
 use crate::gen_id::gen_id;
 use crate::helpers::merge_dom_script::merge_dom_script;
 use crate::transpile_component::transpile_component;
-use crate::transpile_to_js::transpile_script;
+use crate::transpile_to_javascript::transpile_script;
 use crate::import_component::import_component;
 use crate::import_template::import_template;
 use crate::helpers::expected::expect_some;
@@ -30,33 +30,33 @@ use crate::udt::UDT;
 use crate::out::out;
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
+use crate::component_map::ComponentMap;
 
 pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &DspMap) {
     let binding = String::from("script");
     let lang = config.get("lang").unwrap_or(&binding);
 
-    let binding = String::new();
-    let transpile_command = config.get("build").unwrap_or(&binding);
-
     let src = &format!("./src/app.{lang}");
     let mut app = read_to_string(src).expect("Project or app.nts not found");
-    let mut dom_script = String::new();
 
-    app = app
+    // Remove trimming of app after comment is applied
+    comment(&mut app);
+
+    let app_trimmed = app
         .lines()
         .map(|e| e.trim())
         .collect::<Vec<&str>>()
         .join("\n");
 
-    comment(&mut app);
-
+    let mut dom_script = String::new();
     let mut ccm = BTreeMap::new();
     let binding = String::from("app");
     let app_matcher = Matcher::Component(&binding);
 
-    let pat = expect_some(collect_scope(&app, &app_matcher, false), "App component");
+    let pat = expect_some(collect_scope(&app_trimmed, &app_matcher, false), "App component");
     let main_app = pat.mp_val();
 
+    let mut component_map = ComponentMap::new(ComponentArgs::new(config));
     let split = main_app.split('\n');
 
     let mut script = String::new();
@@ -76,7 +76,7 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
         collect_scope(&main_app, &Matcher::Template, false),
         "Template",
     )
-    .mp_val();
+        .mp_val();
 
     remove(&mut script, src);
     import_script(&mut app, &mut import_base, &mut script, src);
@@ -99,16 +99,17 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     module(&mut app, &mut import_base, &mut script, src);
     parse_scope(&mut script, &mut scopes);
 
-    let component_args = ComponentArgs::new(transpile_command, config);
-    let imports = import_component(&mut app, &component_args, src);
+    {
+        let imports = import_component(&app, src.clone(), &mut component_map);
+        extract_component(&mut ccm, &imports, &mut cmu, src);
+        script = script
+            .replace(IGNORE_STATE, NIL)
+            .replace(CAM, NIL);
 
-    extract_component(&mut ccm, &imports, &mut cmu, src);
+        UDT(&mut html, &mut script, &imports, src);
+        drop(imports);
+    }
 
-    script = script
-        .replace(IGNORE_STATE, NIL)
-        .replace(CAM, NIL);
-
-    UDT(&mut html, &mut script, &imports, src);
     import_npm(&mut app, &mut script, src);
     scopify(&mut script, scopes, config, &mut state, src);
 
@@ -126,11 +127,12 @@ pub fn transpile(mut state: _StateBase, mut import_base: ImportBase, config: &Ds
     import_ext(&mut app, src, &mut script);
     import_html(&mut app, src, &mut html);
 
-    transpile_script(lang, transpile_command, &mut script);
-    script.insert_str(0, &router(config));
+    transpile_script(lang, &mut script);
+    script.insert_str(0, &router(&mut component_map));
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);
 
     out(_app_html, cmu.stat, script, config);
 }
+

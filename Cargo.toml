@@ -1,12 +1,25 @@
 [package]
 name = "cream"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 
 [dependencies]
 serde_json = "1.0.104"
 tinyget = { version = "1.0.2", features = ["https"] }
 httparse = "1.8.0"
+
+[dependencies.swc_core]
+version = "0.87.10"
+features = [
+    "__common",
+    "__ecma",
+    "__ecma_transforms",
+    "__visit",
+    "common_tty",
+    "ecma_codegen",
+    "ecma_parser",
+    "ecma_transforms_typescript",
+]
 
 [profile.release]
 codegen-units = 1

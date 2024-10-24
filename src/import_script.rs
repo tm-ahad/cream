@@ -15,7 +15,7 @@ pub fn import_script(
     let pat_len = pat.len();
 
     while let Some(e) = app.find(pat) {
-        let ci = read_until(&app, e+pat_len, NEW_LINE, f_name, ComponentPart::Unknown);
+        let ci = read_until(app, e+pat_len, NEW_LINE, f_name, ComponentPart::Unknown);
 
         let cloned = app.clone();
 

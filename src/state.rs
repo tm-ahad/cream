@@ -33,8 +33,8 @@ pub fn _state(scr: &mut String, b: &mut _StateBase, f_name: &str) {
 
     while let Some(i) = scr.find(IMP_STATE_SIGN) {
         let line_start = i + IMP_STATE_SIGN_LEN;
-        let e = read_until(&scr, line_start, "=", f_name, ComponentPart::Script);
-        let line_end = read_until(&scr, e, NEW_LINE, f_name, ComponentPart::Script);
+        let e = read_until(scr, line_start, "=", f_name, ComponentPart::Script);
+        let line_end = read_until(scr, e, NEW_LINE, f_name, ComponentPart::Script);
 
         let script_len = scr.len();
 
@@ -86,7 +86,7 @@ pub fn _state(scr: &mut String, b: &mut _StateBase, f_name: &str) {
 
             if !is_byte_in_str(e, scr) {
                 let mut line_start = e;
-                let line_end = read_until(&scr, f, NEW_LINE, f_name, ComponentPart::Script);
+                let line_end = read_until(scr, f, NEW_LINE, f_name, ComponentPart::Script);
 
                 while !(
                     &scr[line_start-1..line_start] == NEW_LINE ||

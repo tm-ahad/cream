@@ -14,7 +14,7 @@ pub fn module(
     f_name: &str,
 ) {
     while let Some(e) = app.find("import mod:") {
-        let ci = read_until(&app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
+        let ci = read_until(app, e+11, NEW_LINE, f_name, ComponentPart::Unknown);
 
         let cloned = app.clone();
         let names = &cloned[e + 11..ci]
