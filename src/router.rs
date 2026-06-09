@@ -1,7 +1,7 @@
 use crate::consts::{NEW_LINE_CHAR, NIL};
-use crate::helpers::javascript_function_call::javascript_function_call;
-use crate::component::component;
+use crate::helpers::javascript::javascript_function_call::javascript_function_call;
 use crate::javascript_lib::libs;
+use crate::transpiler::transpile_component_;
 use std::fs::read_to_string;
 use serde_json::{Map, Value};
 use crate::component_map::ComponentMap;
@@ -25,19 +25,20 @@ pub fn router(component_map: &mut ComponentMap) -> String {
 
         for (key, f_name) in map {
             if let Value::String(f_name) = f_name {
-                let comp = component(
+                let comp = transpile_component_(
+                    &mut component_map.component_args.import_base,
+                    &component_map.component_args.config,
                     f_name.clone(),
-                    String::from("Page"),
-                    component_map,
+                    String::from("Page")
                 );
 
                 let script = comp.script.replace("\n\n", NIL);
-                let html = comp.html.stat.replace("\n\n", NIL);
+                let html = comp.html.replace("\n\n", NIL);
 
                 cmap.insert(key, Value::Array(vec![Value::String(html.clone()), Value::String(script.clone())]));
 
                 let config = component_map.config();
-                out(&format!("./build/routes/{f_name}"), html, script, config)
+                out(&format!("./build/routes/{f_name}"), html, script, &config)
             }
         }
 

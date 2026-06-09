@@ -1,3 +1,4 @@
+use crate::component::{Component, cream_dom_name};
 use crate::consts::{NEW_LINE, NIL};
 use crate::dsp_map::DspMap;
 use std::fs::{OpenOptions, read_to_string};
@@ -13,9 +14,10 @@ pub fn out(
     let head = read_to_string(head_prefix.clone())
         .unwrap_or_else(|e| panic!("{head_prefix}: {e}"));
 
-    script = script.replace("\n\n", ";");
-
-    let html = html.replace(NEW_LINE, NIL);
+    let comp = Component::new(String::new(), html, String::new(), String::new());
+    
+    println!("HTML : {} --------------------end------------------", comp.html);
+    let (html, id) = comp.html_rendering_script().unwrap();
 
     let mut file = OpenOptions::new()
         .write(true)
@@ -36,9 +38,11 @@ pub fn out(
     {head}
 </head>
 <body>
-{html}
 <script>
-{script}
+var self;
+{script};
+{html};
+document.body.appendChild({})
 </script>
 <body>
 </html>
@@ -46,7 +50,8 @@ pub fn out(
             config.expect("description"),
             config.expect("keywords"),
             config.expect("author"),
-            config.expect("title")
+            config.expect("title"),
+            cream_dom_name(id)
         )
         .as_bytes(),
     )

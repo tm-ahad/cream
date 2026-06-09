@@ -1,15 +1,16 @@
-use crate::component::{component, Component};
+use crate::component::Component;
 use crate::component_args::ComponentArgs;
+use crate::transpiler::transpile_component_;
 use std::collections::BTreeMap;
 use crate::dsp_map::DspMap;
 
-pub struct ComponentMap<'a> {
+pub struct ComponentMap {
     cache: BTreeMap<String, Component>,
-    component_args: ComponentArgs<'a>
+    pub component_args: ComponentArgs
 }
 
-impl<'a> ComponentMap<'a> {
-    pub fn new(component_args: ComponentArgs<'a>) -> Self {
+impl ComponentMap {
+    pub fn new(component_args: ComponentArgs) -> Self {
         Self {
             cache: BTreeMap::new(),
             component_args
@@ -21,13 +22,19 @@ impl<'a> ComponentMap<'a> {
             return c.clone();
         }
 
-        let new_component = component(f_name, c_name.clone(), self);
+        let new_component = transpile_component_(
+            &mut self.component_args.import_base,
+            &self.component_args.config,
+            f_name,
+            c_name.clone()
+        );
+        
         self.cache.insert(c_name.clone(), new_component);
         self.cache.get(c_name.as_str()).unwrap().clone()
     }
 
 
-    pub fn config(&self) -> &'a DspMap {
-        self.component_args.config
+    pub fn config(&self) -> DspMap {
+        self.component_args.config.clone()
     }
 }

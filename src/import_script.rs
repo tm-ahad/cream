@@ -23,14 +23,12 @@ pub fn import_script(
         app.replace_range(e..ci + 1, NIL);
 
         for name in names {
-            if import_base.validate(Scripts, name.to_string()) {
-                let fmt = format!("./{name}");
-                let resp = read_to_string(&fmt)
-                    .unwrap_or_else(|_| panic!("Script '{fmt}' not found"));
+            let fmt = format!("./{name}");
+            let resp = read_to_string(&fmt)
+                .unwrap_or_else(|_| panic!("Script '{fmt}' not found"));
 
-                import_base.push(Scripts, fmt);
-                script.insert_str(0, &resp)
-            }
+            import_base.push(Scripts, fmt);
+            script.insert_str(0, &resp)
         }
     }
 }

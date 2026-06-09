@@ -1,5 +1,5 @@
 use crate::std_err::{ErrType, StdErr};
-use std::fs::{File, OpenOptions};
+use std::fs::{File, OpenOptions, self};
 
 #[cfg(not(windows))]
 use std::os::unix::fs::PermissionsExt;

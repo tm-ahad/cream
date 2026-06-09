@@ -1,52 +1,94 @@
-use crate::collect_scope::collect_scope;
-use crate::component_markup::ComponentMarkUp;
-use crate::extract_component::extract_component;
-use crate::helpers::expected::expect_some;
-use crate::import_base::ImportBase;
-use crate::import_lib::import_lib;
-use crate::import_npm::import_npm;
-use crate::import_script::import_script;
-use crate::matcher::Matcher;
-use crate::scope::{parse_scope, scopify};
-use crate::script_module::module;
-use crate::state_base::_StateBase;
-use crate::std_err::{ErrType::OSError, StdErr};
-use crate::transpile_component::transpile_component;
-use crate::import_component::import_component;
-use crate::consts::{COMPONENT_CALL_SIGN, COMPONENT_CALL_SIGN_LEN, DOUBLE_QUOTE, IGNORE_STATE, NEW_LINE_CHAR, NIL};
-use crate::helpers::merge_dom_script::merge_dom_script;
-use crate::import_template::import_template;
-use crate::import_html::import_html;
-use crate::import_ext::import_ext;
-use crate::template::template;
-use crate::comment::comment;
-use crate::gen_id::gen_id;
-use crate::state::_state;
-use crate::udt::UDT;
-use std::collections::BTreeMap;
-use std::fs::read_to_string;
-use crate::component_map::ComponentMap;
+use rand::Rng;
+use roxmltree::Node;
+use roxmltree::Error;
+use crate::helpers::javascript::javascript_init_var::javascript_init_var;
+use crate::helpers::javascript::javascript_function_call::javascript_function_call;
+use crate::helpers::javascript::javascript_assign::javascript_assign;
+use crate::helpers::javascript::javascript_string::javascript_string;
 
+#[derive(Debug)]
 pub struct Component {
-    pub html: ComponentMarkUp,
-    pub dyn_script: String,
+    pub html: String,
     pub script: String,
+    pub dom_script: String,
     pub name: String,
 }
+
+pub fn cream_dom_name(id: u64) -> String {format!("cream_element{id}")}
 
 impl Component {
     pub fn new(
         script: String,
-        dyn_script: String,
-        html: ComponentMarkUp,
-        name: String
+        html: String,
+        name: String,
+        dom_script: String
     ) -> Self {
         Component {
             script,
-            dyn_script,
             html,
-            name
+            name,
+            dom_script
         }
+    }
+
+    pub fn html_rendering_script(&self) -> Result<(String, u64), Error>  {
+        let res = roxmltree::Document::parse(&self.html)?;
+        Ok(self.rendering_script_from_desc(res.root_element()))
+    }
+
+    fn rendering_script_from_desc(&self, node: Node) -> (String, u64) {
+        let mut rng = rand::rng();
+        let mut script: String = String::new();
+
+        let root_u64_id = rng.next_u64();
+        let root_id = &cream_dom_name(root_u64_id);
+        script.push_str(&javascript_init_var(
+            root_id,
+            &javascript_function_call("document.createElement", vec![javascript_string(node.tag_name().name())])
+        ));
+        
+        for attr in node.attributes() {
+            if attr.name() == "render" {
+                script.push_str(&javascript_assign("self".to_string(), root_id.clone()));
+                script.push_str(attr.value());
+            } else if attr.name().starts_with("on_") {
+                let event = attr.name()[3..].to_string();
+                script.push_str(&javascript_function_call(
+                    &format!("{}.addEventListener", root_id), 
+                    vec![javascript_string(&event), attr.value().to_string()]
+                ));
+            } else {
+                let value = if attr.value().starts_with('@') {
+                    attr.value()[1..].to_string()
+                } else {
+                    javascript_string(attr.value())
+                };
+
+                script.push_str(&javascript_assign(
+                    format!("{}.{}", root_id, attr.name()),
+                    value
+                ));
+            }
+        }
+
+        for child in node.children() {
+            if child.is_text() {
+                let text = child.text().unwrap();
+                let value = if text.starts_with('@') {
+                    text[1..].to_string()
+                } else {
+                    javascript_string(text)
+                };
+
+                script.push_str(&format!("{}.textContent={};", root_id, value));
+            } else {
+                let rendered_child = self.rendering_script_from_desc(child);
+                script.push_str(&format!("{};", rendered_child.0));
+                script.push_str(&format!("{}.appendChild({});", root_id, &cream_dom_name(rendered_child.1)));
+            }
+        }
+        
+        (script, root_u64_id)
     }
 }
 
@@ -56,119 +98,7 @@ impl Clone for Component {
             name: self.name.clone(),
             script: self.script.clone(),
             html: self.html.clone(),
-            dyn_script: self.dyn_script.clone()
+            dom_script: self.dom_script.clone()
         }
     }
-}
-
-pub fn component(
-    f_name: String,
-    c_name: String,
-    component_map: &mut ComponentMap
-) -> Component {
-    let import_base = &mut ImportBase::new();
-    let st = &mut _StateBase::new();
-    let config = component_map.config();
-
-    let __script__ = &String::from("script");
-    let lang = config.get("lang").unwrap_or(__script__);
-    let path = format!("./{f_name}").replace(DOUBLE_QUOTE, NIL);
-
-    let mut app = read_to_string(path.clone()).unwrap_or_else(|e| {
-        StdErr::exec(OSError, &format!("{path}: {}", &e));
-        todo!()
-    }).lines()
-      .map(|e| e.trim())
-      .collect::<Vec<&str>>()
-      .join("\n");
-
-    comment(&mut app);
-
-    let macher = Matcher::Component(&c_name);
-    let pat = expect_some(collect_scope(app.as_str(), &macher, false), &c_name);
-    let main_app = pat.mp_val();
-    let mut dom_script = String::new();
-
-    let binding = &main_app;
-    let split = binding.split('\n');
-
-    let mut script = String::new();
-    let binding = Matcher::Template.to_string();
-    let t = binding.as_str();
-
-    for s in split {
-        if s != t {
-            script.push(NEW_LINE_CHAR);
-            script.push_str(s)
-        } else {
-            break;
-        }
-    }
-
-    let template_mp = expect_some(
-        collect_scope(&main_app, &Matcher::Template, false),
-        "Template",
-    );
-
-    let mut html = template_mp.mp_val();
-
-    import_script(&mut app, import_base, &mut script, &f_name);
-    import_template(&mut app, &f_name, &mut html);
-
-    let mut cmu = ComponentMarkUp::new(html.clone(), html.clone());
-    let mut ccm = BTreeMap::new();
-    let mut scopes = Vec::new();
-    let mut dyn_script = script.clone();
-
-    gen_id(
-        &mut script,
-        &mut dyn_script,
-        &mut cmu,
-        import_base,
-        true,
-        lang,
-        &f_name
-    );
-
-    import_lib(&mut app, import_base, &mut script, &f_name);
-    module(&mut app, import_base, &mut script, &f_name);
-    parse_scope(&mut script, &mut scopes);
-
-    script = script.replace(IGNORE_STATE, NIL).replace(".cam()", "");
-
-    import_npm(&mut app, &mut script, &f_name);
-    scopify(&mut script, scopes, config, st, &f_name);
-
-    let imports = import_component(&app, f_name.clone(), component_map);
-    extract_component(&mut ccm, &imports, &mut cmu, &f_name);
-    UDT(&mut html, &mut script, &imports, &f_name);
-
-    template(&mut cmu, &mut dom_script, st, &f_name);
-
-    let script_writer_ptr = &mut dom_script;
-    transpile_component(
-        ccm,
-        script_writer_ptr,
-        &mut cmu
-    );
-
-    merge_dom_script(&mut script, &dom_script);
-    _state(&mut script, st, &f_name);
-    import_ext(&mut app, &f_name, &mut script);
-    import_html(&mut app, &f_name, &mut html);
-
-    Component::new(
-        script,
-        dyn_script,
-        cmu,
-        c_name.to_string(),
-    )
-}
-
-pub fn component_call(id: u32) -> String {
-    format!("{}{id}", COMPONENT_CALL_SIGN)
-}
-
-pub fn component_call_len(dnl: usize) -> usize {
-    COMPONENT_CALL_SIGN_LEN + dnl
 }

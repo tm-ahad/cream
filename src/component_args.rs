@@ -1,13 +1,15 @@
-use crate::dsp_map::DspMap;
+use crate::{dsp_map::DspMap, import_base::ImportBase};
 
-pub struct ComponentArgs<'a> {
-    pub config: &'a DspMap<'a>,     //Config map
+pub struct ComponentArgs {
+    pub config: DspMap,
+    pub import_base: ImportBase
 }
 
-impl<'a> ComponentArgs<'a> {
-    pub fn new(config: &'a DspMap<'a>) -> Self {
+impl ComponentArgs {
+    pub fn new(config: DspMap, import_base: ImportBase) -> Self {
         ComponentArgs {
-            config
+            config,
+            import_base
         }
     }
 }

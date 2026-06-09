@@ -1,0 +1,4 @@
+
+pub fn javascript_init_var(name: &str, value: &str) -> String {
+    format!(";let {name}={value};")
+}

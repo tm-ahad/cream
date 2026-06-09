@@ -1,14 +1,13 @@
 use crate::pass::pass;
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
-use std::marker::PhantomData;
 
 //PhantomData<&'a *const bool> has no uses it's just fancy ✨
-pub struct DspMap<'a>(BTreeMap<String, String>, PhantomData<&'a *const bool>);
+pub struct DspMap(BTreeMap<String, String>);
 
-impl<'a> DspMap<'a> {
-    pub fn new() -> DspMap<'a> {
-        DspMap(BTreeMap::new(), PhantomData::<&*const bool>)
+impl DspMap {
+    pub fn new() -> DspMap {
+        DspMap(BTreeMap::new())
     }
 
     pub fn load(&mut self, path: &str) {
@@ -43,5 +42,11 @@ impl<'a> DspMap<'a> {
         self.0
             .get(prop)
             .unwrap_or_else(|| panic!("Property {prop} not found on configuration"))
+    }
+}
+
+impl Clone for DspMap {
+    fn clone(&self) -> Self {
+        DspMap(self.0.clone())
     }
 }

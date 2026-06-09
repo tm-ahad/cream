@@ -7,12 +7,7 @@ use crate::javascript_lib::libs;
 
 pub fn add_lib(script: &mut String, import_base: &mut ImportBase, lib_name: &str) {
     let string_name = String::from(lib_name);
-
-    if import_base.validate(Libs, string_name.clone()) {
-        let resp = libs(lib_name, false);
-        import_base.push(Libs, string_name);
-        script.insert_str(0, &resp);
-    }
+    import_base.push(Libs, string_name);
 }
 
 pub fn import_lib(
@@ -50,12 +45,10 @@ pub fn import_lib_bind(app: &mut String, import_base: &mut ImportBase, f_name: &
         for name in names {
             let string_name = String::from(*name);
 
-            if import_base.validate(Libs, string_name.clone()) {
-                let resp = libs(name, false);
-                import_base.push(Libs, string_name);
+            let resp = libs(name, false);
+            import_base.push(Libs, string_name);
 
-                app.insert_str(0, &resp)
-            }
+            app.insert_str(0, &resp)
         }
     }
 }

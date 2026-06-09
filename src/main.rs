@@ -2,13 +2,9 @@ mod collect_scope;
 mod comment;
 mod component;
 mod component_args;
-mod component_markup;
 mod consts;
 mod dsp_map;
-mod extract_component;
-mod gen_id;
 mod helpers;
-mod id_gen;
 mod import_base;
 mod import_lib;
 mod import_npm;
@@ -25,15 +21,10 @@ mod remove;
 mod router;
 mod scope;
 mod script_module;
-mod state;
-mod state_base;
 mod std_err;
 mod template;
-mod template_type;
-mod transpile_component;
 mod transpile_to_javascript;
 mod transpiler;
-mod udt;
 mod var_not_allowed;
 mod import_component;
 mod parsable_format;
@@ -45,8 +36,7 @@ mod component_map;
 
 use crate::dsp_map::DspMap;
 use crate::import_base::ImportBase;
-use crate::state_base::_StateBase;
-use crate::transpiler::transpile;
+use crate::transpiler::transpile_component_;
 use crate::consts::{CONFIG_FILE};
 use crate::helpers::version::version;
 use crate::serve::serve;
@@ -56,8 +46,7 @@ use std::env;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
-    let state_base = _StateBase::new();
-    let import_base = ImportBase::new();
+    let mut import_base = ImportBase::new();
 
     if args.len() == 1 {
         let ne = "cream new {project_name} - Create a new project";
@@ -75,7 +64,16 @@ fn main() {
             "make" => {
                 map = DspMap::new();
                 map.load(CONFIG_FILE);
-                transpile(state_base, import_base, &map);
+
+                let app_file = format!("src/app.{}", map.expect("lang"));
+                let app_comp = transpile_component_(&mut import_base, &map, app_file, "app".to_string());
+
+                out::out(
+                    map.get("build").unwrap_or("build/app.html"), 
+                    app_comp.html,
+                    format!("{}{}", app_comp.script, app_comp.dom_script),
+                    &map
+                );
             },
             "serve" => {
                 map = DspMap::new();

@@ -5,7 +5,7 @@ use crate::helpers::component_part::ComponentPart;
 use crate::helpers::read_until::read_until;
 use crate::pass::pass;
 
-pub fn import_component(app: &str, f_name: String, component_map: &mut ComponentMap<'_>) -> Vec<Component> {
+pub fn import_component(app: &str, f_name: String, component_map: &mut ComponentMap) -> Vec<Component> {
     let mut components = Vec::new();
 
     match app.find(IC_TOKEN) {
@@ -14,10 +14,10 @@ pub fn import_component(app: &str, f_name: String, component_map: &mut Component
             let r_c_meta_data = &app[a+IC_TOKEN_LEN..n];
 
             if let Some(i) = r_c_meta_data.find(FROM_TOKEN) {
-                let (mut component_name, _) = r_c_meta_data.split_at(i);
+                let (mut component_name, f_name) = r_c_meta_data.split_at(i);
+                let f_name = &f_name[4..] . trim();
                 component_name = component_name.trim();
-
-                components.push(component_map.get(f_name.clone(), component_name.to_string()).clone());
+                components.push(component_map.get(f_name.to_string(), component_name.to_string()).clone());
             }
         },
         None => pass()
