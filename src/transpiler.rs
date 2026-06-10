@@ -10,7 +10,7 @@ use crate::import_component::import_component;
 use crate::import_template::import_template;
 use crate::helpers::expected::expect_some;
 use crate::import_script::import_script;
-use crate::scope::{parse_scope, scopify};
+use crate::scope::parse_scope;
 use crate::import_html::import_html;
 use crate::import_base::ImportBase;
 use crate::import_lib::import_lib;
@@ -18,10 +18,8 @@ use crate::import_npm::import_npm;
 use crate::script_module::module;
 
 use crate::import_ext::import_ext;
-use crate::template::template;
 use crate::matcher::Matcher;
 use crate::remove::remove;
-use crate::router::router;
 use std::fs::read_to_string;
 use crate::component_map::ComponentMap;
 
@@ -43,10 +41,8 @@ pub fn transpile_component_(
         .collect::<Vec<&str>>()
         .join("\n");
 
-    let mut dom_script = String::new();
     let binding = c_name.clone();
     let app_matcher = Matcher::Component(&binding);
-
     let pat = expect_some(collect_scope(&app_trimmed, &app_matcher, false), &*format!("{c_name} component"));
     let main_app = pat.mp_val();
 
@@ -84,21 +80,17 @@ pub fn transpile_component_(
     parse_scope(&mut script, &mut scopes);
 
     import_npm(&mut app, &mut script, &f_name);
-
-    let script_writer_ptr = &mut dom_script;
     
     import_ext(&mut app, &f_name, &mut script);
     import_html(&mut app, &f_name, &mut html);
 
     transpile_script(lang, &mut script);
-    script.insert_str(0, &router(&mut component_map));
 
     let binding = String::from(DEFAULT_COMPILATION_PATH);
     let _app_html = config.get("_app_html").unwrap_or(&binding);
 
     import_base.patch(&mut script);
-    println!("{}", script);
-        {
+    {
         let imports = import_component(&app, f_name.to_string(), &mut component_map);
 
         for comp in imports {
@@ -107,7 +99,8 @@ pub fn transpile_component_(
         script = script
             .replace(IGNORE_STATE, NIL)
             .replace(CAM, NIL);
+
     }
-    Component::new(script, html, c_name, dom_script)
+    Component::new(script, html, c_name, String::new())
 }
 

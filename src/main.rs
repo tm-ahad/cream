@@ -34,9 +34,10 @@ mod import_html;
 mod serve;
 mod component_map;
 
+use crate::component_args::ComponentArgs;
+use crate::component_map::ComponentMap;
 use crate::dsp_map::DspMap;
 use crate::import_base::ImportBase;
-use crate::transpiler::transpile_component_;
 use crate::consts::{CONFIG_FILE};
 use crate::helpers::version::version;
 use crate::serve::serve;
@@ -46,7 +47,7 @@ use std::env;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
-    let mut import_base = ImportBase::new();
+    let import_base = ImportBase::new();
 
     if args.len() == 1 {
         let ne = "cream new {project_name} - Create a new project";
@@ -64,16 +65,8 @@ fn main() {
             "make" => {
                 map = DspMap::new();
                 map.load(CONFIG_FILE);
-
-                let app_file = format!("src/app.{}", map.expect("lang"));
-                let app_comp = transpile_component_(&mut import_base, &map, app_file, "app".to_string());
-
-                out::out(
-                    map.get("build").unwrap_or("build/app.html"), 
-                    app_comp.html,
-                    format!("{}{}", app_comp.script, app_comp.dom_script),
-                    &map
-                );
+                let mut comp_map = ComponentMap::new(ComponentArgs::new(map, import_base));
+                router::router(&mut comp_map);
             },
             "serve" => {
                 map = DspMap::new();

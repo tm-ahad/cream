@@ -1,23 +1,41 @@
-use crate::consts::{NEW_LINE_CHAR, NIL};
-use crate::helpers::javascript::javascript_function_call::javascript_function_call;
-use crate::javascript_lib::libs;
+use crate::consts::NIL;
 use crate::transpiler::transpile_component_;
-use std::fs::read_to_string;
-use serde_json::{Map, Value};
 use crate::component_map::ComponentMap;
+use std::{fs::{self, read_to_string}, io::Error, path::Path};
+use serde_json::{Map, Value};
 use crate::out::out;
 
-pub fn router(component_map: &mut ComponentMap) -> String {
-    let path = "src/routes.json";
+fn clear_dir(path: &Path) -> Result<(), Error> {
+    if !path.is_dir() {
+        return Ok(())
+    }
 
+    for child in fs::read_dir(path)? {
+        let path = child?.path();
+
+        if path.is_dir() {
+            fs::remove_dir_all(path)?;
+        } else {
+            fs::remove_file(path)?;
+        }
+    }
+
+    Ok(())
+}
+
+pub fn router(component_map: &mut ComponentMap) {
+    let bind = component_map.config();
+    let path = bind.expect("routes");
+
+    let _ = clear_dir(Path::new("./build"));
     let raw = match read_to_string(path) {
         Ok(content) => content,
-        Err(_) => return String::new(),
+        Err(_) => panic!("cannot open router"),
     };
 
     let val = match serde_json::from_str::<Value>(&raw) {
         Ok(v) => v,
-        Err(_) => return String::new(),
+        Err(_) => panic!("invalid router json"),
     };
 
     if let Value::Object(map) = val {
@@ -35,23 +53,13 @@ pub fn router(component_map: &mut ComponentMap) -> String {
                 let script = comp.script.replace("\n\n", NIL);
                 let html = comp.html.replace("\n\n", NIL);
 
-                cmap.insert(key, Value::Array(vec![Value::String(html.clone()), Value::String(script.clone())]));
+                cmap.insert(key.clone(), Value::Array(vec![Value::String(html.clone()), Value::String(script.clone())]));
 
                 let config = component_map.config();
-                out(&format!("./build/routes/{f_name}"), html, script, &config)
+                let key = if key == "error" {key} else {key.replace("/", ":")};
+                out(&format!("./build/{key}", ), html, script, &config)
             }
         }
-
-        let enc = serde_json::to_string(&cmap).unwrap();
-        let mut _router = libs("router.js", true);
-        _router.push(NEW_LINE_CHAR);
-
-        return format!(
-            "{}\n{}\n",
-            _router,
-            javascript_function_call("router", vec![enc])
-        )
     }
 
-    String::new()
 }

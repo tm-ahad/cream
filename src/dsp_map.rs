@@ -12,7 +12,6 @@ impl DspMap {
 
     pub fn load(&mut self, path: &str) {
         let cont = read_to_string(path).unwrap_or_else(|e| panic!("{e}"));
-
         let lines = cont.lines();
 
         for lin in lines {

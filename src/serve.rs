@@ -1,5 +1,7 @@
 use crate::dsp_map::DspMap;
+use crate::std_err::ErrType;
 use std::collections::BTreeMap;
+use std::path::{Component, Path};
 use httparse::Request;
 use std::fs;
 use std::io::{Error, Read, Write};
@@ -15,10 +17,21 @@ pub fn read(path: &str) -> Result<String, Error> {
     }
 }
 
+fn serve_file(path: String, err: String) -> (String, String) {
+    let path = if path.is_empty() {"/"} else {&path};
+    let _path = path.replace("/", ":");
+    match fs::read_to_string(format!("./build/{}", _path)) {
+        Ok(content) => ("HTTP/1.1 200 OK\r\n".to_string(), content),
+        Err(_) => ("HTTP/1.1 404 Not Found\r\n".to_string(), err),
+    }
+}
+
 pub fn serve(map: DspMap) {
     let port = map.get("port").unwrap_or_else(|| panic!("Port not found on config.dsp"));
     let host = format!("127.0.0.1:{}", port);
     let server = TcpListener::bind(host.clone()).unwrap();
+
+    let err = fs::read_to_string("./build/error").unwrap();
     println!("crème brûlée servie sur http://{host}");
 
     for mut stream in server.incoming().flatten() {
@@ -35,6 +48,15 @@ pub fn serve(map: DspMap) {
                     let static_dir_render = map.get("static_dir_render")
                         .unwrap_or_else(|| panic!("Static dir render not found"));
 
+                    let path = Path::new(path)
+                        .components()
+                        .map(|c| match c {
+                            Component::Normal(os_str) => os_str.to_string_lossy().to_string(),
+                            _ => String::new(), // ignore RootDir, Prefix, etc.
+                        })
+                        .collect::<Vec<String>>()
+                        .join("/");
+                    
                     let (resp_type, content) = if path.starts_with(static_dir_render) {
                         let static_dir = map.get("static_dir").unwrap_or_else(|| panic!("Static dir not found"));
                         let len = static_dir_render.len();
@@ -44,23 +66,11 @@ pub fn serve(map: DspMap) {
                         file_path.push_str(&path[len..]);
 
                         match read(&file_path) {
-                            Ok(content) => ("HTTP/1.1 200 OK\r\n", content.to_string()),
-                            Err(_) => {
-                                let _app_html = map.get("_app_html").unwrap_or_else(|| panic!("_app_html not found"));
-
-                                match fs::read_to_string(format!("./{}", _app_html)) {
-                                    Ok(content) => ("HTTP/1.1 200 OK\r\n", content),
-                                    Err(_) => ("HTTP/1.1 404 Not Found\r\n", String::from("404 Page Not Found")),
-                                }
-                            },
+                            Ok(content) => ("HTTP/1.1 200 OK\r\n".to_string(), content.to_string()),
+                            Err(_) => serve_file(path, err.clone()),
                         }
                     } else {
-                        let _app_html = map.get("_app_html").unwrap_or_else(|| panic!("_app_html not found"));
-
-                        match fs::read_to_string(format!("./{}", _app_html)) {
-                            Ok(content) => ("HTTP/1.1 200 OK\r\n", content),
-                            Err(_) => ("HTTP/1.1 404 Not Found\r\n", String::from("404 Page Not Found")),
-                        }
+                        serve_file(path.to_string(), err.clone())
                     };
 
                     let response = format!("{}Content-Length: {}\r\n\r\n{}", resp_type, content.len(), content);

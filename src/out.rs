@@ -1,13 +1,24 @@
 use crate::component::{Component, cream_dom_name};
-use crate::consts::{NEW_LINE, NIL};
 use crate::dsp_map::DspMap;
-use std::fs::{OpenOptions, read_to_string};
-use std::io::Write;
+use std::fs::{self, read_to_string};
+use std::path::Path;
+
+
+fn write_file(path: &str, contents: &str) -> std::io::Result<()> {
+    let path = Path::new(path);
+
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+
+    fs::write(path, contents)?;
+    Ok(())
+}
 
 pub fn out(
     path: &str,
     html: String,
-    mut script: String,
+    script: String,
     config: &DspMap
 ) {
     let head_prefix = format!("./{}", config.expect("head_prefix"));
@@ -15,18 +26,10 @@ pub fn out(
         .unwrap_or_else(|e| panic!("{head_prefix}: {e}"));
 
     let comp = Component::new(String::new(), html, String::new(), String::new());
-    
-    println!("HTML : {} --------------------end------------------", comp.html);
     let (html, id) = comp.html_rendering_script().unwrap();
 
-    let mut file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open(path)
-        .unwrap_or_else(|e| panic!("{}", e));
-
-    file.write_all(
-        format!(
+    write_file(&path,
+        &format!(
             "
 <!DOCTYPE html>
 <html lang=\"en\">
@@ -52,8 +55,7 @@ document.body.appendChild({})
             config.expect("author"),
             config.expect("title"),
             cream_dom_name(id)
-        )
-        .as_bytes(),
+        ),
     )
     .unwrap_or_else(|e| panic!("{}", e));
 }
