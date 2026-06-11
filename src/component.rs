@@ -1,6 +1,7 @@
 use rand::Rng;
 use roxmltree::Node;
 use roxmltree::Error;
+use crate::helpers::javascript::javascript_function::javascript_function;
 use crate::helpers::javascript::javascript_init_var::javascript_init_var;
 use crate::helpers::javascript::javascript_function_call::javascript_function_call;
 use crate::helpers::javascript::javascript_assign::javascript_assign;
@@ -15,6 +16,14 @@ pub struct Component {
 }
 
 pub fn cream_dom_name(id: u64) -> String {format!("cream_element{id}")}
+
+fn preproccess_attr_value(value: String) -> String {
+    if value.starts_with('@') {
+        value[1..].to_string()
+    } else {
+        javascript_string(&value)
+    }
+}
 
 impl Component {
     pub fn new(
@@ -32,7 +41,7 @@ impl Component {
     }
 
     pub fn html_rendering_script(&self) -> Result<(String, u64), Error>  {
-        let res = roxmltree::Document::parse(&self.html)?;
+        let res = roxmltree::Document::parse(&self.html.trim())?;
         Ok(self.rendering_script_from_desc(res.root_element()))
     }
 
@@ -42,45 +51,61 @@ impl Component {
 
         let root_u64_id = rng.next_u64();
         let root_id = &cream_dom_name(root_u64_id);
-        script.push_str(&javascript_init_var(
-            root_id,
-            &javascript_function_call("document.createElement", vec![javascript_string(node.tag_name().name())])
-        ));
-        
-        for attr in node.attributes() {
-            if attr.name() == "render" {
-                script.push_str(&javascript_assign("self".to_string(), root_id.clone()));
-                script.push_str(attr.value());
-            } else if attr.name().starts_with("on_") {
-                let event = attr.name()[3..].to_string();
-                script.push_str(&javascript_function_call(
-                    &format!("{}.addEventListener", root_id), 
-                    vec![javascript_string(&event), attr.value().to_string()]
-                ));
-            } else {
-                let value = if attr.value().starts_with('@') {
-                    attr.value()[1..].to_string()
-                } else {
-                    javascript_string(attr.value())
-                };
 
-                script.push_str(&javascript_assign(
-                    format!("{}.{}", root_id, attr.name()),
-                    value
-                ));
+        let root_def = if node.tag_name().name() == "temp" {
+            &javascript_function_call("document.createDocumentFragment", vec![])
+        } else {
+            &javascript_function_call("document.createElement", vec![javascript_string(node.tag_name().name())])
+        };
+
+        script.push_str(&javascript_init_var(root_id,&root_def));
+        if node.tag_name().name() != "temp" {
+            for attr in node.attributes() {
+                if attr.name() == "render" {
+                    script.push_str(&javascript_assign("self".to_string(), root_id.to_string()));
+                    script.push_str(attr.value());
+                } else if attr.name().starts_with("on_") {
+                    let event = attr.name()[3..].to_string();
+                    script.push_str(&javascript_function_call(
+                        &format!("{}.addEventListener", root_id), 
+                        vec![javascript_string(&event), attr.value().to_string()]
+                    ));
+                } else if attr.name() == "key" {
+                    let value = preproccess_attr_value(attr.value().to_string());
+                    script.push_str(&format!("elements[{}] = {}", value, root_id));
+                } else if attr.name().starts_with("bind_") {
+                    let prop = &attr.name()[5..];
+                    script.push_str(&format!(
+                        ";{}.entangle({});", attr.value(),
+                        javascript_function(
+                            String::new(), 
+                            javascript_assign(format!("{}.{}", root_id, prop), "v".to_string()), 
+                            vec!["v".to_string()]
+                        )
+                    ));
+                } else {
+                    let value = preproccess_attr_value(attr.value().to_string());
+
+                    script.push_str(&javascript_assign(
+                        format!("{}.{}", root_id, attr.name()),
+                        value
+                    ));
+                }
             }
         }
 
         for child in node.children() {
             if child.is_text() {
-                let text = child.text().unwrap();
+                let text = child.text().unwrap().trim();
                 let value = if text.starts_with('@') {
                     text[1..].to_string()
                 } else {
                     javascript_string(text)
                 };
 
-                script.push_str(&format!("{}.textContent={};", root_id, value));
+                if !text.is_empty() {   
+                    script.push_str(&format!("{}.textContent={};", root_id, value));
+                }
             } else {
                 let rendered_child = self.rendering_script_from_desc(child);
                 script.push_str(&format!("{};", rendered_child.0));

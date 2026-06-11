@@ -1,12 +1,18 @@
 use crate::component::{Component, cream_dom_name};
 use crate::dsp_map::DspMap;
 use std::fs::{self, read_to_string};
+use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_allocator::Allocator;
+use oxc_parser::{ParseOptions, Parser};
+use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
+use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
+use oxc_transformer::{TransformOptions, Transformer};
 use std::path::Path;
 
 
 fn write_file(path: &str, contents: &str) -> std::io::Result<()> {
     let path = Path::new(path);
-
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -27,6 +33,49 @@ pub fn out(
 
     let comp = Component::new(String::new(), html, String::new(), String::new());
     let (html, id) = comp.html_rendering_script().unwrap();
+    let min_opt = MinifierOptions::default();
+    let min = Minifier::new(min_opt);
+
+    let unopt_script = format!("var elements = {{}};
+        var self = document.body;
+        {script};
+        {html};
+        document.body.appendChild({})
+    ", cream_dom_name(id));
+
+    let source_type = SourceType::from_path("<unknown>.ts").unwrap();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, &unopt_script, source_type)
+        .with_options(ParseOptions { parse_regular_expression: true, ..ParseOptions::default() })
+        .parse();
+    let mut program = ret.program;
+    let transform_options = TransformOptions::default();
+    
+    let semantic_ret = SemanticBuilder::new()
+        .build(&program);
+
+    let scoping = semantic_ret.semantic.into_scoping();
+    let transformer = Transformer::new(
+        &allocator,
+        Path::new("<unkown>.js"),
+        &transform_options,
+    );
+    
+    let _ = transformer.build_with_scoping(scoping, &mut program);
+
+    let _ = min.minify(&allocator, &mut program);
+    let opt_script = Codegen::new()
+        .with_options(CodegenOptions {
+            minify: !cfg!(debug_assertions),
+            single_quote: true,
+            comments: CommentOptions::disabled(),
+            ..Default::default()
+        })
+        .with_source_type(SourceType::mjs())
+        .build(&program)
+        .code;
+
+    
 
     write_file(&path,
         &format!(
@@ -41,20 +90,14 @@ pub fn out(
     {head}
 </head>
 <body>
-<script>
-var self;
-{script};
-{html};
-document.body.appendChild({})
-</script>
+<script>{opt_script}</script>
 <body>
 </html>
 ",
             config.expect("description"),
             config.expect("keywords"),
             config.expect("author"),
-            config.expect("title"),
-            cream_dom_name(id)
+            config.expect("title")
         ),
     )
     .unwrap_or_else(|e| panic!("{}", e));

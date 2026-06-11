@@ -9,10 +9,13 @@ tinyget = { version = "1.0.2", features = ["https"] }
 httparse = "1.8.0"
 roxmltree = "0.21.1"
 rand = "0.10.1"
-oxc_allocator = "0.134.0"
-oxc_parser = "0.134.0"
-oxc_span = "0.134.0"
-oxc_codegen = "0.134.0"
+oxc_transformer = "0.135.0"
+oxc_allocator = "0.135.0"
+oxc_minifier = "0.135.0"
+oxc_semantic = "0.135.0"
+oxc_codegen = "0.135.0"
+oxc_parser = "0.135.0"
+oxc_span = "0.135.0"
 
 
 [profile.release]

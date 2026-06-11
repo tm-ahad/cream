@@ -7,7 +7,7 @@ use crate::helpers::read_until::read_until;
 pub fn module(
     app: &mut String,
     import_base: &mut ImportBase,
-    script: &mut String,
+    _script: &mut String,
     f_name: &str,
 ) {
     while let Some(e) = app.find("import mod:") {

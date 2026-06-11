@@ -8,7 +8,6 @@ pub enum ErrType {
     PackageError,
     LibraryError,
     SyntaxError,
-    NetError,
     NotFound,
     OSError
 }
@@ -19,7 +18,6 @@ impl Display for ErrType {
             ErrType::PackageError => "PackageError",
             ErrType::LibraryError => "LibraryError",
             ErrType::SyntaxError => "SyntaxError",
-            ErrType::NetError => "NetError",
             ErrType::OSError => "OSError",
             ErrType::NotFound => "NotFound",
         });

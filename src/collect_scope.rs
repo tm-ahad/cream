@@ -40,17 +40,13 @@ pub fn collect_scope(toks: &str, matcher: &Matcher, i_s: bool) -> Option<Mp> {
             let remain = &toks[start_idx..];
             if let Some(close_tag_idx) = remain.find("</temp>") {
                 let content = remain
-                    .get(6..close_tag_idx)
+                    .get(..close_tag_idx+7)
                     .unwrap_or("")
                     .to_string();
-                return Some(Mp::new(content, start_idx + 6, None));
+                return Some(Mp::new(content, start_idx, None));
             } else {
                 panic!("</temp> expected to end the template scope");
             }
-        },
-        // For Dom, Sin, Cam, delegate to Component matcher with the respective name
-        Matcher::Dom => collect_scope(toks, &Matcher::Component("dom"), i_s),
-        Matcher::Sin => collect_scope(toks, &Matcher::Component("sin"), i_s),
-        Matcher::Cam => collect_scope(toks, &Matcher::Component("cam"), i_s)
+        }
     }
 }

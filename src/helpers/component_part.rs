@@ -1,16 +1,8 @@
 
-pub enum ComponentPart {
-    Template,
-    Unknown,
-    Script
-}
+pub enum ComponentPart {Unknown}
 
 impl ComponentPart {
     pub fn to_raw_string(&self) -> String {
-        String::from(match self {
-            ComponentPart::Template => "template",
-            ComponentPart::Unknown => "unknown",
-            ComponentPart::Script => "script",
-        })
+        String::from("unknown")
     }
 }

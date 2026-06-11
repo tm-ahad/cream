@@ -21,7 +21,3 @@ pub fn libs(name: &str, is_script: bool) -> String {
         todo!()
     }
 }
-
-pub fn private_work_lib() -> String {
-    libs("private_work_lib.js", true)
-}

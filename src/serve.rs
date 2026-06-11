@@ -1,11 +1,10 @@
 use crate::dsp_map::DspMap;
-use crate::std_err::ErrType;
 use std::collections::BTreeMap;
 use std::path::{Component, Path};
 use httparse::Request;
-use std::fs;
 use std::io::{Error, Read, Write};
 use std::net::TcpListener;
+use std::fs;
 
 static CACHE: BTreeMap<String, String> = BTreeMap::new();
 
@@ -56,8 +55,13 @@ pub fn serve(map: DspMap) {
                         })
                         .collect::<Vec<String>>()
                         .join("/");
+
+                    let only_path = match path.split_once('?') {
+                        Some((p, _)) => p,
+                        None => path.as_str(),
+                    };
                     
-                    let (resp_type, content) = if path.starts_with(static_dir_render) {
+                    let (resp_type, content) = if only_path.starts_with(static_dir_render) {
                         let static_dir = map.get("static_dir").unwrap_or_else(|| panic!("Static dir not found"));
                         let len = static_dir_render.len();
                         let mut file_path = static_dir.to_string();
@@ -67,10 +71,10 @@ pub fn serve(map: DspMap) {
 
                         match read(&file_path) {
                             Ok(content) => ("HTTP/1.1 200 OK\r\n".to_string(), content.to_string()),
-                            Err(_) => serve_file(path, err.clone()),
+                            Err(_) => serve_file(only_path.to_string(), err.clone()),
                         }
                     } else {
-                        serve_file(path.to_string(), err.clone())
+                        serve_file(only_path.to_string(), err.clone())
                     };
 
                     let response = format!("{}Content-Length: {}\r\n\r\n{}", resp_type, content.len(), content);

@@ -1,7 +1,7 @@
 use crate::{component::{Component, cream_dom_name}, helpers::javascript::{javascript_function::javascript_function, javascript_function_call::javascript_function_call}};
 use crate::helpers::javascript::javascript_assign::javascript_assign;
 
-pub fn write_component(comp: Component) -> String{
+pub fn write_component(comp: Component) -> String {
     let rendered_html = comp.html_rendering_script().map_err(|e| format!("roxmltree: {e}")).unwrap();
     let script = format!("{}{}{}",
         format!("{};{}", comp.script, comp.dom_script),
