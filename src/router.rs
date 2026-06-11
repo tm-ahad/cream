@@ -50,8 +50,8 @@ pub fn router(component_map: &mut ComponentMap) {
                     String::from("Page")
                 );
 
-                let script = comp.script.replace("\n\n", NIL);
-                let html = comp.html.replace("\n\n", NIL);
+                let script = comp.script;
+                let html = comp.html;
 
                 cmap.insert(key.clone(), Value::Array(vec![Value::String(html.clone()), Value::String(script.clone())]));
 

@@ -5,7 +5,7 @@ function particle<T>(value: T) {
     let subs: Array<EntangleFn<T>> = []
 
     return {
-        get value() {return value;},
+        get value() {return val;},
         entangle(fn: EntangleFn<T>) {
             subs.push(fn)
             fn(val)
@@ -13,7 +13,7 @@ function particle<T>(value: T) {
         set value(_vall: T) {
             val = _val
             for (let i=0; i<subs.length; ++i) {
-                subs[i](_val)
+                subs[i](val)
             }
         }
     }
