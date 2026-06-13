@@ -1,4 +1,3 @@
-use crate::consts::NIL;
 use crate::transpiler::transpile_component_;
 use crate::component_map::ComponentMap;
 use std::{fs::{self, read_to_string}, io::Error, path::Path};
@@ -57,7 +56,7 @@ pub fn router(component_map: &mut ComponentMap) {
 
                 let config = component_map.config();
                 let key = if key == "error" {key} else {key.replace("/", ":")};
-                out(&format!("./build/{key}", ), html, script, &config)
+                out(&format!("./build/{key}", ), &f_name, html, script, &config)
             }
         }
     }

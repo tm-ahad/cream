@@ -35,7 +35,7 @@ pub fn transpile_component_(
 
     let binding = c_name.clone();
     let app_matcher = Matcher::Component(&binding);
-    let pat = expect_some(collect_scope(&app_trimmed, &app_matcher, false), &*format!("{c_name} component"));
+    let pat = expect_some(collect_scope(&app_trimmed, &app_matcher, false), &*format!("{c_name} component from {f_name}"));
     let main_app = pat.mp_val();
 
     let mut component_map = ComponentMap::new(ComponentArgs::new(config.clone(), import_base.clone()));
@@ -56,7 +56,7 @@ pub fn transpile_component_(
 
     let mut html = expect_some(
         collect_scope(&main_app, &Matcher::Template, false),
-        "Template",
+        &format!("<temp></temp> from {f_name}",),
     )
         .mp_val();
 

@@ -6,5 +6,5 @@ pub fn javascript_function_call(name: &str, params: Vec<String>) -> String {
         pr.push(',')
     }
 
-    format!("{name}({pr});")
+    format!("{name}({pr})")
 }
