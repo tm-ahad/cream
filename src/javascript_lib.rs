@@ -1,4 +1,3 @@
-use crate::consts::NEW_LINE_CHAR;
 use crate::std_err::ErrType::{LibraryError, NotFound};
 use crate::std_err::StdErr;
 use tinyget::get;
@@ -14,7 +13,7 @@ pub fn libs(name: &str, is_script: bool) -> String {
 
     if resp.status_code == 200 {
         let mut res = resp.as_str().unwrap_or_else(|e| panic!("{e}")).to_string();
-        res.push(NEW_LINE_CHAR);
+        res.push('\n');
         res
     } else {
         StdErr::exec(NotFound, &format!("Package {name} not found"));

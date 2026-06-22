@@ -1,84 +1,151 @@
 use crate::component::Component;
-use crate::consts::{DEFAULT_COMPILATION_PATH, NEW_LINE_CHAR};
-use crate::helpers::write_component::write_component;
-use crate::import_component::import_component;
-use crate::import_template::import_template;
-use crate::helpers::expected::expect_some;
-use crate::collect_scope::collect_scope;
-use crate::component_args::ComponentArgs;
-use crate::import_script::import_script;
-use crate::import_html::import_html;
-use crate::import_base::ImportBase;
-use crate::import_lib::import_lib;
-use crate::import_npm::import_npm;
-use crate::script_module::module;
-use crate::dsp_map::DspMap;
-
-use crate::import_ext::import_ext;
-use crate::matcher::Matcher;
+use crate::component::cream_component;
+use crate::component::cream_dom_name;
+use crate::component::special_trim;
+use crate::component::std_lib_path;
+use crate::consts::BUILD_PATH;
+use oxc_allocator::CloneIn;
+use oxc_codegen::Codegen;
+use oxc_codegen::CodegenOptions;
+use oxc_codegen::CommentOptions;
+use oxc_minifier::Minifier;
+use oxc_minifier::MinifierOptions;
+use oxc_semantic::SemanticBuilder;
+use oxc_transformer::TransformOptions;
+use oxc_transformer::Transformer;
+use rand::Rng;
+use rand::rngs::ThreadRng;
+use crate::helpers::build_source::build_import;
+use crate::helpers::javascript::javascript_function::javascript_function;
+use oxc_allocator::Allocator;
+use oxc_ast::AstBuilder;
+use oxc_ast::ast::Statement;
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+use crate::std_err::ErrType;
+use crate::component::format_oxc_diag;
+use crate::std_err::StdErr;
 use std::fs::read_to_string;
-use crate::component_map::ComponentMap;
+use std::path::Path;
 
-pub fn transpile_component_(
-    import_base: &mut ImportBase, 
-    config: &DspMap,
-    f_name: String,
-    c_name: String
-) -> Component {
-    let mut app = read_to_string(f_name.clone()).expect(&*format!("{f_name} not found"));
+impl<'a> Component<'a> {
+    pub fn transpile(&mut self) {
+        let script: String = read_to_string(self.name.clone()).expect(&*format!("{} not found", self.name));
+        let comp = Component::new(String::new(), script, self.name.clone(), self.router_map, self.dep_graph);
+        let render = comp.html_rendering_script().unwrap();
 
-    let app_trimmed = app
-        .lines()
-        .map(|e| e.trim())
-        .collect::<Vec<&str>>()
-        .join("\n");
+        let mut rng = ThreadRng::default();
+        let comp_id = rng.next_u64();
 
-    let binding = c_name.clone();
-    let app_matcher = Matcher::Component(&binding);
-    let pat = expect_some(collect_scope(&app_trimmed, &app_matcher, false), &*format!("{c_name} component from {f_name}"));
-    let main_app = pat.mp_val();
+        let script_trimmed = special_trim(format!("
+            let self; let onRender=function(){{}}; let elements = {{}};
+            {}; function {}(params={{}}) {{{}; onRender();
+                return {}
+            }}; {}
+            export {{{} as {}, mount}};
+        ",  render.script, cream_component(comp_id),
+            render.rendering_script,
+            cream_dom_name(render.root_dom_id),
+            javascript_function(String::from("mount"), 
+                &format!(
+                    "document.body.appendChild({}()); onRender()",
+                    cream_component(comp_id)
+                ),
+                vec![]
+            ),
+            cream_component(comp_id),
+            render.comp_name
+        ));
 
-    let mut component_map = ComponentMap::new(ComponentArgs::new(config.clone(), import_base.clone()));
-    let split = main_app.split('\n'); 
+        let allocator = Allocator::default();
+        let source_type = SourceType::default().with_module(true);
+        let parsed = Parser::new(&allocator, &script_trimmed, source_type).parse();
+        let mut program = parsed.program;
 
-    let mut script = String::new();
-    let binding = Matcher::Template.to_string();
-    let t = binding.as_str();
+        let allocator = Allocator::default();
+        let ast = AstBuilder::new(&allocator);
+        let mut new_program = oxc_allocator::Vec::new_in(&allocator);
 
-    for s in split {
-        if s != t {
-            script.push(NEW_LINE_CHAR);
-            script.push_str(s)
-        } else {
-            break;
+        program.body.retain(|stmt| {
+            match stmt {
+                Statement::ImportDeclaration(src) => {
+                    let source = src.clone_in(&allocator);
+                    
+                    if source.source.value.starts_with("@") {
+                        let resolved = if source.source.value.starts_with("@std:") {
+                            let name = &source.source.value["@std:".len()..].to_string();
+                            self.dep_graph.add_std_lib(name);
+                            std_lib_path(&name)
+                        } else {
+                            build_import(&source.source.value["@".len()..].to_string(), &self.router_map)
+                        };  
+                                        
+                        let new_import = ast.import_declaration(
+                            source.span, 
+                            source.specifiers.clone_in(&allocator), 
+                            ast.string_literal(source.span, ast.str(&resolved), Some(ast.str(&resolved))),
+                            source.phase, 
+                            source.with_clause.clone_in(&allocator), 
+                            source.import_kind
+                        );
+
+                        new_program.insert(0, Statement::ImportDeclaration(oxc_allocator::Box::new_in(new_import, &allocator)));
+                    }
+
+                    return false;
+                },
+                _ => {
+                    new_program.push(stmt.clone_in(&allocator));
+                    true
+                }
+
+            }
+        });
+
+        let mut new_prog = ast.program(
+            program.span, 
+            program.source_type, 
+            "", 
+            program.comments, 
+            program.hashbang, 
+            program.directives,
+            new_program
+        );
+
+        let min_opt = MinifierOptions::default();
+        let min = Minifier::new(min_opt);
+
+        let allocator = Allocator::default();
+        let transform_options = TransformOptions::default();
+        
+        let semantic_ret = SemanticBuilder::new()
+            .build(&new_prog);
+
+        let scoping = semantic_ret.semantic.into_scoping();
+        let transformer = Transformer::new(
+            &allocator,
+            Path::new(&self.name),
+            &transform_options,
+        );
+        
+        for err in parsed.diagnostics {
+            StdErr::exec(ErrType::SyntaxError, &format_oxc_diag(&err, self.name.clone()));
         }
+    
+        let _ = transformer.build_with_scoping(scoping, &mut new_prog);
+        let _ = min.minify(&allocator, &mut new_prog);
+        let opt_script = Codegen::new()
+            .with_options(CodegenOptions {
+                minify: !cfg!(debug_assertions),
+                single_quote: true,
+                comments: CommentOptions::disabled(),
+                ..Default::default()
+            })
+            .with_source_type(SourceType::mjs())
+            .build(&new_prog)
+            .code;
+
+        self.out = opt_script;
     }
-
-    let mut html = expect_some(
-        collect_scope(&main_app, &Matcher::Template, false),
-        &format!("<temp></temp> from {f_name}",),
-    )
-        .mp_val();
-
-    import_script(&mut app, import_base, &mut script, &f_name);
-    import_template(&mut app, &f_name, &mut html);
-
-    import_lib(&mut app, import_base, &mut script, &f_name);
-    module(&mut app, import_base, &mut script, &f_name);
-    import_npm(&mut app, &mut script, &f_name);
-    import_ext(&mut app, &f_name, &mut script);
-    import_html(&mut app, &f_name, &mut html);
-
-    let binding = String::from(DEFAULT_COMPILATION_PATH);
-    let _app_html = config.get("_app_html").unwrap_or(&binding);
-
-    import_base.patch(&mut script);
-    {
-        let imports = import_component(&app, f_name.to_string(), &mut component_map);
-        for comp in imports {
-            script.insert_str(0, &write_component(comp));
-        }
-    }
-    Component::new(script, html, c_name, String::new())
 }
 

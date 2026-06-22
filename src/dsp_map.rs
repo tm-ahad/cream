@@ -2,7 +2,6 @@ use crate::pass::pass;
 use std::collections::BTreeMap;
 use std::fs::read_to_string;
 
-//PhantomData<&'a *const bool> has no uses it's just fancy ✨
 pub struct DspMap(BTreeMap<String, String>);
 
 impl DspMap {

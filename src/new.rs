@@ -53,22 +53,15 @@ description${d}
 title${t}
 port$8871
 host$127.0.0.1
+project$route.json
 _app_html$build/index.html"
                 )
                 .as_bytes(),
             )
             .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
-        f.write_all(
-            "
-app {
-    <temp>
-        <h1>Hello World</h1>
-    </temp>
-}\n"
-            .as_bytes(),
-        )
-        .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
+        f.write_all("<h1>Hello World</h1>\n".as_bytes())
+            .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
         println!("{inst}");
     }
 }
