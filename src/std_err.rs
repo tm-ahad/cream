@@ -4,7 +4,6 @@ use std::fmt::Display;
 pub struct StdErr;
 
 pub enum ErrType {
-    PackageError,
     LibraryError,
     SyntaxError,
     NotFound,
@@ -14,7 +13,6 @@ pub enum ErrType {
 impl Display for ErrType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = String::from(match self {
-            ErrType::PackageError => "Package error",
             ErrType::LibraryError => "Library error",
             ErrType::SyntaxError => "Syntax error",
             ErrType::OSError => "OS error",

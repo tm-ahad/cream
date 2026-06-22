@@ -1,9 +1,6 @@
 use crate::component::Component;
-use crate::component::cream_component;
-use crate::component::cream_dom_name;
-use crate::component::special_trim;
+use crate::component::final_build_string;
 use crate::component::std_lib_path;
-use crate::consts::BUILD_PATH;
 use oxc_allocator::CloneIn;
 use oxc_codegen::Codegen;
 use oxc_codegen::CodegenOptions;
@@ -16,7 +13,6 @@ use oxc_transformer::Transformer;
 use rand::Rng;
 use rand::rngs::ThreadRng;
 use crate::helpers::build_source::build_import;
-use crate::helpers::javascript::javascript_function::javascript_function;
 use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_ast::ast::Statement;
@@ -30,32 +26,14 @@ use std::path::Path;
 
 impl<'a> Component<'a> {
     pub fn transpile(&mut self) {
-        let script: String = read_to_string(self.name.clone()).expect(&*format!("{} not found", self.name));
-        let comp = Component::new(String::new(), script, self.name.clone(), self.router_map, self.dep_graph);
+        let script: String = read_to_string(self.name.clone()).expect(&format!("{} not found", self.name));
+        let comp = Component::new(script, self.name.clone(), self.router_map, self.dep_graph);
         let render = comp.html_rendering_script().unwrap();
 
         let mut rng = ThreadRng::default();
         let comp_id = rng.next_u64();
 
-        let script_trimmed = special_trim(format!("
-            let self; let onRender=function(){{}}; let elements = {{}};
-            {}; function {}(params={{}}) {{{}; onRender();
-                return {}
-            }}; {}
-            export {{{} as {}, mount}};
-        ",  render.script, cream_component(comp_id),
-            render.rendering_script,
-            cream_dom_name(render.root_dom_id),
-            javascript_function(String::from("mount"), 
-                &format!(
-                    "document.body.appendChild({}()); onRender()",
-                    cream_component(comp_id)
-                ),
-                vec![]
-            ),
-            cream_component(comp_id),
-            render.comp_name
-        ));
+        let script_trimmed = final_build_string(render, comp_id);
 
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_module(true);
@@ -75,9 +53,9 @@ impl<'a> Component<'a> {
                         let resolved = if source.source.value.starts_with("@std:") {
                             let name = &source.source.value["@std:".len()..].to_string();
                             self.dep_graph.add_std_lib(name);
-                            std_lib_path(&name)
+                            std_lib_path(name)
                         } else {
-                            build_import(&source.source.value["@".len()..].to_string(), &self.router_map)
+                            build_import(&source.source.value["@".len()..], self.router_map)
                         };  
                                         
                         let new_import = ast.import_declaration(
@@ -92,7 +70,7 @@ impl<'a> Component<'a> {
                         new_program.insert(0, Statement::ImportDeclaration(oxc_allocator::Box::new_in(new_import, &allocator)));
                     }
 
-                    return false;
+                    false
                 },
                 _ => {
                     new_program.push(stmt.clone_in(&allocator));

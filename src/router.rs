@@ -57,9 +57,9 @@ pub fn router(conf: &mut DspMap) {
             };
 
             let mut dep_graph = DependancyGraph::new();
-            let mut comp = Component::new(String::new(), String::new(), str_val.to_string(), &val, &mut dep_graph);
+            let mut comp = Component::new(String::new(), str_val.to_string(), &val, &mut dep_graph);
             comp.transpile();
-            out(&build_source(&str_val), comp.out, &conf);
+            out(&build_source(str_val), comp.out, conf);
             dep_graph.install(BUILD_PATH);
         }
     }
@@ -71,9 +71,9 @@ pub fn router(conf: &mut DspMap) {
         for (key, f_name) in map.iter() {
             if let Value::String(f_name) = f_name {
                 let mut dep_graph = DependancyGraph::new();
-                let mut comp = Component::new(String::new(), String::new(), f_name.to_string(), &val, &mut dep_graph);
+                let mut comp = Component::new(String::new(), f_name.to_string(), &val, &mut dep_graph);
                 comp.transpile();
-                out(&build_source(&key), comp.out, &conf);
+                out(&build_source(key), comp.out, conf);
                 dep_graph.install(BUILD_PATH);
             }
         }

@@ -23,7 +23,6 @@ use rand::Rng;
 pub struct Component<'a> {
     pub router_map: &'a Map<String, Value>,
     pub html: String,
-    pub script: String,
     pub name: String,
     pub out: String,
     pub dep_graph: &'a mut DependancyGraph
@@ -42,14 +41,6 @@ pub fn cream_component(id: u64) -> String {format!("cream_component{id}")}
 pub fn cream_object(id: u64) -> String {format!("cream_object{id}")}
 pub fn std_lib_path(name: &str) -> String {format!("./.cream_std/{name}")}
 
-fn preproccess_attr_value(value: String) -> String {
-    if value.starts_with('@') {
-        value[1..].to_string()
-    } else {
-        javascript_string(&value)
-    }
-}
-
 #[derive(Default)]
 pub struct RenderReturn {
     pub rendering_script: String,
@@ -58,20 +49,44 @@ pub struct RenderReturn {
     pub comp_name: String
 }
 
+fn preproc_attr_value(s: &str) -> String {
+    format!("`{s}`")
+} 
+
 pub fn format_oxc_diag(diag: &OxcDiagnostic, src: String) -> String {
     format!("{} at {}:{}", diag.message, src, diag.labels.clone()[0].offset())
 }
 
+pub fn final_build_string(render: RenderReturn, comp_id: u64) -> String {
+    special_trim(format!("
+            let self; let onRender=function(){{}}; let elements = {{}};
+            {}; function {}(params={{}}) {{{}; onRender();
+                return {}
+            }}; {}
+            export {{{} as {}, mount}};
+        ",  render.script, cream_component(comp_id),
+            render.rendering_script,
+            cream_dom_name(render.root_dom_id),
+            javascript_function(String::from("mount"), 
+                &format!(
+                    "document.body.appendChild({}()); onRender()",
+                    cream_component(comp_id)
+                ),
+                vec![]
+            ),
+            cream_component(comp_id),
+            render.comp_name
+        ))
+}
+
 impl<'a> Component<'a> {
     pub fn new(
-        script: String,
         html: String,
         name: String,
         router_map: &'a Map<String, Value>,
         dep_graph: &'a mut DependancyGraph
     ) -> Self {
         Self {
-            script,
             html,
             name,
             router_map,
@@ -99,7 +114,7 @@ impl<'a> Component<'a> {
             ids.push(code.root_dom_id);
         }
 
-        return (ret, ids);
+        (ret, ids)
     }
 
     pub fn html_rendering_script(&self) -> Result<RenderReturn, Error>  {
@@ -155,7 +170,7 @@ impl<'a> Component<'a> {
             
         for attr in node.attributes() {
             if is_comp {
-                let value = preproccess_attr_value(attr.value().to_string());
+                let value = &preproc_attr_value(attr.value());
                 render_self.push_str(&javascript_assign(
                     &format!("{}.{}", cream_object(comp_attr_map_id), attr.name()),
                     &value
@@ -170,17 +185,17 @@ impl<'a> Component<'a> {
                     vec![javascript_string(&event), attr.value().to_string()]
                 ));
             } else if attr.name() == "key" {
-                let value = preproccess_attr_value(attr.value().to_string());
+                let value = preproc_attr_value(attr.value());
                 render_self.push_str(&format!(";elements[{}] = {};", value, root_id));
             } else if attr.name() == "subscribe" {
                 post_render_hooks.push_str(
                 &format!(
-                        "for (let el of {}) {{{}}}", attr.value(), 
-                        format!("el.{}({})", Component::subscribe_fn_name(), format!("render_fn{rand}"))
+                        ";for (let haaland of {}) {{haaland.{}(render_fn{rand})}};", attr.value(), 
+                        Component::subscribe_fn_name()
                     )
                 );
             } else {
-                let value = preproccess_attr_value(attr.value().to_string());
+                let value = preproc_attr_value(attr.value());
                 render_self.push_str(&javascript_assign(
                     &format!("{}.{}", root_id, attr.name()),
                     &value
@@ -195,7 +210,7 @@ impl<'a> Component<'a> {
                     attr.name() == "name"
                 }).collect::<Vec<Attribute>>();
 
-                if attr.len() == 0 {
+                if attr.is_empty() {
                     StdErr::exec(ErrType::NotFound, &format!("\"name\" attribute of script tag in {}", self.name));
                     exit(1)
                 } else {
@@ -214,16 +229,16 @@ impl<'a> Component<'a> {
 
             if child.is_text() {
                 let text = child.text().unwrap().trim();
-                let value = preproccess_attr_value(text.to_string());
+                let value = preproc_attr_value(text);
 
                 if !text.is_empty() {   
-                    render_self.push_str(&format!(";{}.textContent+={};", root_id, value));
-                    render_self.push_str(&format!("{}.appendChild({});", parent_id, root_id));
+                    render_self.push_str(&format!(";{}.appendChild(document.createTextNode({}));", root_id, value));
+                    render_self.push_str(&format!(";{}.appendChild({});", parent_id, root_id));
                 }
             } else {
                 let rendered_child = self.rendering_script_from_desc(child, root_id.to_string());
-                render_self.push_str(&format!("{};", rendered_child.rendering_script));
-                render_self.push_str(&format!("{}.appendChild({});", root_id, &cream_dom_name(rendered_child.root_dom_id)));
+                render_self.push_str(&format!(";{};", rendered_child.rendering_script));
+                render_self.push_str(&format!(";{}.appendChild({});", root_id, &cream_dom_name(rendered_child.root_dom_id)));
             }
         }
 
@@ -246,16 +261,3 @@ impl<'a> Component<'a> {
         }
     }
 }
-
-// impl<'a> Clone for Component<'a> {
-//     fn clone(&self) -> Self {
-//         Self {
-//             name: self.name.clone(),
-//             script: self.script.clone(),
-//             html: self.html.clone(),
-//             out: String::new(),
-//             router_map: self.router_map,
-//             dep_graph: &'a mut self.dep_graph.clone()
-//         }
-//     }
-// }
