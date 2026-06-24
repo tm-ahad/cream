@@ -8,9 +8,8 @@ function particle<T>(value: T) {
         get value() {return val;},
         entangle(fn: EntangleFn<T>) {
             subs.push(fn)
-            fn(val)
         },
-        set value(_vall: T) {
+        set value(_val: T) {
             val = _val
             for (let i=0; i<subs.length; ++i) {
                 subs[i](val)
@@ -18,3 +17,4 @@ function particle<T>(value: T) {
         }
     }
 }
+export {particle}

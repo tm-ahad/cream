@@ -6,7 +6,6 @@ function particle(value) {
         get value() {return val;},
         entangle(fn) {
             subs.push(fn)
-            fn(val)
         },
         set value(_val) {
             val = _val
@@ -16,3 +15,4 @@ function particle(value) {
         }
     }
 }
+export {particle}

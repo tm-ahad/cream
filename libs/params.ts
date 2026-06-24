@@ -3,3 +3,4 @@ function utilQueryParams(): Object {
     const queryParams = new URLSearchParams(url.search);
     return Object.fromEntries(queryParams);
 }
+export {utilQueryParams}

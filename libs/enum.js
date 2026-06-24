@@ -4,3 +4,4 @@ function Enum(fields) {
         this[fields[i]] = Symbol()
     }
 }
+export {Enum}

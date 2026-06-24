@@ -57,28 +57,6 @@ pub fn format_oxc_diag(diag: &OxcDiagnostic, src: String) -> String {
     format!("{} at {}:{}", diag.message, src, diag.labels.clone()[0].offset())
 }
 
-pub fn final_build_string(render: RenderReturn, comp_id: u64) -> String {
-    special_trim(format!("
-            let self; let onRender=function(){{}}; let elements = {{}};
-            {}; function {}(params={{}}) {{{}; onRender();
-                return {}
-            }}; {}
-            export {{{} as {}, mount}};
-        ",  render.script, cream_component(comp_id),
-            render.rendering_script,
-            cream_dom_name(render.root_dom_id),
-            javascript_function(String::from("mount"), 
-                &format!(
-                    "document.body.appendChild({}()); onRender()",
-                    cream_component(comp_id)
-                ),
-                vec![]
-            ),
-            cream_component(comp_id),
-            render.comp_name
-        ))
-}
-
 impl<'a> Component<'a> {
     pub fn new(
         html: String,
