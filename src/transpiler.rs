@@ -159,8 +159,6 @@ impl<'a> Component<'a> {
                      if let Some(name) = func.name() && name.to_string() == cream_component(comp_id) {
                          let mut bind = func.clone_in(&allocator);
                          self.handle_comp_declr(&mut bind, &mut new_program, &allocator, &ast);
-
-                         println!("{:?}\n\n\n", bind);
                          new_program.push(Statement::FunctionDeclaration(bind));
                     } else {
                         new_program.push(stmt);
