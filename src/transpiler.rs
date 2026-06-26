@@ -4,6 +4,8 @@ use crate::component::cream_component;
 use crate::component::cream_dom_name;
 use crate::component::special_trim;
 use crate::component::std_lib_path;
+use crate::consts::DEFAULT_WINDOW_OBJ;
+use crate::consts::ENTRY_FILE;
 use crate::helpers::javascript::javascript_function::javascript_function;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::Function;
@@ -13,7 +15,6 @@ use oxc_codegen::CommentOptions;
 use oxc_minifier::Minifier;
 use oxc_minifier::MinifierOptions;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::Span;
 use oxc_transformer::TransformOptions;
 use oxc_transformer::Transformer;
 use rand::Rng;
@@ -30,27 +31,37 @@ use crate::std_err::StdErr;
 use std::fs::read_to_string;
 use std::path::Path;
 
-pub fn final_build_string(render: RenderReturn, comp_id: u64) -> String {
+pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool) -> String {
     special_trim(format!("
-            let self; let onRender=function(){{}};
-            function {}(params, elements={{}}) {{{}; 
+            let self; let onRender=function(){{}}; {}
+            function {}(params) {{{}; 
                 {}; onRender();
                 return {}
             }}; {}
             export {{{} as {}, mount}};
-        ",  cream_component(comp_id),
+        ",  
+            if is_main {
+                format!("{}={};", Component::cream_window_obj(), DEFAULT_WINDOW_OBJ)
+            } else {
+                String::new()
+            },
+            cream_component(comp_id),
             render.script, render.rendering_script, 
             cream_dom_name(render.root_dom_id),
             javascript_function(String::from("mount"), 
                 &format!(
-                    "document.body.appendChild({}({{}}, elements));",
+                    "document.body.appendChild({}(params, elements));",
                     cream_component(comp_id)
                 ),
-                vec!["elements".to_string()]
+                vec!["elements".to_string(), "params={}".to_string()]
             ),
             cream_component(comp_id),
             render.comp_name
         ))
+}
+
+fn is_entry_file(name: &str) -> bool {
+    name == ENTRY_FILE
 }
 
 impl<'a> Component<'a> {
@@ -65,7 +76,7 @@ impl<'a> Component<'a> {
             body.statements.retain(|stmt| {
                 match stmt {
                     Statement::ImportDeclaration(src) => {
-                        let source = src.clone_in(&allocator);
+                        let source = src.clone_in(allocator);
                         
                         if source.source.value.starts_with("@") {
                             let resolved = if source.source.value.starts_with("@std:") {
@@ -78,25 +89,21 @@ impl<'a> Component<'a> {
                                             
                             let new_import = ast.import_declaration(
                                 source.span, 
-                                source.specifiers.clone_in(&allocator), 
+                                source.specifiers.clone_in(allocator), 
                                 ast.string_literal(source.span, ast.str(&resolved), Some(ast.str(&resolved))),
                                 source.phase, 
-                                source.with_clause.clone_in(&allocator), 
+                                source.with_clause.clone_in(allocator), 
                                 source.import_kind
                             );
 
-                            new_program.insert(0, Statement::ImportDeclaration(oxc_allocator::Box::new_in(new_import, &allocator)));
+                            new_program.insert(0, Statement::ImportDeclaration(oxc_allocator::Box::new_in(new_import, allocator)));
                         }
 
                         false
                     },
-                    Statement::LabeledStatement(label) => {
-                        if label.label.name.to_string() == "global" {
-                            new_program.push(label.body.clone_in(&allocator));
-                            false
-                        } else {
-                            true
-                        }
+                    Statement::LabeledStatement(label) if label.label.name == "global" => {
+                        new_program.push(label.body.clone_in(allocator));
+                        false
                     }
                     _ => true
                 }
@@ -112,8 +119,7 @@ impl<'a> Component<'a> {
 
         let mut rng = ThreadRng::default();
         let comp_id = rng.next_u64();
-
-        let script_trimmed = final_build_string(render, comp_id);
+        let script_trimmed = final_build_string(render, comp_id, is_entry_file(&self.name));
 
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_module(true);
@@ -217,4 +223,3 @@ impl<'a> Component<'a> {
         self.out = opt_script;
     }
 }
-

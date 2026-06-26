@@ -24,10 +24,10 @@ fn main() {
     let args = env::args().collect::<Vec<String>>();
 
     if args.len() == 1 {
-        let ne = "cream new {project_name} - Create a new project";
-        let build = "cream make - Build your project";
-        let serve = "cream serve - Serve or run your project";
-        let vers = "cream version - Output's cream's version that is currently installed";
+        let ne = "cream new {project_name}: Create a new project";
+        let build = "cream make: Build your project";
+        let serve = "cream serve: Serve or run your project";
+        let vers = "cream version: Output's cream's version that is currently installed";
 
         let inst = format!("{ne}\n{build}\n{serve}\n{vers}");
         println!("{inst}");

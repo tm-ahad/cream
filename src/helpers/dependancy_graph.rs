@@ -1,6 +1,6 @@
 use std::{fs, path::Path, vec::Vec};
-
-use crate::javascript_lib::libs;
+use oxc_codegen::{CodegenOptions, CommentOptions};
+use crate::{helpers::javascript::transpile_to_js::transpile_to_js, javascript_lib::libs};
 
 #[derive(Debug)]
 pub struct DependancyGraph {
@@ -24,7 +24,16 @@ impl DependancyGraph {
 
         for name in &self.std {
             let file_path = std_dir.join(name);
-            let content = libs(name, false);
+            let content = transpile_to_js(
+                &libs(name, false),
+                name,
+                CodegenOptions {
+                    minify: !cfg!(debug_assertions),
+                    single_quote: true,
+                    comments: CommentOptions::disabled(),
+                    ..Default::default()
+                }
+            );
 
             fs::write(&file_path, content)
                 .unwrap_or_else(|e| {

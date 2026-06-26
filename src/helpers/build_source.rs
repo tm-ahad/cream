@@ -2,10 +2,9 @@ use std::process::exit;
 use serde_json::{Map, Value};
 use crate::std_err::{ErrType, StdErr};
 
-
 pub fn build_source(path: &str) -> String {
     let key = if path == "error" {path} else {&path.replace("/", "_")};
-    format!("./build/{key}")
+    format!("./build/{key}.js")
 }
 
 fn naive_inverse_search(map: &Map<String, Value>, val: &str) -> String {
@@ -47,6 +46,6 @@ fn naive_inverse_search(map: &Map<String, Value>, val: &str) -> String {
 pub fn build_import(path: &str, router_map: &Map<String, Value>) -> String {
     let path = naive_inverse_search(router_map, path);
     let key = if path == "error" {&path} else {&path.replace("/", "_")};
-    format!("./{key}")
+    format!("./{key}.js")
 }
 

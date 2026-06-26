@@ -3,3 +3,4 @@ pub mod javascript_function;
 pub mod javascript_string;
 pub mod javascript_init_var;
 pub mod javascript_assign;
+pub mod transpile_to_js;

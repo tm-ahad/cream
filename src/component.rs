@@ -1,5 +1,4 @@
 use std::process::exit;
-
 use oxc_diagnostics::OxcDiagnostic;
 use roxmltree::Attribute;
 use serde_json::Map;
@@ -7,13 +6,13 @@ use serde_json::Value;
 use crate::consts::DOCUMENT_BODY;
 use crate::helpers::dependancy_graph::DependancyGraph;
 use crate::helpers::javascript::javascript_function::javascript_function;
-use crate::helpers::javascript::javascript_init_var::EMPTY_OBJ;
 use crate::helpers::javascript::javascript_init_var::NULL;
 use crate::helpers::javascript::javascript_init_var::javascript_init_var;
 use crate::helpers::javascript::javascript_function_call::javascript_function_call;
 use crate::helpers::javascript::javascript_assign::javascript_assign;
 use crate::helpers::javascript::javascript_string::javascript_string;
 use crate::std_err::ErrType;
+use crate::std_err::ErrType::SyntaxError;
 use crate::std_err::StdErr;
 use roxmltree::Node;
 use roxmltree::Error;
@@ -50,8 +49,16 @@ pub struct RenderReturn {
 }
 
 fn preproc_attr_value(s: &str) -> String {
-    format!("`{s}`")
-} 
+    if s.starts_with('@') {
+        s[1..].to_string()
+    } else {
+        format!("`{s}`")
+    }
+}
+
+fn default_component_param() -> String {
+    String::from("{childrens: []}")
+}
 
 pub fn format_oxc_diag(diag: &OxcDiagnostic, src: String) -> String {
     format!("{} at {}:{}", diag.message, src, diag.labels.clone()[0].offset())
@@ -83,7 +90,7 @@ impl<'a> Component<'a> {
                 continue;
             }
 
-            let code = self.rendering_script_from_desc(child, DOCUMENT_BODY.to_string());
+            let code = self.rendering_script_from_desc(child, DOCUMENT_BODY.to_string(), false);
             ret.insert_str(0, &javascript_function_call(
                 &format!("{}.appendChild", cream_dom_name(id)),
                 vec![cream_dom_name(code.root_dom_id)]
@@ -96,14 +103,21 @@ impl<'a> Component<'a> {
     }
 
     pub fn html_rendering_script(&self) -> Result<RenderReturn, Error>  {
-        let synt = format!("<temp>{}</temp>", &self.html.trim());
+        let synt = format!("<div>{}</div>", &self.html.trim());
         let res = roxmltree::Document::parse(&synt)?;
-        Ok(self.rendering_script_from_desc(res.root_element(), DOCUMENT_BODY.to_string()))
+        Ok(self.rendering_script_from_desc(res.root_element(), DOCUMENT_BODY.to_string(), false))
     }
 
     fn subscribe_fn_name() -> String {"entangle".to_string()}
+    pub fn cream_window_obj() -> String {"window.__CREAM__".to_string()}
+    fn element_storing_object() -> String {"window.__CREAM__.elements".to_string()}
 
-    fn rendering_script_from_desc(&self, node: Node, parent_id: String) -> RenderReturn {
+    fn rendering_script_from_desc(&self, node: Node, parent_id: String, is_parent_comp: bool) -> RenderReturn {
+        if node.tag_name().name() == "append" {
+            StdErr::exec(SyntaxError, "'append' tag is expected to have a parent which is not a 'render' tag");
+            exit(1)
+        }
+        
         let mut rng = rand::rng();
         let mut rendering_script: String = String::new();
         let mut script = String::new();
@@ -125,7 +139,7 @@ impl<'a> Component<'a> {
         if is_comp {
             comp_attr_map_id = rng.next_u64();
             rendering_script.push_str(
-                &javascript_init_var(&cream_object(comp_attr_map_id), EMPTY_OBJ)
+                &javascript_init_var(&cream_object(comp_attr_map_id), &default_component_param())
             );
         }
 
@@ -138,9 +152,9 @@ impl<'a> Component<'a> {
         ));
         
         let mut render_self = if is_comp {
-            javascript_assign(root_id, root_def)
+            String::new()
         } else {
-            format!(";{}.remove();{};",  root_id, javascript_assign(root_id, root_def))
+            format!("{root_id}.replaceChildren();")
         };
 
         let mut post_render_hooks = String::new();
@@ -151,7 +165,7 @@ impl<'a> Component<'a> {
                 let value = &preproc_attr_value(attr.value());
                 render_self.push_str(&javascript_assign(
                     &format!("{}.{}", cream_object(comp_attr_map_id), attr.name()),
-                    &value
+                    value
                 ));
                 continue;
             }
@@ -164,7 +178,10 @@ impl<'a> Component<'a> {
                 ));
             } else if attr.name() == "key" {
                 let value = preproc_attr_value(attr.value());
-                render_self.push_str(&format!(";elements[{}] = {};", value, root_id));
+                render_self.push_str(&format!(";{}[{}] = [{}, ...({}[{}] ?? [])];", 
+                    Component::element_storing_object(), value, root_id, 
+                    Component::element_storing_object(), value
+                ));
             } else if attr.name() == "subscribe" {
                 post_render_hooks.push_str(
                 &format!(
@@ -203,21 +220,45 @@ impl<'a> Component<'a> {
                 render_self.push_str(&javascript_assign("self", root_id));
                 render_self.push_str(&parsed.0);
                 continue;
+            } else if child.tag_name().name() == "append" {
+                let mut obj = String::new();
+                for grandchild in child.children() {
+                    if !grandchild.is_text() {
+                        StdErr::exec(ErrType::SyntaxError, "Childrens of 'append' were not expected")
+                    } else {
+                        obj.push_str(grandchild.text().unwrap())
+                    }
+                }
+                render_self.push_str(&format!(";{}.appendChild({});", root_id, obj));
+                continue;
             }
+
 
             if child.is_text() {
                 let text = child.text().unwrap().trim();
                 let value = preproc_attr_value(text);
 
-                if !text.is_empty() {   
+                if !text.is_empty() && !is_parent_comp {
                     render_self.push_str(&format!(";{}.appendChild(document.createTextNode({}));", root_id, value));
-                    render_self.push_str(&format!(";{}.appendChild({});", parent_id, root_id));
+                } else if !text.is_empty() {
+                    render_self.push_str(&format!(";{}.appendChild(document.createTextNode({}));", root_id, value));
                 }
-            } else {
-                let rendered_child = self.rendering_script_from_desc(child, root_id.to_string());
+            } else if !is_comp {
+                let rendered_child = self.rendering_script_from_desc(child, root_id.to_string(), false);
                 render_self.push_str(&format!(";{};", rendered_child.rendering_script));
                 render_self.push_str(&format!(";{}.appendChild({});", root_id, &cream_dom_name(rendered_child.root_dom_id)));
+            } else {
+                let rendered_child = self.rendering_script_from_desc(child, root_id.to_string(), true);
+                render_self.push_str(&format!(";{};", rendered_child.rendering_script));
+                render_self.push_str(&format!(";{}.childrens.push({});", cream_object(comp_attr_map_id), &cream_dom_name(rendered_child.root_dom_id)));
             }
+        }
+
+        if is_comp {
+            render_self.push_str(&javascript_assign(
+                root_id, 
+                &javascript_function_call(node.tag_name().name(), vec![cream_object(comp_attr_map_id)])
+            ));
         }
 
         rendering_script.push_str(&javascript_function(
@@ -226,13 +267,6 @@ impl<'a> Component<'a> {
         rendering_script.push_str(&format!(";{};", post_render_hooks));
         rendering_script.push_str(&javascript_function_call(&format!("render_fn{rand}"), vec![]));
         rendering_script.push(';');
-
-        if is_comp {
-            rendering_script.push_str(&javascript_assign(
-                root_id, 
-                &javascript_function_call(node.tag_name().name(), vec![cream_object(comp_attr_map_id)])
-            ));
-        }
         
         RenderReturn { 
             rendering_script, script, root_dom_id: root_u64_id, comp_name 
