@@ -1,4 +1,3 @@
-use crate::dsp_map::DspMap;
 use std::fs;
 use std::path::Path;
 
@@ -14,8 +13,7 @@ fn write_file(path: &str, contents: &str) -> std::io::Result<()> {
 
 pub fn out(
     path: &str,
-    script: String,
-    _config: &DspMap
+    script: String
 ) {
     write_file(path, &script)
         .unwrap_or_else(|e| panic!("{}", e));

@@ -1,26 +1,30 @@
 mod component;
 mod consts;
-mod dsp_map;
+mod config;
 mod helpers;
 mod input;
 mod javascript_lib;
-mod router;
+mod make;
 mod transpiler;
 mod std_err;
-mod new;
+mod create_project;
 mod out;
 mod pass;
 mod serve;
 
-use crate::dsp_map::DspMap;
 use crate::consts::{CONFIG_FILE};
 use crate::helpers::version::version;
-use crate::serve::serve;
-use crate::new::new;
+use crate::create_project::create_project;
 use crate::pass::pass;
+use crate::serve::serve;
+use crate::std_err::ErrType::{NotFound, SyntaxError};
+use crate::std_err::StdErr;
 use std::env;
+use std::fs::read_to_string;
+use std::process::exit;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = env::args().collect::<Vec<String>>();
 
     if args.len() == 1 {
@@ -32,19 +36,36 @@ fn main() {
         let inst = format!("{ne}\n{build}\n{serve}\n{vers}");
         println!("{inst}");
     } else {
-        let mut map;
+        let mut config;
 
         match args[1].as_str() {
-            "new" => new(args.get(2).expect("Project name not provided")),
+            "new" => create_project(args.get(2).expect("Project name not provided")),
             "make" => {
-                map = DspMap::new();
-                map.load(CONFIG_FILE);
-                router::router(&mut map);
+                config = toml::from_str(
+                    &read_to_string(CONFIG_FILE)
+                        .unwrap_or_else(|_| {
+                            StdErr::exec(NotFound, CONFIG_FILE);
+                            exit(1)
+                        })
+                ).unwrap_or_else(|_| {
+                    StdErr::exec(SyntaxError, "config file contains invalid toml");
+                    exit(1)
+                });
+                make::router(&mut config);
             },
             "serve" => {
-                map = DspMap::new();
-                map.load(CONFIG_FILE);
-                serve(map)
+                config = toml::from_str(
+                    &read_to_string(CONFIG_FILE)
+                        .unwrap_or_else(|_| {
+                            StdErr::exec(NotFound, CONFIG_FILE);
+                            exit(1)
+                        })
+                ).unwrap_or_else(|_| {
+                    StdErr::exec(SyntaxError, "config file contains invalid toml");
+                    exit(1)
+                });
+
+                serve(&config).await
             },
             "version" => println!("{}", version()),
             &_ => pass(),

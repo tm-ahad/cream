@@ -6,7 +6,9 @@ use crate::component::special_trim;
 use crate::component::std_lib_path;
 use crate::consts::DEFAULT_WINDOW_OBJ;
 use crate::consts::ENTRY_FILE;
+use crate::helpers::build_source::translate_import_src_to_build;
 use crate::helpers::javascript::javascript_function::javascript_function;
+use crate::std_err::ErrType::NotFound;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::Function;
 use oxc_codegen::Codegen;
@@ -17,9 +19,7 @@ use oxc_minifier::MinifierOptions;
 use oxc_semantic::SemanticBuilder;
 use oxc_transformer::TransformOptions;
 use oxc_transformer::Transformer;
-use rand::Rng;
 use rand::rngs::ThreadRng;
-use crate::helpers::build_source::build_import;
 use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_ast::ast::Statement;
@@ -30,11 +30,14 @@ use crate::component::format_oxc_diag;
 use crate::std_err::StdErr;
 use std::fs::read_to_string;
 use std::path::Path;
+use std::process::exit;
+use rand::Rng;
 
 pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool) -> String {
     special_trim(format!("
             let self; let onRender=function(){{}}; {}
-            function {}(params) {{{}; 
+            function {}(params) {{{};
+                params.childrens = params.childrens ?? [];
                 {}; onRender();
                 return {}
             }}; {}
@@ -50,10 +53,10 @@ pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool) -> 
             cream_dom_name(render.root_dom_id),
             javascript_function(String::from("mount"), 
                 &format!(
-                    "document.body.appendChild({}(params, elements));",
+                    "document.body.appendChild({}(params));",
                     cream_component(comp_id)
                 ),
-                vec!["elements".to_string(), "params={}".to_string()]
+                vec!["params={}".to_string()]
             ),
             cream_component(comp_id),
             render.comp_name
@@ -84,7 +87,7 @@ impl<'a> Component<'a> {
                                 self.dep_graph.add_std_lib(name);
                                 std_lib_path(name)
                             } else {
-                                build_import(&source.source.value["@".len()..], self.router_map)
+                                translate_import_src_to_build(&source.source.value["@".len()..])
                             };  
                                             
                             let new_import = ast.import_declaration(
@@ -114,8 +117,13 @@ impl<'a> Component<'a> {
 
     pub fn transpile(&mut self) {
         let script: String = read_to_string(self.name.clone()).expect(&format!("{} not found", self.name));
-        let comp = Component::new(script, self.name.clone(), self.router_map, self.dep_graph);
+        let comp = Component::new(script, self.name.clone(), self.dep_graph);
         let render = comp.html_rendering_script().unwrap();
+
+        if render.comp_name.trim().is_empty() {
+            StdErr::exec(NotFound, &format!("componenet name for {}", self.name));
+            exit(1)
+        }
 
         let mut rng = ThreadRng::default();
         let comp_id = rng.next_u64();
@@ -146,7 +154,7 @@ impl<'a> Component<'a> {
                             self.dep_graph.add_std_lib(name);
                             std_lib_path(name)
                         } else {
-                            build_import(&source.source.value["@".len()..], self.router_map)
+                            translate_import_src_to_build(&source.source.value["@".len()..])
                         };  
                                         
                         let new_import = ast.import_declaration(

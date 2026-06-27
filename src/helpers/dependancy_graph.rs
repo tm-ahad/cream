@@ -1,4 +1,4 @@
-use std::{fs, path::Path, vec::Vec};
+use std::{fs, path::{Path, PathBuf}, vec::Vec};
 use oxc_codegen::{CodegenOptions, CommentOptions};
 use crate::{helpers::javascript::transpile_to_js::transpile_to_js, javascript_lib::libs};
 
@@ -35,7 +35,10 @@ impl DependancyGraph {
                 }
             );
 
-            fs::write(&file_path, content)
+            let mut build_path = PathBuf::from(file_path);
+            build_path.set_extension("js");
+            
+            fs::write(&build_path, content)
                 .unwrap_or_else(|e| {
                     panic!("failed to write stdlib file {}: {}", name, e);
                 });

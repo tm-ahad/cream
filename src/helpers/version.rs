@@ -1,3 +1,3 @@
 pub fn version() -> String {
-    String::from("Beta 0.6.0")
+    String::from("alpha 0.1.0")
 }

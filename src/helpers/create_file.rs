@@ -22,7 +22,7 @@ pub fn create_file(path: String) -> File {
     }
 
     options.open(path.clone()).unwrap_or_else(|e| {
-        StdErr::exec(ErrType::OSError, &format!("Error create file {path}: {e}"));
+        StdErr::exec(ErrType::OSError, &format!("Error creating file {path}: {e}"));
         todo!()
     })
 }

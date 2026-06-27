@@ -1,9 +1,8 @@
+use std::path::Path;
+use std::path::PathBuf;
 use std::process::exit;
 use oxc_diagnostics::OxcDiagnostic;
 use roxmltree::Attribute;
-use serde_json::Map;
-use serde_json::Value;
-use crate::consts::DOCUMENT_BODY;
 use crate::helpers::dependancy_graph::DependancyGraph;
 use crate::helpers::javascript::javascript_function::javascript_function;
 use crate::helpers::javascript::javascript_init_var::NULL;
@@ -20,7 +19,6 @@ use rand::Rng;
 
 #[derive(Debug)]
 pub struct Component<'a> {
-    pub router_map: &'a Map<String, Value>,
     pub html: String,
     pub name: String,
     pub out: String,
@@ -38,7 +36,15 @@ pub fn special_trim(s: String) -> String {
 pub fn cream_dom_name(id: u64) -> String {format!("cream_element{id}")}
 pub fn cream_component(id: u64) -> String {format!("cream_component{id}")}
 pub fn cream_object(id: u64) -> String {format!("cream_object{id}")}
-pub fn std_lib_path(name: &str) -> String {format!("./.cream_std/{name}")}
+pub fn std_lib_path(name: &str) -> String {
+    let mut path = PathBuf::from(name);
+    path.set_extension("js");
+
+    let out_path = Path::new("./.cream_std/")
+        .join(path);
+
+    out_path.to_string_lossy().into_owned()
+}
 
 #[derive(Default)]
 pub struct RenderReturn {
@@ -68,13 +74,11 @@ impl<'a> Component<'a> {
     pub fn new(
         html: String,
         name: String,
-        router_map: &'a Map<String, Value>,
         dep_graph: &'a mut DependancyGraph
     ) -> Self {
         Self {
             html,
             name,
-            router_map,
             dep_graph,
             out: String::new()
         }
@@ -86,11 +90,11 @@ impl<'a> Component<'a> {
 
         for child in node.children().rev() {
             if child.is_text() || child.is_comment() {
-                ret.insert_str(0,child.text().unwrap());
+                ret.insert_str(0, child.text().unwrap());
                 continue;
             }
 
-            let code = self.rendering_script_from_desc(child, DOCUMENT_BODY.to_string(), false);
+            let code = self.rendering_script_from_desc(child, false);
             ret.insert_str(0, &javascript_function_call(
                 &format!("{}.appendChild", cream_dom_name(id)),
                 vec![cream_dom_name(code.root_dom_id)]
@@ -105,14 +109,14 @@ impl<'a> Component<'a> {
     pub fn html_rendering_script(&self) -> Result<RenderReturn, Error>  {
         let synt = format!("<div>{}</div>", &self.html.trim());
         let res = roxmltree::Document::parse(&synt)?;
-        Ok(self.rendering_script_from_desc(res.root_element(), DOCUMENT_BODY.to_string(), false))
+        Ok(self.rendering_script_from_desc(res.root_element(), false))
     }
 
     fn subscribe_fn_name() -> String {"entangle".to_string()}
     pub fn cream_window_obj() -> String {"window.__CREAM__".to_string()}
     fn element_storing_object() -> String {"window.__CREAM__.elements".to_string()}
 
-    fn rendering_script_from_desc(&self, node: Node, parent_id: String, is_parent_comp: bool) -> RenderReturn {
+    fn rendering_script_from_desc(&self, node: Node, is_parent_comp: bool) -> RenderReturn {
         if node.tag_name().name() == "append" {
             StdErr::exec(SyntaxError, "'append' tag is expected to have a parent which is not a 'render' tag");
             exit(1)
@@ -244,11 +248,11 @@ impl<'a> Component<'a> {
                     render_self.push_str(&format!(";{}.appendChild(document.createTextNode({}));", root_id, value));
                 }
             } else if !is_comp {
-                let rendered_child = self.rendering_script_from_desc(child, root_id.to_string(), false);
+                let rendered_child = self.rendering_script_from_desc(child, false);
                 render_self.push_str(&format!(";{};", rendered_child.rendering_script));
                 render_self.push_str(&format!(";{}.appendChild({});", root_id, &cream_dom_name(rendered_child.root_dom_id)));
             } else {
-                let rendered_child = self.rendering_script_from_desc(child, root_id.to_string(), true);
+                let rendered_child = self.rendering_script_from_desc(child, true);
                 render_self.push_str(&format!(";{};", rendered_child.rendering_script));
                 render_self.push_str(&format!(";{}.childrens.push({});", cream_object(comp_attr_map_id), &cream_dom_name(rendered_child.root_dom_id)));
             }
