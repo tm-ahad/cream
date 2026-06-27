@@ -25,9 +25,7 @@ pub fn create_project(name: &String) {
 
         config
             .write_all(
-                format!(
-                    "build=[\"src/app.html\"]\nport=6767\n"
-                )
+                "build=[\"src/app.html\"]\nport=6767\n"
                 .as_bytes(),
             )
             .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));

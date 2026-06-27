@@ -1,4 +1,4 @@
-use std::{fs, path::{Path, PathBuf}, vec::Vec};
+use std::{fs, path::Path, vec::Vec};
 use oxc_codegen::{CodegenOptions, CommentOptions};
 use crate::{helpers::javascript::transpile_to_js::transpile_to_js, javascript_lib::libs};
 
@@ -23,7 +23,7 @@ impl DependancyGraph {
             .expect("failed to create .cream_std directory");
 
         for name in &self.std {
-            let file_path = std_dir.join(name);
+            let mut file_path = std_dir.join(name);
             let content = transpile_to_js(
                 &libs(name, false),
                 name,
@@ -35,10 +35,8 @@ impl DependancyGraph {
                 }
             );
 
-            let mut build_path = PathBuf::from(file_path);
-            build_path.set_extension("js");
-            
-            fs::write(&build_path, content)
+            file_path.set_extension("js");
+            fs::write(file_path, content)
                 .unwrap_or_else(|e| {
                     panic!("failed to write stdlib file {}: {}", name, e);
                 });

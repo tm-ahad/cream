@@ -30,8 +30,8 @@ pub fn router(conf: &mut Config) {
     for str_val in conf.build.iter() {
         let mut dep_graph = DependancyGraph::new();
         let mut comp = Component::new(String::new(), str_val.to_string(), &mut dep_graph);
-        comp.transpile();
-        out(&build_path(&str_val), comp.out);
+        comp.transpile(&conf);
+        out(&build_path(str_val), comp.out);
         dep_graph.install(BUILD_PATH);
     }
     

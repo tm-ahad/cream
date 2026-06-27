@@ -55,8 +55,8 @@ pub struct RenderReturn {
 }
 
 fn preproc_attr_value(s: &str) -> String {
-    if s.starts_with('@') {
-        s[1..].to_string()
+    if let Some(val) = s.strip_prefix("@") {
+        val.to_string()
     } else {
         format!("`{s}`")
     }

@@ -4,11 +4,14 @@ use crate::component::cream_component;
 use crate::component::cream_dom_name;
 use crate::component::special_trim;
 use crate::component::std_lib_path;
+use crate::config::Config;
 use crate::consts::DEFAULT_WINDOW_OBJ;
 use crate::consts::ENTRY_FILE;
 use crate::helpers::build_source::translate_import_src_to_build;
 use crate::helpers::javascript::javascript_function::javascript_function;
+use crate::helpers::javascript::transpile_to_js::transpile_to_js;
 use crate::std_err::ErrType::NotFound;
+use crate::std_err::ErrType::SyntaxError;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::Function;
 use oxc_codegen::Codegen;
@@ -74,6 +77,7 @@ impl<'a> Component<'a> {
         new_program: &mut oxc_allocator::Vec<'b, Statement<'b>>,
         allocator: &'b Allocator,
         ast: &AstBuilder<'b>,
+        conf: &Config
     ) {
         if let Some(body) = &mut stmt.body {
             body.statements.retain(|stmt| {
@@ -82,10 +86,17 @@ impl<'a> Component<'a> {
                         let source = src.clone_in(allocator);
                         
                         if source.source.value.starts_with("@") {
-                            let resolved = if source.source.value.starts_with("@std:") {
-                                let name = &source.source.value["@std:".len()..].to_string();
+                            let resolved = if let Some(name) = source.source.value.strip_prefix("@std:") {
                                 self.dep_graph.add_std_lib(name);
                                 std_lib_path(name)
+                            } else if let Some(name) = source.source.value.strip_prefix("@pkg:") {
+                                match &conf.packages[name] {
+                                    toml::Value::String(s) => s.to_string(),
+                                    _ =>  {
+                                        StdErr::exec(SyntaxError, "package table must contain string values");
+                                        exit(1)
+                                    }
+                                }
                             } else {
                                 translate_import_src_to_build(&source.source.value["@".len()..])
                             };  
@@ -115,8 +126,34 @@ impl<'a> Component<'a> {
 
     }
 
-    pub fn transpile(&mut self) {
-        let script: String = read_to_string(self.name.clone()).expect(&format!("{} not found", self.name));
+    pub fn transpile(&mut self, conf: &Config) {
+        let script: String = read_to_string(self.name.clone())
+            .unwrap_or_else(|_| {
+                StdErr::exec(NotFound, &self.name);
+                exit(1)
+            });
+
+        match Path::new(&self.name).extension().unwrap().to_str().unwrap(){
+            "js" | "ts" | "mjs" => {
+                self.out = transpile_to_js(
+                    &script, &self.name,
+                    CodegenOptions {
+                        minify: !cfg!(debug_assertions),
+                        single_quote: true,
+                        comments: CommentOptions::disabled(),
+                        ..Default::default()
+                    }
+                );
+
+                return
+            },
+            "cream" => {}
+            _ => {
+                self.out = script;
+                return
+            }
+        }
+
         let comp = Component::new(script, self.name.clone(), self.dep_graph);
         let render = comp.html_rendering_script().unwrap();
 
@@ -141,7 +178,7 @@ impl<'a> Component<'a> {
         for mut stmt in program.body {
             match &mut stmt {
                 Statement::LabeledStatement(label) => {
-                    if label.label.name.to_string() == "global" {
+                    if label.label.name == "global" {
                         new_program.push(label.body.clone_in(&allocator));
                     }
                 },
@@ -172,7 +209,7 @@ impl<'a> Component<'a> {
                 Statement::FunctionDeclaration(func) => {
                      if let Some(name) = func.name() && name.to_string() == cream_component(comp_id) {
                          let mut bind = func.clone_in(&allocator);
-                         self.handle_comp_declr(&mut bind, &mut new_program, &allocator, &ast);
+                         self.handle_comp_declr(&mut bind, &mut new_program, &allocator, &ast, conf);
                          new_program.push(Statement::FunctionDeclaration(bind));
                     } else {
                         new_program.push(stmt);
@@ -200,7 +237,6 @@ impl<'a> Component<'a> {
 
         let allocator = Allocator::default();
         let transform_options = TransformOptions::default();
-        
         let semantic_ret = SemanticBuilder::new()
             .build(&new_prog);
 
