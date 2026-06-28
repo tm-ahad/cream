@@ -36,6 +36,10 @@ impl DependancyGraph {
             );
 
             file_path.set_extension("js");
+            if file_path.exists() {
+                continue;
+            }
+
             fs::write(file_path, content)
                 .unwrap_or_else(|e| {
                     panic!("failed to write stdlib file {}: {}", name, e);

@@ -4,29 +4,10 @@ use crate::std_err::{ErrType, StdErr};
 use crate::{component::Component, config::Config};
 use crate::helpers::build_source::{build_path, translate_import_src_to_build};
 use std::process::exit;
-use std::{fs, io::Error, path::Path};
 use crate::out::out;
+use std::fs;
 
-fn clear_dir(path: &Path) -> Result<(), Error> {
-    if !path.is_dir() {
-        return Ok(())
-    }
-
-    for child in fs::read_dir(path)? {
-        let path = child?.path();
-
-        if path.is_dir() {
-            fs::remove_dir_all(path)?;
-        } else {
-            fs::remove_file(path)?;
-        }
-    }
-
-    Ok(())
-}
-
-pub fn router(conf: &mut Config) {
-    let _ = clear_dir(Path::new(BUILD_PATH));
+pub fn make(conf: &Config) {
     for str_val in conf.build.iter() {
         let mut dep_graph = DependancyGraph::new();
         let mut comp = Component::new(String::new(), str_val.to_string(), &mut dep_graph);

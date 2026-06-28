@@ -12,6 +12,7 @@ mod out;
 mod pass;
 mod serve;
 
+use notify::{Event, EventKind, RecursiveMode, Watcher};
 use crate::consts::{CONFIG_FILE};
 use crate::helpers::version::version;
 use crate::create_project::create_project;
@@ -21,6 +22,7 @@ use crate::std_err::ErrType::{NotFound, SyntaxError};
 use crate::std_err::StdErr;
 use std::env;
 use std::fs::read_to_string;
+use std::path::Path;
 use std::process::exit;
 
 #[tokio::main]
@@ -51,7 +53,7 @@ async fn main() {
                     StdErr::exec(SyntaxError, "config file contains invalid toml");
                     exit(1)
                 });
-                make::router(&mut config);
+                make::make(&mut config);
             },
             "serve" => {
                 config = toml::from_str(
@@ -65,7 +67,33 @@ async fn main() {
                     exit(1)
                 });
 
-                serve(&config).await
+
+                let bind_conf = config.clone();
+                let mut watcher = notify::recommended_watcher
+                (move |event: Result<Event, notify::Error>| {
+                    if let Ok(event) = event {
+                        match event.kind {
+                            EventKind::Create(_) |
+                            EventKind::Remove(_) |
+                            EventKind::Modify(_) => {
+                                std::thread::sleep(
+                                    std::time::Duration::from_millis(100)
+                                );
+                                println!("Building...");
+                                make::make(&bind_conf);
+                            },
+                            _ => {}
+                        }
+                    }
+                }).unwrap();
+
+                let _ = watcher.watch(
+                    Path::new("./src").as_ref(), 
+                    RecursiveMode::Recursive
+                );
+
+                let bind_conf = config.clone();
+                serve(&bind_conf).await
             },
             "version" => println!("{}", version()),
             &_ => pass(),

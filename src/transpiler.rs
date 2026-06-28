@@ -156,9 +156,8 @@ impl<'a> Component<'a> {
 
         let comp = Component::new(script, self.name.clone(), self.dep_graph);
         let render = comp.html_rendering_script().unwrap();
-
         if render.comp_name.trim().is_empty() {
-            StdErr::exec(NotFound, &format!("componenet name for {}", self.name));
+            StdErr::exec(NotFound, &format!("component name for {}", self.name));
             exit(1)
         }
 
