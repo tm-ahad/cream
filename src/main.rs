@@ -42,58 +42,53 @@ async fn main() {
 
         match args[1].as_str() {
             "new" => create_project(args.get(2).expect("Project name not provided")),
-            "make" => {
+            "make" | "serve" => {
                 config = toml::from_str(
                     &read_to_string(CONFIG_FILE)
                         .unwrap_or_else(|_| {
                             StdErr::exec(NotFound, CONFIG_FILE);
                             exit(1)
                         })
-                ).unwrap_or_else(|_| {
-                    StdErr::exec(SyntaxError, "config file contains invalid toml");
-                    exit(1)
-                });
-                make::make(&mut config);
-            },
-            "serve" => {
-                config = toml::from_str(
-                    &read_to_string(CONFIG_FILE)
-                        .unwrap_or_else(|_| {
-                            StdErr::exec(NotFound, CONFIG_FILE);
-                            exit(1)
-                        })
-                ).unwrap_or_else(|_| {
-                    StdErr::exec(SyntaxError, "config file contains invalid toml");
+                ).unwrap_or_else(|e| {
+                    StdErr::exec(
+                        SyntaxError,
+                        &format!("config file contains invalid toml: {}", e)
+                    );
                     exit(1)
                 });
 
+                if !cfg!(debug_assertions) || args[1].as_str() == "make" {
+                    make::make(&mut config);
+                }
 
-                let bind_conf = config.clone();
-                let mut watcher = notify::recommended_watcher
-                (move |event: Result<Event, notify::Error>| {
-                    if let Ok(event) = event {
-                        match event.kind {
-                            EventKind::Create(_) |
-                            EventKind::Remove(_) |
-                            EventKind::Modify(_) => {
-                                std::thread::sleep(
-                                    std::time::Duration::from_millis(100)
-                                );
-                                println!("Building...");
-                                make::make(&bind_conf);
-                            },
-                            _ => {}
-                        }
-                    }
-                }).unwrap();
+                if args[1].as_str() == "serve" {
+                    let bind_conf = config.clone();
+                    let mut watcher = notify::recommended_watcher
+                        (move |event: Result<Event, notify::Error>| {
+                            if let Ok(event) = event {
+                                match event.kind {
+                                    EventKind::Create(_) |
+                                    EventKind::Remove(_) |
+                                    EventKind::Modify(_) => {
+                                        std::thread::sleep(
+                                            std::time::Duration::from_millis(300)
+                                        );
+                                        println!("Building...");
+                                        make::make(&bind_conf);
+                                    },
+                                    _ => {}
+                                }
+                            }
+                        }).unwrap();
 
-                let _ = watcher.watch(
-                    Path::new("./src").as_ref(), 
-                    RecursiveMode::Recursive
-                );
+                    let _ = watcher.watch(
+                        Path::new("./src").as_ref(),
+                        RecursiveMode::Recursive
+                    );
 
-                let bind_conf = config.clone();
-                serve(&bind_conf).await
+                    let bind_conf = config.clone();
+                    serve(&bind_conf).await
+                }
             },
             "version" => println!("{}", version()),
             &_ => pass(),

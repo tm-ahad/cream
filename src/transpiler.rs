@@ -33,13 +33,14 @@ use crate::component::format_oxc_diag;
 use crate::std_err::StdErr;
 use std::fs::read_to_string;
 use std::path::Path;
-use std::process::exit;
 use rand::Rng;
+use crate::helpers::dependancy_graph::DependencyGraph;
+use crate::helpers::javascript::javascript_assign::javascript_assign;
 
-pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool) -> String {
+pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool, config: &Config) -> String {
     special_trim(format!("
-            let self; let onRender=function(){{}}; {}
-            function {}(params) {{{};
+            let self; let onRender=function(){{}}; {};
+            {}; function {}(params) {{{};
                 params.childrens = params.childrens ?? [];
                 {}; onRender();
                 return {}
@@ -48,6 +49,13 @@ pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool) -> 
         ",  
             if is_main {
                 format!("{}={};", Component::cream_window_obj(), DEFAULT_WINDOW_OBJ)
+            } else {
+                String::new()
+            }, if is_main {
+                javascript_assign(
+                    &Component::cream_env_object(),
+                    &serde_json::to_string(&config.env).unwrap()
+                )
             } else {
                 String::new()
             },
@@ -70,14 +78,15 @@ fn is_entry_file(name: &str) -> bool {
     name == ENTRY_FILE
 }
 
-impl<'a> Component<'a> {
+impl Component{
     pub fn handle_comp_declr<'b>(
         &mut self,
         stmt: &mut Function,
         new_program: &mut oxc_allocator::Vec<'b, Statement<'b>>,
         allocator: &'b Allocator,
         ast: &AstBuilder<'b>,
-        conf: &Config
+        conf: &Config,
+        dep_graph: &mut DependencyGraph,
     ) {
         if let Some(body) = &mut stmt.body {
             body.statements.retain(|stmt| {
@@ -87,14 +96,14 @@ impl<'a> Component<'a> {
                         
                         if source.source.value.starts_with("@") {
                             let resolved = if let Some(name) = source.source.value.strip_prefix("@std:") {
-                                self.dep_graph.add_std_lib(name);
+                                dep_graph.add_std_lib(name);
                                 std_lib_path(name)
                             } else if let Some(name) = source.source.value.strip_prefix("@pkg:") {
                                 match &conf.packages[name] {
                                     toml::Value::String(s) => s.to_string(),
                                     _ =>  {
                                         StdErr::exec(SyntaxError, "package table must contain string values");
-                                        exit(1)
+                                        return false
                                     }
                                 }
                             } else {
@@ -126,12 +135,23 @@ impl<'a> Component<'a> {
 
     }
 
-    pub fn transpile(&mut self, conf: &Config) {
+    pub fn cream_env_object() -> String {
+        "window.ENV".to_string()
+    }
+
+    pub fn transpile(&mut self, config: &Config, dep_graph: &mut DependencyGraph) {
+        let mut succ_read = true;
         let script: String = read_to_string(self.name.clone())
             .unwrap_or_else(|_| {
                 StdErr::exec(NotFound, &self.name);
-                exit(1)
+                self.out = String::new();
+                succ_read = false;
+                String::new()
             });
+
+        if !succ_read {
+            return
+        };
 
         match Path::new(&self.name).extension().unwrap().to_str().unwrap(){
             "js" | "ts" | "mjs" => {
@@ -154,16 +174,17 @@ impl<'a> Component<'a> {
             }
         }
 
-        let comp = Component::new(script, self.name.clone(), self.dep_graph);
+        let comp = Component::new(script, self.name.clone());
         let render = comp.html_rendering_script().unwrap();
         if render.comp_name.trim().is_empty() {
             StdErr::exec(NotFound, &format!("component name for {}", self.name));
-            exit(1)
+            self.out = String::new();
+            return
         }
 
         let mut rng = ThreadRng::default();
         let comp_id = rng.next_u64();
-        let script_trimmed = final_build_string(render, comp_id, is_entry_file(&self.name));
+        let script_trimmed = final_build_string(render, comp_id, is_entry_file(&self.name), config);
 
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_module(true);
@@ -187,7 +208,7 @@ impl<'a> Component<'a> {
                     if source.source.value.starts_with("@") {
                         let resolved = if source.source.value.starts_with("@std:") {
                             let name = &source.source.value["@std:".len()..].to_string();
-                            self.dep_graph.add_std_lib(name);
+                            dep_graph.add_std_lib(name);
                             std_lib_path(name)
                         } else {
                             translate_import_src_to_build(&source.source.value["@".len()..])
@@ -208,7 +229,15 @@ impl<'a> Component<'a> {
                 Statement::FunctionDeclaration(func) => {
                      if let Some(name) = func.name() && name.to_string() == cream_component(comp_id) {
                          let mut bind = func.clone_in(&allocator);
-                         self.handle_comp_declr(&mut bind, &mut new_program, &allocator, &ast, conf);
+                         self.handle_comp_declr(
+                             &mut bind,
+                             &mut new_program,
+                             &allocator,
+                             &ast,
+                             config,
+                             dep_graph
+                         );
+
                          new_program.push(Statement::FunctionDeclaration(bind));
                     } else {
                         new_program.push(stmt);

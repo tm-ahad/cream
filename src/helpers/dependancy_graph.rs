@@ -3,11 +3,11 @@ use oxc_codegen::{CodegenOptions, CommentOptions};
 use crate::{helpers::javascript::transpile_to_js::transpile_to_js, javascript_lib::libs};
 
 #[derive(Debug)]
-pub struct DependancyGraph {
+pub struct DependencyGraph {
     std: Vec<String>
 }
 
-impl DependancyGraph {
+impl DependencyGraph {
     pub fn new() -> Self {
         Self {std: vec![]}
     }
@@ -48,7 +48,7 @@ impl DependancyGraph {
     }
 }
 
-impl Clone for DependancyGraph {
+impl Clone for DependencyGraph {
     fn clone(&self) -> Self {
         Self {std: self.std.clone()}
     }

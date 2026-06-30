@@ -1,15 +1,12 @@
-use serde::Deserialize;
+use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 use toml::Table; 
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Config {
     pub build: Vec<String>,
     pub packages: Table,
+    pub env: HashMap<String, toml::Value>,
     pub port: u16
 }
 
-impl Clone for Config {
-    fn clone(&self) -> Self {
-        Config { build: self.build.clone(), port: self.port, packages: self.packages.clone() }
-    }
-}

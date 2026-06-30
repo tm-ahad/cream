@@ -6,7 +6,7 @@ function particle<T>(value: T) {
 
     return {
         get value() {return val;},
-        entangle(fn: EntangleFn<T>) {
+        subscribe(fn: EntangleFn<T>) {
             subs.push(fn)
         },
         set value(_val: T) {

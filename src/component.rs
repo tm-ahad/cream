@@ -1,9 +1,8 @@
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::exit;
 use oxc_diagnostics::OxcDiagnostic;
 use roxmltree::Attribute;
-use crate::helpers::dependancy_graph::DependancyGraph;
+use crate::consts::FRAGMENT;
 use crate::helpers::javascript::javascript_function::javascript_function;
 use crate::helpers::javascript::javascript_init_var::NULL;
 use crate::helpers::javascript::javascript_init_var::javascript_init_var;
@@ -17,19 +16,18 @@ use roxmltree::Node;
 use roxmltree::Error;
 use rand::Rng;
 
-#[derive(Debug)]
-pub struct Component<'a> {
+#[derive(Debug, Clone)]
+pub struct Component {
     pub html: String,
     pub name: String,
     pub out: String,
-    pub dep_graph: &'a mut DependancyGraph
 }
 
 pub fn special_trim(s: String) -> String {
     s
         .lines()
         .map(|e| e.trim())
-        .collect::<std::vec::Vec<&str>>()
+        .collect::<Vec<&str>>()
         .join("\n")
 }
 
@@ -46,12 +44,38 @@ pub fn std_lib_path(name: &str) -> String {
     out_path.to_string_lossy().into_owned()
 }
 
+#[derive(Debug, Clone)]
+pub enum Directive {
+    For(String),
+    If(String),
+    None
+}
+
+impl Directive {
+    pub fn from(s: String, val: String) -> Self {
+        match s.as_str() {
+            "c-for" => Directive::For(val),
+            "c-if" => Directive::If(val),
+            _ => Directive::None
+        }
+    }
+
+    pub fn is_none(&self) -> bool {
+        matches!(self, Directive::None)
+    }
+
+    pub fn is_some(&self) -> bool {
+        !self.is_none()
+    }
+}
+
 #[derive(Default)]
 pub struct RenderReturn {
     pub rendering_script: String,
     pub script: String,
     pub root_dom_id: u64,
-    pub comp_name: String
+    pub comp_name: String,
+    pub dirs: Vec<Directive>
 }
 
 fn preproc_attr_value(s: &str) -> String {
@@ -70,16 +94,36 @@ pub fn format_oxc_diag(diag: &OxcDiagnostic, src: String) -> String {
     format!("{} at {}:{}", diag.message, src, diag.labels.clone()[0].offset())
 }
 
-impl<'a> Component<'a> {
+fn is_special_attr_for_comp(name: &str) -> bool {
+    let dir = Directive::from(name.to_string(), String::new());
+    dir.is_some() || name == "subscribe"
+}
+
+fn wrap_directive(dirs: &Vec<Directive>, inside_script: String) -> String {
+    let mut wrapped = inside_script;
+    for dir in dirs.iter().rev() {
+        match dir {
+            Directive::For(stmt) => {
+                wrapped = format!(";for({}){{{}}};", stmt, wrapped)
+            }
+            Directive::If(stmt) => {
+                wrapped = format!(";if({}){{{}}};", stmt, wrapped)
+            },
+            Directive::None => {}
+        }
+    }
+
+    wrapped
+}
+
+impl Component {
     pub fn new(
         html: String,
         name: String,
-        dep_graph: &'a mut DependancyGraph
     ) -> Self {
         Self {
             html,
             name,
-            dep_graph,
             out: String::new()
         }
     }
@@ -97,7 +141,9 @@ impl<'a> Component<'a> {
             let code = self.rendering_script_from_desc(child, false);
             ret.insert_str(0, &javascript_function_call(
                 &format!("{}.appendChild", cream_dom_name(id)),
-                vec![cream_dom_name(code.root_dom_id)]
+                vec![
+                    format!("{} ?? {FRAGMENT}", cream_dom_name(code.root_dom_id))
+                ]
             ));
             ret.insert_str(0, &code.rendering_script);
             ids.push(code.root_dom_id);
@@ -112,14 +158,13 @@ impl<'a> Component<'a> {
         Ok(self.rendering_script_from_desc(res.root_element(), false))
     }
 
-    fn subscribe_fn_name() -> String {"entangle".to_string()}
+    fn subscribe_fn_name() -> String {"subscribe".to_string()}
     pub fn cream_window_obj() -> String {"window.__CREAM__".to_string()}
     fn element_storing_object() -> String {"window.__CREAM__.elements".to_string()}
 
     fn rendering_script_from_desc(&self, node: Node, is_parent_comp: bool) -> RenderReturn {
         if node.tag_name().name() == "append" {
             StdErr::exec(SyntaxError, "'append' tag is expected to have a parent which is not a 'render' tag");
-            exit(1)
         }
         
         let mut rng = rand::rng();
@@ -158,20 +203,30 @@ impl<'a> Component<'a> {
         let mut render_self = if is_comp {
             String::new()
         } else {
-            format!("{root_id}.replaceChildren();")
+            format!("del && {root_id}.replaceChildren();")
         };
 
         let mut post_render_hooks = String::new();
         let rand =  rng.next_u64();
+        let mut dirs = vec![];
             
         for attr in node.attributes() {
-            if is_comp {
+            if is_comp && !is_special_attr_for_comp(attr.name()) {
                 let value = &preproc_attr_value(attr.value());
                 render_self.push_str(&javascript_assign(
-                    &format!("{}.{}", cream_object(comp_attr_map_id), attr.name()),
+                    &format!("{}[{:?}]", cream_object(comp_attr_map_id), attr.name()),
                     value
                 ));
                 continue;
+            }
+
+            let dir = Directive::from(attr.name().to_string(), attr.value().to_string());
+            match dir {
+                Directive::None => {},
+                _ => {
+                    dirs.push(dir);
+                    continue;
+                }
             }
 
             if attr.name().starts_with("on_") {
@@ -196,7 +251,7 @@ impl<'a> Component<'a> {
             } else {
                 let value = preproc_attr_value(attr.value());
                 render_self.push_str(&javascript_assign(
-                    &format!("{}.{}", root_id, attr.name()),
+                    &format!("{}[{:?}]", root_id, attr.name()),
                     &value
                 ));
             }
@@ -211,7 +266,6 @@ impl<'a> Component<'a> {
 
                 if attr.is_empty() {
                     StdErr::exec(ErrType::NotFound, &format!("\"name\" attribute of script tag in {}", self.name));
-                    exit(1)
                 } else {
                     comp_name = attr[0].value().to_string()
                 }
@@ -228,7 +282,7 @@ impl<'a> Component<'a> {
                 let mut obj = String::new();
                 for grandchild in child.children() {
                     if !grandchild.is_text() {
-                        StdErr::exec(ErrType::SyntaxError, "Childrens of 'append' were not expected")
+                        StdErr::exec(SyntaxError, "Childrens of 'append' were not expected")
                     } else {
                         obj.push_str(grandchild.text().unwrap())
                     }
@@ -250,13 +304,18 @@ impl<'a> Component<'a> {
             } else if !is_comp {
                 let rendered_child = self.rendering_script_from_desc(child, false);
                 render_self.push_str(&format!(";{};", rendered_child.rendering_script));
-                render_self.push_str(&format!(";{}.appendChild({});", root_id, &cream_dom_name(rendered_child.root_dom_id)));
+                render_self.push_str(&format!(";{}.appendChild({});", root_id, 
+                    format!("{} ?? {FRAGMENT}", &cream_dom_name(rendered_child.root_dom_id))
+                ));
+                render_self = wrap_directive(&rendered_child.dirs, render_self);
             } else {
                 let rendered_child = self.rendering_script_from_desc(child, true);
                 render_self.push_str(&format!(";{};", rendered_child.rendering_script));
                 render_self.push_str(&format!(";{}.childrens.push({});", cream_object(comp_attr_map_id), &cream_dom_name(rendered_child.root_dom_id)));
+                render_self = wrap_directive(&rendered_child.dirs, render_self);
             }
         }
+
 
         if is_comp {
             render_self.push_str(&javascript_assign(
@@ -264,16 +323,20 @@ impl<'a> Component<'a> {
                 &javascript_function_call(node.tag_name().name(), vec![cream_object(comp_attr_map_id)])
             ));
         }
-
+        
         rendering_script.push_str(&javascript_function(
-            format!("render_fn{rand}"), &render_self, vec![]
+            format!("render_fn{rand}"), &render_self, vec!["del=true".to_string()]
         ));
         rendering_script.push_str(&format!(";{};", post_render_hooks));
-        rendering_script.push_str(&javascript_function_call(&format!("render_fn{rand}"), vec![]));
+        rendering_script.push_str(&javascript_function_call(&format!("render_fn{rand}"), vec!["false".to_string()]));
         rendering_script.push(';');
         
         RenderReturn { 
-            rendering_script, script, root_dom_id: root_u64_id, comp_name 
+            rendering_script,
+            script,
+            root_dom_id: root_u64_id,
+            comp_name,
+            dirs
         }
     }
 }

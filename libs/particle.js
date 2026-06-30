@@ -4,7 +4,7 @@ function particle(value) {
 
     return {
         get value() {return val;},
-        entangle(fn) {
+        subscribe(fn) {
             subs.push(fn)
         },
         set value(_val) {

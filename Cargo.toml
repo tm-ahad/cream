@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-httparse = "1.8.0"
 roxmltree = "0.21.1"
 rand = "0.10.1"
 axum = "0.8"
@@ -12,7 +11,8 @@ tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.7", features = ["fs"] }
 serde = { version = "1", features = ["derive"] }
 tinyget = { version = "1.0.2", features = ["https"] }
-oxc_transformer = "0.137.0" 
+serde_json = "1.0.150"
+oxc_transformer = "0.137.0"
 oxc_diagnostics = "0.137.0"
 oxc_allocator = "0.137.0"
 oxc_minifier = "0.137.0"
