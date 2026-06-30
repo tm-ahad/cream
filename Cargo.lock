@@ -212,7 +212,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cream"
+name = "cream-js"
 version = "0.1.0"
 dependencies = [
  "axum",

@@ -5,12 +5,14 @@ use crate::component::cream_dom_name;
 use crate::component::special_trim;
 use crate::component::std_lib_path;
 use crate::config::Config;
+use crate::consts::BUILD_PATH;
 use crate::consts::DEFAULT_WINDOW_OBJ;
 use crate::consts::ENTRY_FILE;
 use crate::helpers::build_source::translate_import_src_to_build;
 use crate::helpers::javascript::javascript_function::javascript_function;
 use crate::helpers::javascript::transpile_to_js::transpile_to_js;
 use crate::std_err::ErrType::NotFound;
+use crate::std_err::ErrType::OSError;
 use crate::std_err::ErrType::SyntaxError;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::Function;
@@ -31,7 +33,9 @@ use oxc_span::SourceType;
 use crate::std_err::ErrType;
 use crate::component::format_oxc_diag;
 use crate::std_err::StdErr;
+use std::fs;
 use std::fs::read_to_string;
+use std::io::ErrorKind;
 use std::path::Path;
 use rand::Rng;
 use crate::helpers::dependancy_graph::DependencyGraph;
@@ -141,12 +145,32 @@ impl Component{
 
     pub fn transpile(&mut self, config: &Config, dep_graph: &mut DependencyGraph) {
         let mut succ_read = true;
-        let script: String = read_to_string(self.name.clone())
-            .unwrap_or_else(|_| {
-                StdErr::exec(NotFound, &self.name);
-                self.out = String::new();
-                succ_read = false;
-                String::new()
+        let path  = Path::new(&self.name);
+        let script: String = read_to_string(path)
+            .unwrap_or_else(|e| {
+                if e.kind() == ErrorKind::InvalidData {
+                    let dest  = Path::new(BUILD_PATH)
+                            .join(path.file_name().unwrap());
+
+                    if dest.exists() {
+                        succ_read = false;
+                        String::new()
+                    } else {
+                        let _ = fs::copy(path, dest);
+                        succ_read = false;
+                        String::new() 
+                    }
+                } else {    
+
+                    StdErr::exec(OSError, &format!(
+                        "error reading {}: {}", 
+                        &self.name,
+                        e
+                    ));
+                    self.out = String::new();
+                    succ_read = false;
+                    String::new()
+                }
             });
 
         if !succ_read {
@@ -175,7 +199,21 @@ impl Component{
         }
 
         let comp = Component::new(script, self.name.clone());
-        let render = comp.html_rendering_script().unwrap();
+        let mut succ_render = true;
+        let render = comp.html_rendering_script()
+            .unwrap_or_else(|e| {
+                StdErr::exec(SyntaxError, &format!(
+                    "error while parsing xml of {}: {}",
+                    self.name, e
+                ));
+                succ_render = false;
+                RenderReturn::default()
+            });
+
+        if !succ_render {
+            return
+        }
+
         if render.comp_name.trim().is_empty() {
             StdErr::exec(NotFound, &format!("component name for {}", self.name));
             self.out = String::new();

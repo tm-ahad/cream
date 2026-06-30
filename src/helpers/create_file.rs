@@ -12,12 +12,12 @@ pub fn create_file(path: String) -> File {
 
     #[cfg(windows)]
     {
-        options.access_mode(0o666); // Permissions for Windows
+        options.access_mode(0o666);
     }
 
     #[cfg(not(windows))]
     {
-        let permissions = fs::Permissions::from_mode(0o777); // Permissions for Unix-based platforms
+        let permissions = fs::Permissions::from_mode(0o777);
         let _ = fs::set_permissions(path.clone(), permissions);
     }
 

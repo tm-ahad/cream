@@ -1,7 +1,7 @@
 use toml::Table;
 
 use crate::config::Config;
-use crate::consts::ENTRY_FILE;
+use crate::consts::{ENTRY_FILE, HEAD_PREFIX_PATH};
 use crate::input::std_input;
 use crate::std_err::{ErrType::OSError, StdErr};
 use crate::helpers::create_file::create_file;
@@ -26,6 +26,7 @@ pub fn create_project(name: &String) {
             });
 
         let mut config = create_file(format!("./{name}/config.toml"));
+        let _ = create_file(format!("./{name}/{}", HEAD_PREFIX_PATH));
         let inst = format!("{} ✨", format_colored("Done", 0, 255, 0));
         let _ = create_dir_all(format!("./{name}/build/"));
 

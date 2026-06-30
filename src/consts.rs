@@ -4,3 +4,4 @@ pub const ENTRY_FILE: &str = "src/app.cream";
 pub const DEFAULT_WINDOW_OBJ: &str = "{elements: {}}";
 pub const BUILD_ENTRY: &str = "./build/index.html";
 pub const FRAGMENT: &str = "document.createDocumentFragment()";
+pub const HEAD_PREFIX_PATH: &str = "head_prefix.html";

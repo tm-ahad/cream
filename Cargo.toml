@@ -1,7 +1,12 @@
 [package]
-name = "cream"
+name = "cream-js"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+
+[[bin]]
+name = "cream"
+path = "src/main.rs"
 
 [dependencies]
 roxmltree = "0.21.1"
@@ -23,7 +28,6 @@ oxc_span = "0.137.0"
 oxc_ast = "0.137.0"
 toml = "1.1.2"
 notify = "8"
-
 
 [profile.release]
 codegen-units = 1
