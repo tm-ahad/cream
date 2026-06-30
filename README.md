@@ -10,8 +10,6 @@ Cream simplifies frontend development by providing a straightforward way to writ
 
 - **Compiled JavaScript with Zero Abstraction**: Cream generates JavaScript code without introducing unnecessary abstractions, resulting in efficient and maintainable code.
   
-- **All-in-One HTML File**: All JavaScript and markup are embedded in a single HTML file, simplifying deployment and distribution of applications.
-  
 - **Reactive States Without Weird APIs**: Cream provides reactive state management without relying on complex or unfamiliar APIs, making it easy to manage application state.
   
 - **Very Small JavaScript Script with Zero Dependencies**: Cream produces lightweight JavaScript code with no external dependencies, ensuring fast load times and minimal overhead.
@@ -24,8 +22,6 @@ Cream simplifies frontend development by providing a straightforward way to writ
   
 - **Blazingly Fast and Memory Safe**: Cream is built with Rust, providing excellent performance, memory safety, and reliability.
   
-- **Relatively Newer Syntax**: Cream introduces a modern syntax that is easy to learn and use, providing developers with powerful language features and expressive constructs.
-  
 - **No Bundler Required**: Cream eliminates the need for bundlers, enabling simpler and more efficient build processes.
 
 ## Installation
@@ -33,12 +29,7 @@ Cream simplifies frontend development by providing a straightforward way to writ
 To install the latest version of cream on macOS or Linux, run the following command in your terminal:
 
 ```bash
-curl https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.bash | bash
-```
-
-And to install the latest version of cream on windows, run the following command in your terminal:
-```pwsh
-irm https://raw.githubusercontent.com/tm-ahad/cream-installation/master/install.ps1 | iex
+cargo install cream-js
 ```
 
 ## Getting Started
