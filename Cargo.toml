@@ -7,6 +7,7 @@ license = "MIT"
 description = "A lightweight compiler for modern web applications."
 repository = "https://github.com/tm-ahad/cream"
 readme = "README.md"
+documentation = "tm-ahad.github.io/cream_docs"
 
 [[bin]]
 name = "cream"
