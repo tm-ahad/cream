@@ -42,8 +42,8 @@ To get started with Cream, follow these steps:
 4. Compile your code to generate the corresponding HTML output.
 5. Deploy and run your application using a web browser or server environment.
 
-For detailed documentation and usage examples, visit [cream-dev.vercel.app](https://cream-dev.vercel.app).
+For detailed documentation and usage examples, visit [cream](https://tm-ahad.github.io/cream_docs).
 
 ## Documentation
 
-For detailed documentation and usage examples, visit [cream-dev.vercel.app](https://cream-dev.vercel.app). The documentation covers various aspects of Cream, including installation instructions, language syntax, standard library APIs, and best practices for developing with Cream.
+For detailed documentation and usage examples, visit [cream](https://tm-ahad.github.io/cream_docs). The documentation covers various aspects of Cream, including installation instructions, language syntax, standard library APIs, and best practices for developing with Cream.
