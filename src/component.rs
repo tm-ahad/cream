@@ -1,5 +1,3 @@
-use std::path::Path;
-use std::path::PathBuf;
 use oxc_diagnostics::OxcDiagnostic;
 use roxmltree::Attribute;
 use crate::consts::FRAGMENT;
@@ -34,15 +32,6 @@ pub fn special_trim(s: String) -> String {
 pub fn cream_dom_name(id: u64) -> String {format!("cream_element{id}")}
 pub fn cream_component(id: u64) -> String {format!("cream_component{id}")}
 pub fn cream_object(id: u64) -> String {format!("cream_object{id}")}
-pub fn std_lib_path(name: &str) -> String {
-    let mut path = PathBuf::from(name);
-    path.set_extension("js");
-
-    let out_path = Path::new("./.cream_std/")
-        .join(path);
-
-    out_path.to_string_lossy().into_owned()
-}
 
 #[derive(Debug, Clone)]
 pub enum Directive {

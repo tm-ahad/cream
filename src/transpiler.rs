@@ -3,7 +3,7 @@ use crate::component::RenderReturn;
 use crate::component::cream_component;
 use crate::component::cream_dom_name;
 use crate::component::special_trim;
-use crate::component::std_lib_path;
+use crate::helpers::build_source::std_lib_path;
 use crate::config::Config;
 use crate::consts::BUILD_PATH;
 use crate::consts::DEFAULT_WINDOW_OBJ;
@@ -111,7 +111,7 @@ impl Component{
                                     }
                                 }
                             } else {
-                                translate_import_src_to_build(&source.source.value["@".len()..])
+                                translate_import_src_to_build(&source.source.value["@".len()..], &conf.root)
                             };  
                                             
                             let new_import = ast.import_declaration(
@@ -249,7 +249,7 @@ impl Component{
                             dep_graph.add_std_lib(name);
                             std_lib_path(name)
                         } else {
-                            translate_import_src_to_build(&source.source.value["@".len()..])
+                            translate_import_src_to_build(&source.source.value["@".len()..], &config.root)
                         };  
                                         
                         let new_import = ast.import_declaration(

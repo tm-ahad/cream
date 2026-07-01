@@ -7,6 +7,7 @@ pub struct Config {
     pub build: Vec<String>,
     pub packages: Table,
     pub env: HashMap<String, toml::Value>,
+    pub root: String,
     pub port: u16
 }
 

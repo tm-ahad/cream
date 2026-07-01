@@ -33,7 +33,7 @@ pub fn make(conf: &Config) {
             import {{mount as App}} from \"{}\"
             App({{}})
         </script>",
-        translate_import_src_to_build(ENTRY_FILE)
+        translate_import_src_to_build(ENTRY_FILE, &conf.root)
     );
 
     fs::write(BUILD_ENTRY, final_html)

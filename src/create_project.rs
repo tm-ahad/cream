@@ -34,7 +34,8 @@ pub fn create_project(name: &String) {
             build: vec![ENTRY_FILE.to_string()],
             port: 6767,
             env: HashMap::new(),
-            packages: Table::new()
+            packages: Table::new(),
+            root: String::from("/")
         };
 
         config
