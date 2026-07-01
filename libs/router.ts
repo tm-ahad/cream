@@ -8,6 +8,7 @@ type RouteContext = {
     }
     [key: string]: unknown
 };
+
 type RouteHandler = (ctx: RouteContext) => void
 type Route = {
     refresh: boolean, 
@@ -17,6 +18,12 @@ type Route = {
 type RouterMap = {
     [key: string]: Route;
 };
+
+function preproccessPath(path: string): string {
+    return path.split("/")
+                .filter(Boolean)
+                .join("/")
+}
 
 class Router {
     routes: RouterMap = {}
@@ -33,17 +40,17 @@ class Router {
     }
 
     setHandle(path: string, handler: RouteHandler, refresh: boolean) {
-        this.routes[path] = { handler, refresh };
+        window.__CREAM__.router.routes[preproccessPath(path)] = { handler, refresh };
     }
 
     setDefaultHandler(handler: RouteHandler, refresh: boolean) {
-        this.defaultRoute = { refresh, handler }
+        window.__CREAM__.router.defaultRoute = { refresh, handler }
     }
 
     serve(location: Location = window.location) {
-        const pathname = location.pathname
+        const pathname = preproccessPath(location.pathname)
         const query = new URLSearchParams(location.search);
-        const route = this.routes[pathname] ?? this.defaultRoute;
+        const route = window.__CREAM__.router.routes[pathname] ?? window.__CREAM__.router.defaultRoute;
 
         if (route.refresh) 
             document.body.replaceChildren()
