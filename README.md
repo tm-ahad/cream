@@ -12,17 +12,15 @@ Cream simplifies frontend development by providing a straightforward way to writ
   
 - **Reactive States Without Weird APIs**: Cream provides reactive state management without relying on complex or unfamiliar APIs, making it easy to manage application state.
   
-- **Very Small JavaScript Script with Zero Dependencies**: Cream produces lightweight JavaScript code with no external dependencies, ensuring fast load times and minimal overhead.
-  
 - **Standard Library**: Cream includes a standard library with functions for tasks such as fetching data, error handling, data extraction, hashing, and cycling data, streamlining common development tasks.
   
 - **Build Full-Stack Web Apps**: Cream can be used to build full-stack web applications in conjunction with any backend framework, offering flexibility and interoperability.
   
 - **No `node_modules` Required**: Cream does not rely on `node_modules` for its functionality, eliminating unnecessary dependencies and simplifying project setup. This is particularly beneficial for projects that do not use TypeScript or Tailwind CSS.
   
-- **Blazingly Fast and Memory Safe**: Cream is built with Rust, providing excellent performance, memory safety, and reliability.
-  
 - **No Bundler Required**: Cream eliminates the need for bundlers, enabling simpler and more efficient build processes.
+
+- **Native Typescript**: Cream eliminates the need for any explicit runtime or the typescipt compiler to write typescript scripts for your web app.
 
 ## Installation
 
@@ -31,16 +29,6 @@ To install the latest version of cream on macOS or Linux, run the following comm
 ```bash
 cargo install cream-js
 ```
-
-## Getting Started
-
-To get started with Cream, follow these steps:
-
-1. Install Cream using the provided installation script.
-2. Create a new Cream project or add Cream to an existing project.
-3. Write your frontend UI code using Cream's declarative syntax.
-4. Compile your code to generate the corresponding HTML output.
-5. Deploy and run your application using a web browser or server environment.
 
 For detailed documentation and usage examples, visit [cream](https://tm-ahad.github.io/cream_docs).
 
