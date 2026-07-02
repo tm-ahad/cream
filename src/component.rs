@@ -233,7 +233,7 @@ impl Component {
             } else if attr.name() == "subscribe" {
                 post_render_hooks.push_str(
                 &format!(
-                        ";for (let haaland of {}) {{haaland.{}(render_fn{rand})}};", attr.value(), 
+                        ";for (var haaland of {}) {{haaland.{}(render_fn{rand})}};", attr.value(),
                         Component::subscribe_fn_name()
                     )
                 );

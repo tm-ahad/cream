@@ -58,7 +58,7 @@ async fn main() {
                 });
 
                 if !cfg!(debug_assertions) || args[1].as_str() == "make" {
-                    make::make(&mut config);
+                    make::make(&mut config, &None);
                 }
 
                 if args[1].as_str() == "serve" {
@@ -74,7 +74,7 @@ async fn main() {
                                             std::time::Duration::from_millis(300)
                                         );
                                         println!("Building...");
-                                        make::make(&bind_conf);
+                                        make::make(&bind_conf, &Some(event));
                                     },
                                     _ => {}
                                 }
@@ -84,6 +84,10 @@ async fn main() {
                     let _ = watcher.watch(
                         Path::new("./src").as_ref(),
                         RecursiveMode::Recursive
+                    );
+                    let _ = watcher.watch(
+                        Path::new(CONFIG_FILE).as_ref(),
+                        RecursiveMode::NonRecursive
                     );
 
                     let bind_conf = config.clone();

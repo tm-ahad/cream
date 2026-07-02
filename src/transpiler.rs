@@ -14,8 +14,9 @@ use crate::helpers::javascript::transpile_to_js::transpile_to_js;
 use crate::std_err::ErrType::NotFound;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::ErrType::SyntaxError;
-use oxc_allocator::CloneIn;
-use oxc_ast::ast::Function;
+use oxc_allocator::{CloneIn, Vec};
+use oxc_ast::ast::NumberBase;
+use oxc_ast::ast::{BindingPattern, Expression, Function, ObjectPropertyKind, PropertyKey, PropertyKind, TSEnumMemberName, TSTypeAnnotation, VariableDeclarationKind};
 use oxc_codegen::Codegen;
 use oxc_codegen::CodegenOptions;
 use oxc_codegen::CommentOptions;
@@ -29,8 +30,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
 use oxc_ast::ast::Statement;
 use oxc_parser::Parser;
-use oxc_span::SourceType;
-use crate::std_err::ErrType;
+use oxc_span::{SourceType, Span};
 use crate::component::format_oxc_diag;
 use crate::std_err::StdErr;
 use std::fs;
@@ -82,11 +82,11 @@ fn is_entry_file(name: &str) -> bool {
     name == ENTRY_FILE
 }
 
-impl Component{
+impl Component {
     pub fn handle_comp_declr<'b>(
         &mut self,
         stmt: &mut Function,
-        new_program: &mut oxc_allocator::Vec<'b, Statement<'b>>,
+        new_program: &mut Vec<'b, Statement<'b>>,
         allocator: &'b Allocator,
         ast: &AstBuilder<'b>,
         conf: &Config,
@@ -123,8 +123,92 @@ impl Component{
                                 source.import_kind
                             );
 
-                            new_program.insert(0, Statement::ImportDeclaration(oxc_allocator::Box::new_in(new_import, allocator)));
+                            new_program.insert(0, Statement::ImportDeclaration(
+                                oxc_allocator::Box::new_in(new_import, allocator)
+                            ));
                         }
+
+                        false
+                    },
+                    Statement::TSEnumDeclaration(declr, ..) => {
+                        let mut enum_object: Vec<ObjectPropertyKind> = Vec::new_in(&allocator);
+
+                        for (val, mem) in declr.body.members.clone_in(allocator).iter().enumerate() {
+                            let name = match &mem.id {
+                                TSEnumMemberName::Identifier(id) => id.name.as_str(),
+                                _ => continue,
+                            };
+
+                            let prop = ObjectPropertyKind::ObjectProperty(
+                                oxc_allocator::Box::new_in(ast.object_property(
+                                    Span::default(),
+                                    PropertyKind::Init,
+                                    PropertyKey::StaticIdentifier(
+                                        ast.alloc_identifier_name(Span::default(), name)
+                                    ),
+                                    Expression::NumericLiteral(
+                                        oxc_allocator::Box::new_in(
+                                            ast.numeric_literal(
+                                                Span::default(),
+                                                val as f64, 
+                                                None, 
+                                                NumberBase::Decimal
+                                            ), &allocator
+                                        )
+
+                                    ),
+                                    false, false, false
+                                ), &allocator
+                            ));
+
+                            let rev_prop = ObjectPropertyKind::ObjectProperty(
+                                oxc_allocator::Box::new_in(ast.object_property(
+                                    Span::default(),
+                                    PropertyKind::Init,
+                                    PropertyKey::NumericLiteral(
+                                        oxc_allocator::Box::new_in(
+                                            ast.numeric_literal(
+                                                Span::default(),
+                                                val as f64, 
+                                                None, 
+                                                NumberBase::Decimal
+                                            ), &allocator
+                                        )
+                                    ),
+                                    Expression::StringLiteral(
+                                        ast.alloc_string_literal(Span::default(), ast.str(name), None)
+                                    ),
+                                    false, false, false
+                                ), &allocator
+                            ));
+
+                            enum_object.push(prop);
+                            enum_object.push(rev_prop);
+                        }
+
+                        let declarator = ast.variable_declarator(
+                            Span::default(),
+                            VariableDeclarationKind::Const,
+                            BindingPattern::BindingIdentifier(
+                                oxc_allocator::Box::new_in(declr.id.clone_in(&allocator), &allocator)
+                            ),
+                            None::<oxc_allocator::Box<TSTypeAnnotation>>,
+                            Some(Expression::ObjectExpression(
+                                ast.alloc_object_expression(Span::default(), enum_object)
+                            )),
+                            false,
+                        );
+
+                        new_program.insert(0,
+                            Statement::VariableDeclaration(
+                                ast.alloc_variable_declaration(
+                                    Span::default(),
+                                    VariableDeclarationKind::Const,
+                                    ast.vec1(declarator),
+                                    false
+                                )
+                            )
+                        );
 
                         false
                     },
@@ -225,13 +309,13 @@ impl Component{
         let script_trimmed = final_build_string(render, comp_id, is_entry_file(&self.name), config);
 
         let allocator = Allocator::default();
-        let source_type = SourceType::default().with_module(true);
+        let source_type = SourceType::ts().with_module(true);
         let parsed = Parser::new(&allocator, &script_trimmed, source_type).parse();
         let program = parsed.program;
 
         let allocator = Allocator::default();
         let ast = AstBuilder::new(&allocator);
-        let mut new_program = oxc_allocator::Vec::new_in(&allocator);
+        let mut new_program = Vec::new_in(&allocator);
 
         for mut stmt in program.body {
             match &mut stmt {
@@ -294,14 +378,13 @@ impl Component{
             "", 
             program.comments, 
             None, 
-            oxc_allocator::Vec::new_in(&allocator),
+            Vec::new_in(&allocator),
             new_program
         );
 
         let min_opt = MinifierOptions::default();
         let min = Minifier::new(min_opt);
 
-        let allocator = Allocator::default();
         let transform_options = TransformOptions::default();
         let semantic_ret = SemanticBuilder::new()
             .build(&new_prog);
@@ -314,7 +397,7 @@ impl Component{
         );
         
         for err in parsed.diagnostics {
-            StdErr::exec(ErrType::SyntaxError, &format_oxc_diag(&err, self.name.clone()));
+            StdErr::exec(SyntaxError, &format_oxc_diag(&err, self.name.clone()));
         }
     
         let _ = transformer.build_with_scoping(scoping, &mut new_prog);

@@ -1,20 +1,48 @@
-use crate::consts::{BUILD_ENTRY, BUILD_PATH, ENTRY_FILE, HEAD_PREFIX_PATH};
+use crate::consts::{BUILD_ENTRY, BUILD_PATH, CONFIG_FILE, ENTRY_FILE, HEAD_PREFIX_PATH};
 use crate::helpers::dependancy_graph::DependencyGraph;
-use crate::std_err::ErrType::NotFound;
+use crate::std_err::ErrType::{NotFound, OSError};
 use crate::std_err::{ErrType, StdErr};
 use crate::{component::Component, config::Config};
 use crate::helpers::build_source::{build_path, translate_import_src_to_build};
 use std::process::exit;
 use crate::out::out;
 use std::fs::{self, read_to_string};
+use std::path::PathBuf;
+use notify::Event;
 
-pub fn make(conf: &Config) {
+pub fn make(conf: &Config, change: &Option<Event>) {
     for str_val in conf.build.iter() {
         let mut dep_graph = DependencyGraph::new();
         let mut comp = Component::new(String::new(), str_val.to_string());
-        comp.transpile(&conf, &mut dep_graph);
-        out(&build_path(str_val), comp.out);
-        dep_graph.install(BUILD_PATH);
+        let path_buf = fs::canonicalize(PathBuf::from(str_val))
+            .unwrap_or_else(|e| {
+                StdErr::exec(
+                    OSError, 
+                    &format!("Error canonicalize {str_val}: {e}")
+                );
+                exit(1)
+            });
+
+        let cannon_config = fs::canonicalize(PathBuf::from(CONFIG_FILE))
+            .unwrap_or_else(|e| {
+                StdErr::exec(
+                    OSError, 
+                    &format!("Error canonicalize {str_val}: {e}")
+                );
+                exit(1)
+            });
+
+        if let Some(event) = change {
+            if event.paths.contains(&path_buf) || event.paths.contains(&cannon_config) {
+                comp.transpile(&conf, &mut dep_graph);
+                out(&build_path(str_val), comp.out);
+                dep_graph.install(BUILD_PATH);
+            }
+        } else if change.is_none() {
+            comp.transpile(&conf, &mut dep_graph);
+            out(&build_path(str_val), comp.out);
+            dep_graph.install(BUILD_PATH);
+        }
     }
 
     let head_prefix = read_to_string(HEAD_PREFIX_PATH)
@@ -28,11 +56,7 @@ pub fn make(conf: &Config) {
     
 
     let final_html = format!(
-        "{head_prefix}
-        <script type=\"module\">
-            import {{mount as App}} from \"{}\"
-            App({{}})
-        </script>",
+        "{head_prefix}\n<script type=\"module\">import {{mount}} from \"{}\";mount({{}})</script>",
         translate_import_src_to_build(ENTRY_FILE, &conf.root)
     );
 
