@@ -90,7 +90,7 @@ async fn main() {
                     serve(&bind_conf).await
                 }
             },
-            "version" => println!("{}", version()),
+            "version" => println!("Cream {}", version()),
             &_ => pass(),
         }
     }

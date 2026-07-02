@@ -292,16 +292,24 @@ impl Component {
                 }
             } else if !is_comp {
                 let rendered_child = self.rendering_script_from_desc(child, false);
-                render_self.push_str(&format!(";{};", rendered_child.rendering_script));
-                render_self.push_str(&format!(";{}.appendChild({});", root_id, 
+                let mut child_script = String::new();
+
+                child_script.push_str(&format!(";{};", rendered_child.rendering_script));
+                child_script.push_str(&format!(";{}.appendChild({});", root_id, 
                     format!("{} ?? {FRAGMENT}", &cream_dom_name(rendered_child.root_dom_id))
                 ));
-                render_self = wrap_directive(&rendered_child.dirs, render_self);
+                child_script = wrap_directive(&rendered_child.dirs, child_script);
+                
+                render_self.push_str(&child_script);
             } else {
                 let rendered_child = self.rendering_script_from_desc(child, true);
-                render_self.push_str(&format!(";{};", rendered_child.rendering_script));
-                render_self.push_str(&format!(";{}.childrens.push({});", cream_object(comp_attr_map_id), &cream_dom_name(rendered_child.root_dom_id)));
-                render_self = wrap_directive(&rendered_child.dirs, render_self);
+                let mut child_script = String::new();
+                
+                child_script.push_str(&format!(";{};", rendered_child.rendering_script));
+                child_script.push_str(&format!(";{}.childrens.push({});", cream_object(comp_attr_map_id), &cream_dom_name(rendered_child.root_dom_id)));
+                child_script = wrap_directive(&rendered_child.dirs, child_script);
+                
+                render_self.push_str(&child_script);
             }
         }
 

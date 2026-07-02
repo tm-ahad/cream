@@ -1,3 +1,3 @@
 pub fn version() -> String {
-    String::from("alpha 0.1.0")
+    env!("CARGO_PKG_VERSION").to_string()
 }
