@@ -60,6 +60,7 @@ class Router {
         })
 
         window.addEventListener("popstate", () => this.serve())
+        window.__CREAM__.router.serve = this.serve
     }
 
     static visit(path: string) {

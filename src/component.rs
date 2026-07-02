@@ -29,9 +29,9 @@ pub fn special_trim(s: String) -> String {
         .join("\n")
 }
 
-pub fn cream_dom_name(id: u64) -> String {format!("cream_element{id}")}
-pub fn cream_component(id: u64) -> String {format!("cream_component{id}")}
-pub fn cream_object(id: u64) -> String {format!("cream_object{id}")}
+pub fn cream_dom_name(id: u64) -> String {format!("__c_elem{id}")}
+pub fn cream_component(id: u64) -> String {format!("__c_comp{id}")}
+pub fn cream_object(id: u64) -> String {format!("__c_obj{id}")}
 
 #[derive(Debug, Clone)]
 pub enum Directive {
@@ -88,7 +88,7 @@ fn is_special_attr_for_comp(name: &str) -> bool {
     dir.is_some() || name == "subscribe"
 }
 
-fn wrap_directive(dirs: &Vec<Directive>, inside_script: String) -> String {
+fn wrap_directive(dirs: &[Directive], inside_script: String) -> String {
     let mut wrapped = inside_script;
     for dir in dirs.iter().rev() {
         match dir {
@@ -149,6 +149,8 @@ impl Component {
 
     fn subscribe_fn_name() -> String {"subscribe".to_string()}
     pub fn cream_window_obj() -> String {"window.__CREAM__".to_string()}
+    pub fn cream_project_obj() -> String {"window.project".to_string()}
+
     fn element_storing_object() -> String {"window.__CREAM__.elements".to_string()}
 
     fn rendering_script_from_desc(&self, node: Node, is_parent_comp: bool) -> RenderReturn {

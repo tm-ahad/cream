@@ -52,7 +52,13 @@ pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool, con
             export {{{} as {}, mount}};
         ",  
             if is_main {
-                format!("{}={};", Component::cream_window_obj(), DEFAULT_WINDOW_OBJ)
+                format!(
+                    "{}={}; {}={{root: {:?}}}", 
+                    Component::cream_window_obj(), 
+                    DEFAULT_WINDOW_OBJ,
+                    Component::cream_project_obj(),
+                    config.root
+                )
             } else {
                 String::new()
             }, if is_main {
