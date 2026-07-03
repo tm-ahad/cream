@@ -36,12 +36,12 @@ pub fn make(conf: &Config, change: &Option<Event>) {
             if event.paths.contains(&path_buf) || event.paths.contains(&cannon_config) {
                 comp.transpile(&conf, &mut dep_graph);
                 out(&build_path(str_val), comp.out);
-                dep_graph.install(BUILD_PATH);
+                dep_graph.install(BUILD_PATH, conf);
             }
         } else if change.is_none() {
             comp.transpile(&conf, &mut dep_graph);
             out(&build_path(str_val), comp.out);
-            dep_graph.install(BUILD_PATH);
+            dep_graph.install(BUILD_PATH, conf);
         }
     }
 

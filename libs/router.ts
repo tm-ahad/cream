@@ -1,74 +1,134 @@
-type Query = { [key: string]: string }
+type Query = { [key: string]: string };
 
 type RouteContext = {
     ctx: {
-        params: Array<string>,
-        path: string,
-        query: Query
-    }
-    [key: string]: unknown
+        params: string[];
+        path: string;
+        query: Query;
+    };
+    [key: string]: unknown;
 };
 
-type RouteHandler = (ctx: RouteContext) => void
+type RouteHandler = (ctx: RouteContext) => void;
+
 type Route = {
-    refresh: boolean, 
-    handler: RouteHandler
+    refresh: boolean;
+    handler: RouteHandler;
 };
 
 type RouterMap = {
     [key: string]: Route;
 };
 
-function preproccessPath(path: string): string {
-    return path.split("/")
-                .filter(Boolean)
-                .join("/")
+function preprocessPath(path: string): string {
+    return "/" + path
+        .split("/")
+        .filter(Boolean)
+        .join("/");
+}
+
+declare global {
+    interface Window {
+        __CREAM__?: {
+            router?: {
+                routes: RouterMap;
+                defaultRoute: Route;
+                serve: (location?: Location) => void;
+            };
+        };
+    }
 }
 
 class Router {
-    routes: RouterMap = {}
     defaultRoute: Route = {
         refresh: true,
         handler: () => {}
-    }
+    };
 
     constructor() {
+        window.__CREAM__ ??= {};
+
         window.__CREAM__.router = {
             routes: {},
-            defaultRoute: this.defaultRoute
-        }
+            defaultRoute: this.defaultRoute,
+            serve: this.serve.bind(this)
+        };
+
+        window.addEventListener("popstate", () => {
+            this.serve();
+        });
     }
 
-    setHandle(path: string, handler: RouteHandler, refresh: boolean) {
-        window.__CREAM__.router.routes[preproccessPath(path)] = { handler, refresh };
+    setHandle(
+        path: string,
+        handler: RouteHandler,
+        refresh: boolean
+    ) {
+        window.__CREAM__!.router!.routes[
+            preprocessPath(path)
+        ] = {
+            handler,
+            refresh
+        };
     }
 
-    setDefaultHandler(handler: RouteHandler, refresh: boolean) {
-        window.__CREAM__.router.defaultRoute = { refresh, handler }
+    setDefaultHandler(
+        handler: RouteHandler,
+        refresh: boolean
+    ) {
+        window.__CREAM__!.router!.defaultRoute = {
+            handler,
+            refresh
+        };
     }
 
     serve(location: Location = window.location) {
-        const pathname = preproccessPath(location.pathname)
-        const query = new URLSearchParams(location.search);
-        const route = window.__CREAM__.router.routes[pathname] ?? window.__CREAM__.router.defaultRoute;
+        const pathname = preprocessPath(location.pathname);
 
-        if (route.refresh) 
-            document.body.replaceChildren()
+        const query = Object.fromEntries(
+            new URLSearchParams(location.search)
+        );
+
+        const router = window.__CREAM__?.router;
+
+        if (!router) {
+            return;
+        }
+
+        const route =
+            router.routes[pathname] ??
+            router.defaultRoute;
+
+        if (route.refresh) {
+            document.body.replaceChildren();
+        }
 
         route.handler({
-            ctx: {params: [], path: pathname, query: Object.fromEntries(query)}
-        })
-
-        window.addEventListener("popstate", () => this.serve())
-        window.__CREAM__.router.serve = this.serve
+            ctx: {
+                params: [],
+                path: pathname,
+                query
+            }
+        });
     }
 
     static visit(path: string) {
-        history.pushState({}, "", path);
-        if (window.__CREAM__.router) {
-            window.__CREAM__.router.serve(window.location)
+        const router = window.__CREAM__?.router;
+
+        if (router) {
+            history.pushState({}, "", path);
+            router.serve();
+        } else {
+            // Static site fallback
+            window.location.href = path;
         }
     }
 }
 
-export { Route, RouteContext, RouteHandler, Router, RouterMap }
+export {
+    Route,
+    RouteContext,
+    RouteHandler,
+    Router,
+    RouterMap
+};

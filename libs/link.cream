@@ -1,0 +1,8 @@
+<a on_click="function() {Router.visit(params.href)}" style.cursor="pointer" className="@params.className">
+    <div c-for="let i in params.childrens">
+        <append >params.childrens[i]</append>
+    </div>
+</a>
+<script name="Link">
+    import { Router } from "@std:router.ts"
+</script>

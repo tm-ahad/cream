@@ -32,7 +32,7 @@ pub fn create_project(name: &String) {
 
         let initial_config = Config {
             build: vec![ENTRY_FILE.to_string()],
-            port: 6767,
+            port: 8000,
             env: HashMap::new(),
             packages: Table::new(),
             root: String::from("/")

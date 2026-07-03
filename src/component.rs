@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use roxmltree::Attribute;
 use crate::consts::FRAGMENT;
+use crate::helpers::javascript::create_dom_element::dom_element;
 use crate::helpers::javascript::javascript_function::javascript_function;
 use crate::helpers::javascript::javascript_init_var::NULL;
 use crate::helpers::javascript::javascript_init_var::javascript_init_var;
@@ -142,7 +143,7 @@ impl Component {
     }
 
     pub fn html_rendering_script(&self) -> Result<RenderReturn, Error>  {
-        let synt = format!("<div>{}</div>", &self.html.trim());
+        let synt = format!("<template>{}</template>", &self.html.trim());
         let res = roxmltree::Document::parse(&synt)?;
         Ok(self.rendering_script_from_desc(res.root_element(), false))
     }
@@ -171,7 +172,7 @@ impl Component {
             "undefined"
         } else {
             &format!("{};",
-                &javascript_function_call("document.createElement", vec![javascript_string(node.tag_name().name())])
+                &dom_element(node.tag_name().name())
             )
         };
 
@@ -204,8 +205,14 @@ impl Component {
         for attr in node.attributes() {
             if is_comp && !is_special_attr_for_comp(attr.name()) {
                 let value = &preproc_attr_value(attr.value());
+                let obj_assignment = if attr.name().contains("-") {
+                    &format!("{}[{:?}]", cream_object(comp_attr_map_id), attr.name())
+                } else {
+                    &format!("{}.{}", cream_object(comp_attr_map_id), attr.name())
+                };
+
                 render_self.push_str(&javascript_assign(
-                    &format!("{}[{:?}]", cream_object(comp_attr_map_id), attr.name()),
+                    obj_assignment,
                     value
                 ));
                 continue;
@@ -241,8 +248,14 @@ impl Component {
                 );
             } else {
                 let value = preproc_attr_value(attr.value());
+                let prop_assignment = if attr.name().contains("-") {
+                    &format!("{}[{:?}]", root_id, attr.name())
+                } else {
+                    &format!("{}.{}", root_id, attr.name())
+                };
+
                 render_self.push_str(&javascript_assign(
-                    &format!("{}[{:?}]", root_id, attr.name()),
+                    prop_assignment,
                     &value
                 ));
             }
@@ -287,6 +300,15 @@ impl Component {
                 let text = child.text().unwrap().trim();
                 let value = preproc_attr_value(text);
 
+                if is_comp && !text.is_empty() {
+                    render_self.push_str(&format!(
+                        "{}.childrens.push(document.createTextNode({}))",
+                        cream_object(comp_attr_map_id),
+                        value
+                    ));
+                    continue;
+                }
+
                 if !text.is_empty() && !is_parent_comp {
                     render_self.push_str(&format!(";{}.appendChild(document.createTextNode({}));", root_id, value));
                 } else if !text.is_empty() {
@@ -306,6 +328,9 @@ impl Component {
             } else {
                 let rendered_child = self.rendering_script_from_desc(child, true);
                 let mut child_script = String::new();
+
+
+                println!("{}", rendered_child.rendering_script);
                 
                 child_script.push_str(&format!(";{};", rendered_child.rendering_script));
                 child_script.push_str(&format!(";{}.childrens.push({});", cream_object(comp_attr_map_id), &cream_dom_name(rendered_child.root_dom_id)));
