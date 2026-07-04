@@ -15,11 +15,11 @@ fn preprocces_path(path: &str) -> String {
     )
 }
 
-pub fn std_lib_path(name: &str) -> String {
+pub fn std_lib_path(name: &str, root: &str) -> String {
     let mut path = PathBuf::from(name);
     path.set_extension("js");
 
-    let out_path = Path::new("./.cream_std/")
+    let out_path = Path::new(&format!("{root}/.cream_std/"))
         .join(path);
 
     out_path.to_string_lossy().into_owned()

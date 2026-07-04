@@ -107,7 +107,7 @@ impl Component {
                         if source.source.value.starts_with("@") {
                             let resolved = if let Some(name) = source.source.value.strip_prefix("@std:") {
                                 dep_graph.add_std_lib(name);
-                                std_lib_path(name)
+                                std_lib_path(name, &conf.root)
                             } else if let Some(name) = source.source.value.strip_prefix("@pkg:") {
                                 match &conf.packages[name] {
                                     toml::Value::String(s) => s.to_string(),
@@ -236,32 +236,36 @@ impl Component {
     pub fn transpile(&mut self, config: &Config, dep_graph: &mut DependencyGraph) {
         let mut succ_read = true;
         let path  = Path::new(&self.name);
-        let script: String = read_to_string(path)
-            .unwrap_or_else(|e| {
-                if e.kind() == ErrorKind::InvalidData {
-                    let dest  = Path::new(BUILD_PATH)
-                            .join(path.file_name().unwrap());
+        let script: String = if let Some(html) = &self.html {
+            html.to_string()
+        } else { 
+            read_to_string(path)
+                .unwrap_or_else(|e| {
+                    if e.kind() == ErrorKind::InvalidData {
+                        let dest  = Path::new(BUILD_PATH)
+                                .join(path.file_name().unwrap());
 
-                    if dest.exists() {
+                        if dest.exists() {
+                            succ_read = false;
+                            String::new()
+                        } else {
+                            let _ = fs::copy(path, dest);
+                            succ_read = false;
+                            String::new() 
+                        }
+                    } else {    
+
+                        StdErr::exec(OSError, &format!(
+                            "error reading {}: {}", 
+                            &self.name,
+                            e
+                        ));
+                        self.out = String::new();
                         succ_read = false;
                         String::new()
-                    } else {
-                        let _ = fs::copy(path, dest);
-                        succ_read = false;
-                        String::new() 
                     }
-                } else {    
-
-                    StdErr::exec(OSError, &format!(
-                        "error reading {}: {}", 
-                        &self.name,
-                        e
-                    ));
-                    self.out = String::new();
-                    succ_read = false;
-                    String::new()
-                }
-            });
+                })
+        };
 
         if !succ_read {
             return
@@ -288,7 +292,7 @@ impl Component {
             }
         }
 
-        let comp = Component::new(script, self.name.clone());
+        let comp = Component::new(Some(script), self.name.clone());
         let mut succ_render = true;
         let render = comp.html_rendering_script()
             .unwrap_or_else(|e| {
@@ -337,7 +341,7 @@ impl Component {
                         let resolved = if source.source.value.starts_with("@std:") {
                             let name = &source.source.value["@std:".len()..].to_string();
                             dep_graph.add_std_lib(name);
-                            std_lib_path(name)
+                            std_lib_path(name, &config.root)
                         } else {
                             translate_import_src_to_build(&source.source.value["@".len()..], &config.root)
                         };  

@@ -17,7 +17,7 @@ use rand::Rng;
 
 #[derive(Debug, Clone)]
 pub struct Component {
-    pub html: String,
+    pub html: Option<String>,
     pub name: String,
     pub out: String,
 }
@@ -108,7 +108,7 @@ fn wrap_directive(dirs: &[Directive], inside_script: String) -> String {
 
 impl Component {
     pub fn new(
-        html: String,
+        html: Option<String>,
         name: String,
     ) -> Self {
         Self {
@@ -143,7 +143,7 @@ impl Component {
     }
 
     pub fn html_rendering_script(&self) -> Result<RenderReturn, Error>  {
-        let synt = format!("<template>{}</template>", &self.html.trim());
+        let synt = format!("<template>{}</template>", &self.html.clone().unwrap().trim());
         let res = roxmltree::Document::parse(&synt)?;
         Ok(self.rendering_script_from_desc(res.root_element(), false))
     }

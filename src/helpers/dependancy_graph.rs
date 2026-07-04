@@ -53,7 +53,8 @@ impl DependencyGraph {
                 },
                 "cream" => {
                     let mut dep_graph = DependencyGraph::new();
-                    let mut comp = Component::new(lib, name.to_string());
+                    let mut comp = Component::new(Some(lib.clone()), name.to_string());
+                    println!("{}", lib);
                     comp.transpile(config, &mut dep_graph);
                     dep_graph.install(BUILD_PATH, config);
 

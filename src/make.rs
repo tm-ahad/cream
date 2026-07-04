@@ -13,7 +13,7 @@ use notify::Event;
 pub fn make(conf: &Config, change: &Option<Event>) {
     for str_val in conf.build.iter() {
         let mut dep_graph = DependencyGraph::new();
-        let mut comp = Component::new(String::new(), str_val.to_string());
+        let mut comp = Component::new(None, str_val.to_string());
         let path_buf = fs::canonicalize(PathBuf::from(str_val))
             .unwrap_or_else(|e| {
                 StdErr::exec(
