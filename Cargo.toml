@@ -31,8 +31,10 @@ oxc_codegen = "0.137.0"
 oxc_parser = "0.137.0"
 oxc_span = "0.137.0"
 oxc_ast = "0.137.0"
+seahash = "4.1.0"
 toml = "1.1.2"
 notify = "8"
+hex = "0.4.3"
 
 [profile.release]
 codegen-units = 1

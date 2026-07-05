@@ -119,7 +119,6 @@ class Router {
             history.pushState({}, "", path);
             router.serve();
         } else {
-            // Static site fallback
             window.location.href = path;
         }
     }

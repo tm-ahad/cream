@@ -13,17 +13,19 @@ mod pass;
 mod serve;
 
 use notify::{Event, EventKind, RecursiveMode, Watcher};
-use crate::consts::{CONFIG_FILE};
+use crate::helpers::check_sums::CheckSums;
+use crate::consts::{CHECK_SUM_FILE, CONFIG_FILE};
 use crate::helpers::version::version;
 use crate::create_project::create_project;
 use crate::pass::pass;
 use crate::serve::serve;
 use crate::std_err::ErrType::{NotFound, SyntaxError};
 use crate::std_err::StdErr;
-use std::env;
+use std::collections::{BTreeMap};
 use std::fs::read_to_string;
 use std::path::Path;
 use std::process::exit;
+use std::env;
 
 #[tokio::main]
 async fn main() {
@@ -58,7 +60,14 @@ async fn main() {
                 });
 
                 if !cfg!(debug_assertions) || args[1].as_str() == "make" {
-                    make::make(&mut config, &None);
+                    let raw_check_sum = read_to_string(CHECK_SUM_FILE)
+                        .unwrap_or(String::new());
+
+                    let mut check_sums =
+                         serde_json::from_str::<CheckSums>(&raw_check_sum)
+                            .unwrap_or(BTreeMap::new());
+
+                    make::make(&mut config, &None, &mut check_sums);
                 }
 
                 if args[1].as_str() == "serve" {
@@ -74,7 +83,11 @@ async fn main() {
                                             std::time::Duration::from_millis(300)
                                         );
                                         println!("Building...");
-                                        make::make(&bind_conf, &Some(event));
+                                        make::make(
+                                            &bind_conf,
+                                            &Some(event),
+                                            &mut BTreeMap::new()
+                                        );
                                     },
                                     _ => {}
                                 }
