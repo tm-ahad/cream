@@ -38,14 +38,14 @@ pub fn special_trim(s: String) -> String {
         .join("\n")
 }
 
-pub fn cream_dom_name(id: u64) -> String {
-    format!("__c_elem{id}")
+pub fn cream_dom_name(id: u32) -> String {
+    format!("__c_elem{:X}", id)
 }
-pub fn cream_component(id: u64) -> String {
-    format!("__c_comp{id}")
+pub fn cream_component(id: u32) -> String {
+    format!("__c_comp{:X}", id)
 }
-pub fn cream_object(id: u64) -> String {
-    format!("__c_obj{id}")
+pub fn cream_object(id: u32) -> String {
+    format!("__c_obj{:X}", id)
 }
 
 #[derive(Debug, Clone)]
@@ -77,7 +77,7 @@ impl Directive {
 pub struct RenderReturn {
     pub rendering_script: String,
     pub script: String,
-    pub root_dom_id: u64,
+    pub root_dom_id: u32,
     pub comp_name: String,
     pub dirs: Vec<Directive>,
 }
@@ -161,7 +161,7 @@ impl Component {
         self.out.clone()
     }
 
-    fn parse_render_value(&self, node: &Node, id: u64) -> (String, Vec<u64>) {
+    fn parse_render_value(&self, node: &Node, id: u32) -> (String, Vec<u32>) {
         let mut ret = String::new();
         let mut ids = vec![];
 
@@ -225,7 +225,7 @@ impl Component {
         let mut script = String::new();
         let mut comp_name = String::new();
 
-        let root_u64_id = rng.next_u64();
+        let root_u64_id = rng.next_u32();
         let root_id = &cream_dom_name(root_u64_id);
 
         let is_comp = node
@@ -243,7 +243,7 @@ impl Component {
 
         let mut comp_attr_map_id = 0;
         if is_comp {
-            comp_attr_map_id = rng.next_u64();
+            comp_attr_map_id = rng.next_u32();
             rendering_script.push_str(&javascript_init_var(
                 &cream_object(comp_attr_map_id),
                 &default_component_param(),
@@ -262,7 +262,7 @@ impl Component {
         };
 
         let mut post_render_hooks = String::new();
-        let rand = rng.next_u64();
+        let rand = rng.next_u32();
         let mut dirs = vec![];
 
         for attr in node.attributes() {
@@ -305,9 +305,10 @@ impl Component {
                 ));
             } else if attr.name() == "subscribe" {
                 post_render_hooks.push_str(&format!(
-                    ";for (var haaland of {}) {{haaland.{}(render_fn{rand})}};",
+                    ";for (var __c_rest of {}) {{__c_rest.{}(render_fn{:X})}};",
                     attr.value(),
-                    Component::subscribe_fn_name()
+                    Component::subscribe_fn_name(),
+                    rand
                 ));
             } else {
                 let value = preproc_attr_value(attr.value());
@@ -426,13 +427,13 @@ impl Component {
         }
 
         rendering_script.push_str(&javascript_function(
-            format!("render_fn{rand}"),
+            format!("render_fn{:X}", rand),
             &render_self,
             vec!["del=true".to_string()],
         ));
         rendering_script.push_str(&format!(";{};", post_render_hooks));
         rendering_script.push_str(&javascript_function_call(
-            &format!("render_fn{rand}"),
+            &format!("render_fn{:X}", rand),
             vec!["false".to_string()],
         ));
         rendering_script.push(';');

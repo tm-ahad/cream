@@ -8,6 +8,7 @@ mod javascript_lib;
 mod make;
 mod out;
 mod pass;
+mod preprocces;
 mod serve;
 mod std_err;
 mod transpiler;
@@ -45,6 +46,8 @@ async fn main() {
         match args[1].as_str() {
             "new" => create_project(args.get(2).expect("Project name not provided")),
             "make" | "serve" => {
+                let is_fresh: bool = args.contains(&String::from("--fresh"));
+
                 config = toml::from_str(&read_to_string(CONFIG_FILE).unwrap_or_else(|_| {
                     StdErr::exec(NotFound, CONFIG_FILE);
                     exit(1)
@@ -58,10 +61,14 @@ async fn main() {
                 });
 
                 if !cfg!(debug_assertions) || args[1].as_str() == "make" {
-                    let raw_check_sum = read_to_string(CHECK_SUM_FILE).unwrap_or(String::new());
-
-                    let mut check_sums = serde_json::from_str::<CheckSums>(&raw_check_sum)
-                        .unwrap_or(BTreeMap::new());
+                    let mut check_sums = if is_fresh {
+                        BTreeMap::new()
+                    } else {
+                        serde_json::from_str::<CheckSums>(
+                            &read_to_string(CHECK_SUM_FILE).unwrap_or(String::new()),
+                        )
+                        .unwrap_or(BTreeMap::new())
+                    };
 
                     make::make(&mut config, &None, &mut check_sums);
                 }

@@ -2,47 +2,57 @@ use crate::component::Component;
 use crate::component::RenderReturn;
 use crate::component::cream_component;
 use crate::component::cream_dom_name;
+use crate::component::format_oxc_diag;
 use crate::component::special_trim;
-use crate::helpers::build_source::std_lib_path;
 use crate::config::Config;
 use crate::consts::BUILD_PATH;
 use crate::consts::DEFAULT_WINDOW_OBJ;
 use crate::consts::ENTRY_FILE;
+use crate::helpers::build_source::std_lib_path;
 use crate::helpers::build_source::translate_import_src_to_build;
+use crate::helpers::dependancy_graph::DependencyGraph;
+use crate::helpers::javascript::javascript_assign::javascript_assign;
 use crate::helpers::javascript::javascript_function::javascript_function;
 use crate::helpers::javascript::transpile_to_js::transpile_to_js;
+use crate::preprocces::preprocces_script;
 use crate::std_err::ErrType::NotFound;
 use crate::std_err::ErrType::OSError;
 use crate::std_err::ErrType::SyntaxError;
+use crate::std_err::StdErr;
+use oxc_allocator::Allocator;
 use oxc_allocator::{CloneIn, Vec};
+use oxc_ast::AstBuilder;
 use oxc_ast::ast::NumberBase;
-use oxc_ast::ast::{BindingPattern, Expression, Function, ObjectPropertyKind, PropertyKey, PropertyKind, TSEnumMemberName, TSTypeAnnotation, VariableDeclarationKind};
+use oxc_ast::ast::Statement;
+use oxc_ast::ast::{
+    BindingPattern, Expression, Function, ObjectPropertyKind, PropertyKey, PropertyKind,
+    TSEnumMemberName, TSTypeAnnotation, VariableDeclarationKind,
+};
 use oxc_codegen::Codegen;
 use oxc_codegen::CodegenOptions;
 use oxc_codegen::CommentOptions;
 use oxc_minifier::Minifier;
 use oxc_minifier::MinifierOptions;
+use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use oxc_span::{SourceType, Span};
 use oxc_transformer::TransformOptions;
 use oxc_transformer::Transformer;
+use rand::Rng;
 use rand::rngs::ThreadRng;
-use oxc_allocator::Allocator;
-use oxc_ast::AstBuilder;
-use oxc_ast::ast::Statement;
-use oxc_parser::Parser;
-use oxc_span::{SourceType, Span};
-use crate::component::format_oxc_diag;
-use crate::std_err::StdErr;
 use std::fs;
 use std::fs::read_to_string;
 use std::io::ErrorKind;
 use std::path::Path;
-use rand::Rng;
-use crate::helpers::dependancy_graph::DependencyGraph;
-use crate::helpers::javascript::javascript_assign::javascript_assign;
 
-pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool, config: &Config) -> String {
-    special_trim(format!("
+pub fn final_build_string(
+    render: RenderReturn,
+    comp_id: u32,
+    is_main: bool,
+    config: &Config,
+) -> String {
+    special_trim(format!(
+        "
             let self; let onRender=function(){{}}; {};
             {}; function {}(params) {{{};
                 params.childrens = params.childrens ?? [];
@@ -50,38 +60,41 @@ pub fn final_build_string(render: RenderReturn, comp_id: u64, is_main: bool, con
                 return {}
             }}; {}
             export {{{} as {}, mount}};
-        ",  
-            if is_main {
-                format!(
-                    "{}={}; {}={{root: {:?}}}", 
-                    Component::cream_window_obj(), 
-                    DEFAULT_WINDOW_OBJ,
-                    Component::cream_project_obj(),
-                    config.root
-                )
-            } else {
-                String::new()
-            }, if is_main {
-                javascript_assign(
-                    &Component::cream_env_object(),
-                    &serde_json::to_string(&config.env).unwrap()
-                )
-            } else {
-                String::new()
-            },
-            cream_component(comp_id),
-            render.script, render.rendering_script, 
-            cream_dom_name(render.root_dom_id),
-            javascript_function(String::from("mount"), 
-                &format!(
-                    "document.body.appendChild({}(params));",
-                    cream_component(comp_id)
-                ),
-                vec!["params={}".to_string()]
+        ",
+        if is_main {
+            format!(
+                "{}={}; {}={{root: {:?}}}",
+                Component::cream_window_obj(),
+                DEFAULT_WINDOW_OBJ,
+                Component::cream_project_obj(),
+                config.root
+            )
+        } else {
+            String::new()
+        },
+        if is_main {
+            javascript_assign(
+                &Component::cream_env_object(),
+                &serde_json::to_string(&config.env).unwrap(),
+            )
+        } else {
+            String::new()
+        },
+        cream_component(comp_id),
+        preprocces_script(&render.script),
+        preprocces_script(&render.rendering_script),
+        cream_dom_name(render.root_dom_id),
+        javascript_function(
+            String::from("mount"),
+            &format!(
+                "document.body.appendChild({}(params));",
+                cream_component(comp_id)
             ),
-            cream_component(comp_id),
-            render.comp_name
-        ))
+            vec!["params={}".to_string()]
+        ),
+        cream_component(comp_id),
+        render.comp_name
+    ))
 }
 
 fn is_entry_file(name: &str) -> bool {
@@ -99,134 +112,151 @@ impl Component {
         dep_graph: &mut DependencyGraph,
     ) {
         if let Some(body) = &mut stmt.body {
-            body.statements.retain(|stmt| {
-                match stmt {
-                    Statement::ImportDeclaration(src) => {
-                        let source = src.clone_in(allocator);
-                        
-                        if source.source.value.starts_with("@") {
-                            let resolved = if let Some(name) = source.source.value.strip_prefix("@std:") {
-                                dep_graph.add_std_lib(name);
-                                std_lib_path(name, &conf.root)
-                            } else if let Some(name) = source.source.value.strip_prefix("@pkg:") {
-                                match &conf.packages[name] {
-                                    toml::Value::String(s) => s.to_string(),
-                                    _ =>  {
-                                        StdErr::exec(SyntaxError, "package table must contain string values");
-                                        return false
-                                    }
+            body.statements.retain(|stmt| match stmt {
+                Statement::ImportDeclaration(src) => {
+                    let source = src.clone_in(allocator);
+
+                    if source.source.value.starts_with("@") {
+                        let resolved = if let Some(name) = source.source.value.strip_prefix("@std:")
+                        {
+                            dep_graph.add_std_lib(name);
+                            std_lib_path(name, &conf.root)
+                        } else if let Some(name) = source.source.value.strip_prefix("@pkg:") {
+                            match &conf.packages[name] {
+                                toml::Value::String(s) => s.to_string(),
+                                _ => {
+                                    StdErr::exec(
+                                        SyntaxError,
+                                        "package table must contain string values",
+                                    );
+                                    return false;
                                 }
-                            } else {
-                                translate_import_src_to_build(&source.source.value["@".len()..], &conf.root)
-                            };  
-                                            
-                            let new_import = ast.import_declaration(
-                                source.span, 
-                                source.specifiers.clone_in(allocator), 
-                                ast.string_literal(source.span, ast.str(&resolved), Some(ast.str(&resolved))),
-                                source.phase, 
-                                source.with_clause.clone_in(allocator), 
-                                source.import_kind
-                            );
+                            }
+                        } else {
+                            translate_import_src_to_build(
+                                &source.source.value["@".len()..],
+                                &conf.root,
+                            )
+                        };
 
-                            new_program.insert(0, Statement::ImportDeclaration(
-                                oxc_allocator::Box::new_in(new_import, allocator)
-                            ));
-                        }
+                        let new_import = ast.import_declaration(
+                            source.span,
+                            source.specifiers.clone_in(allocator),
+                            ast.string_literal(
+                                source.span,
+                                ast.str(&resolved),
+                                Some(ast.str(&resolved)),
+                            ),
+                            source.phase,
+                            source.with_clause.clone_in(allocator),
+                            source.import_kind,
+                        );
 
-                        false
-                    },
-                    Statement::TSEnumDeclaration(declr, ..) => {
-                        let mut enum_object: Vec<ObjectPropertyKind> = Vec::new_in(&allocator);
+                        new_program.insert(
+                            0,
+                            Statement::ImportDeclaration(oxc_allocator::Box::new_in(
+                                new_import, allocator,
+                            )),
+                        );
+                    }
 
-                        for (val, mem) in declr.body.members.clone_in(allocator).iter().enumerate() {
-                            let name = match &mem.id {
-                                TSEnumMemberName::Identifier(id) => id.name.as_str(),
-                                _ => continue,
-                            };
+                    false
+                }
+                Statement::TSEnumDeclaration(declr, ..) => {
+                    let mut enum_object: Vec<ObjectPropertyKind> = Vec::new_in(&allocator);
 
-                            let prop = ObjectPropertyKind::ObjectProperty(
-                                oxc_allocator::Box::new_in(ast.object_property(
+                    for (val, mem) in declr.body.members.clone_in(allocator).iter().enumerate() {
+                        let name = match &mem.id {
+                            TSEnumMemberName::Identifier(id) => id.name.as_str(),
+                            _ => continue,
+                        };
+
+                        let prop = ObjectPropertyKind::ObjectProperty(oxc_allocator::Box::new_in(
+                            ast.object_property(
+                                Span::default(),
+                                PropertyKind::Init,
+                                PropertyKey::StaticIdentifier(
+                                    ast.alloc_identifier_name(Span::default(), name),
+                                ),
+                                Expression::NumericLiteral(oxc_allocator::Box::new_in(
+                                    ast.numeric_literal(
+                                        Span::default(),
+                                        val as f64,
+                                        None,
+                                        NumberBase::Decimal,
+                                    ),
+                                    &allocator,
+                                )),
+                                false,
+                                false,
+                                false,
+                            ),
+                            &allocator,
+                        ));
+
+                        let rev_prop =
+                            ObjectPropertyKind::ObjectProperty(oxc_allocator::Box::new_in(
+                                ast.object_property(
                                     Span::default(),
                                     PropertyKind::Init,
-                                    PropertyKey::StaticIdentifier(
-                                        ast.alloc_identifier_name(Span::default(), name)
-                                    ),
-                                    Expression::NumericLiteral(
-                                        oxc_allocator::Box::new_in(
-                                            ast.numeric_literal(
-                                                Span::default(),
-                                                val as f64, 
-                                                None, 
-                                                NumberBase::Decimal
-                                            ), &allocator
-                                        )
-
-                                    ),
-                                    false, false, false
-                                ), &allocator
+                                    PropertyKey::NumericLiteral(oxc_allocator::Box::new_in(
+                                        ast.numeric_literal(
+                                            Span::default(),
+                                            val as f64,
+                                            None,
+                                            NumberBase::Decimal,
+                                        ),
+                                        &allocator,
+                                    )),
+                                    Expression::StringLiteral(ast.alloc_string_literal(
+                                        Span::default(),
+                                        ast.str(name),
+                                        None,
+                                    )),
+                                    false,
+                                    false,
+                                    false,
+                                ),
+                                &allocator,
                             ));
 
-                            let rev_prop = ObjectPropertyKind::ObjectProperty(
-                                oxc_allocator::Box::new_in(ast.object_property(
-                                    Span::default(),
-                                    PropertyKind::Init,
-                                    PropertyKey::NumericLiteral(
-                                        oxc_allocator::Box::new_in(
-                                            ast.numeric_literal(
-                                                Span::default(),
-                                                val as f64, 
-                                                None, 
-                                                NumberBase::Decimal
-                                            ), &allocator
-                                        )
-                                    ),
-                                    Expression::StringLiteral(
-                                        ast.alloc_string_literal(Span::default(), ast.str(name), None)
-                                    ),
-                                    false, false, false
-                                ), &allocator
-                            ));
+                        enum_object.push(prop);
+                        enum_object.push(rev_prop);
+                    }
 
-                            enum_object.push(prop);
-                            enum_object.push(rev_prop);
-                        }
+                    let declarator = ast.variable_declarator(
+                        Span::default(),
+                        VariableDeclarationKind::Const,
+                        BindingPattern::BindingIdentifier(oxc_allocator::Box::new_in(
+                            declr.id.clone_in(&allocator),
+                            &allocator,
+                        )),
+                        None::<oxc_allocator::Box<TSTypeAnnotation>>,
+                        Some(Expression::ObjectExpression(
+                            ast.alloc_object_expression(Span::default(), enum_object),
+                        )),
+                        false,
+                    );
 
-                        let declarator = ast.variable_declarator(
+                    new_program.insert(
+                        0,
+                        Statement::VariableDeclaration(ast.alloc_variable_declaration(
                             Span::default(),
                             VariableDeclarationKind::Const,
-                            BindingPattern::BindingIdentifier(
-                                oxc_allocator::Box::new_in(declr.id.clone_in(&allocator), &allocator)
-                            ),
-                            None::<oxc_allocator::Box<TSTypeAnnotation>>,
-                            Some(Expression::ObjectExpression(
-                                ast.alloc_object_expression(Span::default(), enum_object)
-                            )),
+                            ast.vec1(declarator),
                             false,
-                        );
+                        )),
+                    );
 
-                        new_program.insert(0,
-                            Statement::VariableDeclaration(
-                                ast.alloc_variable_declaration(
-                                    Span::default(),
-                                    VariableDeclarationKind::Const,
-                                    ast.vec1(declarator),
-                                    false
-                                )
-                            )
-                        );
-
-                        false
-                    },
-                    Statement::LabeledStatement(label) if label.label.name == "global" => {
-                        new_program.push(label.body.clone_in(allocator));
-                        false
-                    }
-                    _ => true
+                    false
                 }
+                Statement::LabeledStatement(label) if label.label.name == "global" => {
+                    new_program.push(label.body.clone_in(allocator));
+                    false
+                }
+                _ => true,
             });
         }
-
     }
 
     pub fn cream_env_object() -> String {
@@ -235,87 +265,80 @@ impl Component {
 
     pub fn transpile(&mut self, config: &Config, dep_graph: &mut DependencyGraph) {
         let mut succ_read = true;
-        let path  = Path::new(&self.name);
+        let path = Path::new(&self.name);
         let script: String = if let Some(html) = &self.html {
             html.to_string()
-        } else { 
-            read_to_string(path)
-                .unwrap_or_else(|e| {
-                    if e.kind() == ErrorKind::InvalidData {
-                        let dest  = Path::new(BUILD_PATH)
-                                .join(path.file_name().unwrap());
+        } else {
+            read_to_string(path).unwrap_or_else(|e| {
+                if e.kind() == ErrorKind::InvalidData {
+                    let dest = Path::new(BUILD_PATH).join(path.file_name().unwrap());
 
-                        if dest.exists() {
-                            succ_read = false;
-                            String::new()
-                        } else {
-                            let _ = fs::copy(path, dest);
-                            succ_read = false;
-                            String::new() 
-                        }
-                    } else {    
-
-                        StdErr::exec(OSError, &format!(
-                            "error reading {}: {}", 
-                            &self.name,
-                            e
-                        ));
-                        self.out = String::new();
+                    if dest.exists() {
+                        succ_read = false;
+                        String::new()
+                    } else {
+                        let _ = fs::copy(path, dest);
                         succ_read = false;
                         String::new()
                     }
-                })
+                } else {
+                    StdErr::exec(OSError, &format!("error reading {}: {}", &self.name, e));
+                    self.out = String::new();
+                    succ_read = false;
+                    String::new()
+                }
+            })
         };
 
         if !succ_read {
-            return
+            return;
         };
 
-        match Path::new(&self.name).extension().unwrap().to_str().unwrap(){
+        match Path::new(&self.name).extension().unwrap().to_str().unwrap() {
             "js" | "ts" | "mjs" => {
                 self.out = transpile_to_js(
-                    &script, &self.name,
+                    &script,
+                    &self.name,
                     CodegenOptions {
                         minify: !cfg!(debug_assertions),
                         single_quote: true,
                         comments: CommentOptions::disabled(),
                         ..Default::default()
-                    }
+                    },
                 );
 
-                return
-            },
+                return;
+            }
             "cream" => {}
             _ => {
                 self.out = script;
-                return
+                return;
             }
         }
 
         let comp = Component::new(Some(script), self.name.clone());
         let mut succ_render = true;
-        let render = comp.html_rendering_script()
-            .unwrap_or_else(|e| {
-                StdErr::exec(SyntaxError, &format!(
-                    "error while parsing xml of {}: {}",
-                    self.name, e
-                ));
-                succ_render = false;
-                RenderReturn::default()
-            });
+        let render = comp.html_rendering_script().unwrap_or_else(|e| {
+            StdErr::exec(
+                SyntaxError,
+                &format!("error while parsing xml of {}: {}", self.name, e),
+            );
+            succ_render = false;
+            RenderReturn::default()
+        });
 
         if !succ_render {
-            return
+            return;
         }
 
         if render.comp_name.trim().is_empty() {
             StdErr::exec(NotFound, &format!("component name for {}", self.name));
             self.out = String::new();
-            return
+            return;
         }
 
         let mut rng = ThreadRng::default();
-        let comp_id = rng.next_u64();
+        let comp_id = rng.next_u32();
         let script_trimmed = final_build_string(render, comp_id, is_entry_file(&self.name), config);
 
         let allocator = Allocator::default();
@@ -333,44 +356,58 @@ impl Component {
                     if label.label.name == "global" {
                         new_program.push(label.body.clone_in(&allocator));
                     }
-                },
+                }
                 Statement::ImportDeclaration(src) => {
                     let source = src.clone_in(&allocator);
-                    
+
                     if source.source.value.starts_with("@") {
                         let resolved = if source.source.value.starts_with("@std:") {
                             let name = &source.source.value["@std:".len()..].to_string();
                             dep_graph.add_std_lib(name);
                             std_lib_path(name, &config.root)
                         } else {
-                            translate_import_src_to_build(&source.source.value["@".len()..], &config.root)
-                        };  
-                                        
+                            translate_import_src_to_build(
+                                &source.source.value["@".len()..],
+                                &config.root,
+                            )
+                        };
+
                         let new_import = ast.import_declaration(
-                            source.span, 
-                            source.specifiers.clone_in(&allocator), 
-                            ast.string_literal(source.span, ast.str(&resolved), Some(ast.str(&resolved))),
-                            source.phase, 
-                            source.with_clause.clone_in(&allocator), 
-                            source.import_kind
+                            source.span,
+                            source.specifiers.clone_in(&allocator),
+                            ast.string_literal(
+                                source.span,
+                                ast.str(&resolved),
+                                Some(ast.str(&resolved)),
+                            ),
+                            source.phase,
+                            source.with_clause.clone_in(&allocator),
+                            source.import_kind,
                         );
 
-                        new_program.insert(0, Statement::ImportDeclaration(oxc_allocator::Box::new_in(new_import, &allocator)));
+                        new_program.insert(
+                            0,
+                            Statement::ImportDeclaration(oxc_allocator::Box::new_in(
+                                new_import, &allocator,
+                            )),
+                        );
                     }
-                },
+                }
                 Statement::FunctionDeclaration(func) => {
-                     if let Some(name) = func.name() && name.to_string() == cream_component(comp_id) {
-                         let mut bind = func.clone_in(&allocator);
-                         self.handle_comp_declr(
-                             &mut bind,
-                             &mut new_program,
-                             &allocator,
-                             &ast,
-                             config,
-                             dep_graph
-                         );
+                    if let Some(name) = func.name()
+                        && name.to_string() == cream_component(comp_id)
+                    {
+                        let mut bind = func.clone_in(&allocator);
+                        self.handle_comp_declr(
+                            &mut bind,
+                            &mut new_program,
+                            &allocator,
+                            &ast,
+                            config,
+                            dep_graph,
+                        );
 
-                         new_program.push(Statement::FunctionDeclaration(bind));
+                        new_program.push(Statement::FunctionDeclaration(bind));
                     } else {
                         new_program.push(stmt);
                     }
@@ -378,38 +415,32 @@ impl Component {
                 _ => {
                     new_program.push(stmt.clone_in(&allocator));
                 }
-
             }
         }
 
         let mut new_prog = ast.program(
-            program.span, 
-            program.source_type, 
-            "", 
-            program.comments, 
-            None, 
+            program.span,
+            program.source_type,
+            "",
+            program.comments,
+            None,
             Vec::new_in(&allocator),
-            new_program
+            new_program,
         );
 
         let min_opt = MinifierOptions::default();
         let min = Minifier::new(min_opt);
 
         let transform_options = TransformOptions::default();
-        let semantic_ret = SemanticBuilder::new()
-            .build(&new_prog);
+        let semantic_ret = SemanticBuilder::new().build(&new_prog);
 
         let scoping = semantic_ret.semantic.into_scoping();
-        let transformer = Transformer::new(
-            &allocator,
-            Path::new(&self.name),
-            &transform_options,
-        );
-        
+        let transformer = Transformer::new(&allocator, Path::new(&self.name), &transform_options);
+
         for err in parsed.diagnostics {
             StdErr::exec(SyntaxError, &format_oxc_diag(&err, self.name.clone()));
         }
-    
+
         let _ = transformer.build_with_scoping(scoping, &mut new_prog);
         let _ = min.minify(&allocator, &mut new_prog);
         let opt_script = Codegen::new()
