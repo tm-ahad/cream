@@ -2,10 +2,10 @@ use toml::Table;
 
 use crate::config::Config;
 use crate::consts::{ENTRY_FILE, HEAD_PREFIX_PATH};
-use crate::input::std_input;
-use crate::std_err::{ErrType::OSError, StdErr};
 use crate::helpers::create_file::create_file;
 use crate::helpers::format_colored::format_colored;
+use crate::input::std_input;
+use crate::std_err::{ErrType::OSError, StdErr};
 use std::collections::HashMap;
 use std::fs::{File, create_dir, create_dir_all};
 use std::io::Write;
@@ -19,11 +19,13 @@ pub fn create_project(name: &String) {
         create_dir(format!("./{}/src", name)).expect("Directory Exists");
         create_dir(format!("./{}/build", name)).expect("Directory Exists");
 
-        let mut entry = File::create(format!("./{name}/{ENTRY_FILE}",))
-            .unwrap_or_else(|e| {
-                StdErr::exec(OSError, &format!("Error creating ./{name}/{ENTRY_FILE}: {e}"));
-                exit(1);
-            });
+        let mut entry = File::create(format!("./{name}/{ENTRY_FILE}",)).unwrap_or_else(|e| {
+            StdErr::exec(
+                OSError,
+                &format!("Error creating ./{name}/{ENTRY_FILE}: {e}"),
+            );
+            exit(1);
+        });
 
         let mut config = create_file(format!("./{name}/config.toml"));
         let _ = create_file(format!("./{name}/{}", HEAD_PREFIX_PATH));
@@ -35,18 +37,15 @@ pub fn create_project(name: &String) {
             port: 8000,
             env: HashMap::new(),
             packages: Table::new(),
-            root: String::from("/")
+            root: String::from("./"),
         };
 
         config
-            .write_all(
-                toml::to_string(&initial_config)
-                .unwrap()
-                .as_bytes()
-            )
+            .write_all(toml::to_string(&initial_config).unwrap().as_bytes())
             .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
 
-        entry.write_all("<h1>Hello World</h1>\n<script name=\"App\"></script>\n".as_bytes())
+        entry
+            .write_all("<h1>Hello World</h1>\n<script name=\"App\"></script>\n".as_bytes())
             .unwrap_or_else(|e| StdErr::exec(OSError, &e.to_string()));
         println!("{inst}");
     }

@@ -3,7 +3,7 @@ use crate::std_err::StdErr;
 use tinyget::get;
 
 pub fn libs(name: &str, is_script: bool) -> String {
-    let dir = if is_script {"scripts"} else {"libs"};
+    let dir = if is_script { "scripts" } else { "libs" };
     let url = format!("https://raw.githubusercontent.com/tm-ahad/cream/master/{dir}/{name}");
 
     let resp = get(&url).send().unwrap_or_else(|e| {

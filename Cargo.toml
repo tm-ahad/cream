@@ -18,7 +18,7 @@ roxmltree = "0.21.1"
 rand = "0.10.1"
 axum = "0.8"
 tokio = { version = "1", features = ["full"] }
-tower-http = { version = "0.7", features = ["fs"] }
+tower-http = { version = "0.7", features = ["fs", "cors"] }
 serde = { version = "1", features = ["derive"] }
 tinyget = { version = "1.0.2", features = ["https"] }
 serde_json = "1.0.150"
