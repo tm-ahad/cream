@@ -125,7 +125,8 @@ impl Component {
     pub fn new(html: Option<String>, name: String) -> Self {
         let path = Path::new(&name);
 
-        let content: String = if let Some(html) = &html {
+        let version = env!("CARGO_PKG_VERSION");
+        let mut content = if let Some(html) = &html {
             html.to_string()
         } else {
             read_to_string(path).unwrap_or_else(|e| {
@@ -144,6 +145,7 @@ impl Component {
                 }
             })
         };
+        content = format!("{content}.{version}");
 
         Self {
             html,
@@ -174,15 +176,21 @@ impl Component {
             let code = self.rendering_script_from_desc(child, false);
             ret.insert_str(
                 0,
-                &javascript_function_call(
-                    &format!("{}.appendChild", cream_dom_name(id)),
-                    vec![format!(
-                        "{} ?? {FRAGMENT}",
-                        cream_dom_name(code.root_dom_id)
-                    )],
+                &wrap_directive(
+                    &code.dirs,
+                    format!(
+                        "{}{}",
+                        code.rendering_script,
+                        javascript_function_call(
+                            &format!("{}.appendChild", cream_dom_name(id)),
+                            vec![format!(
+                                "{} ?? {FRAGMENT}",
+                                cream_dom_name(code.root_dom_id)
+                            )],
+                        )
+                    ),
                 ),
             );
-            ret.insert_str(0, &code.rendering_script);
             ids.push(code.root_dom_id);
         }
 
@@ -397,8 +405,9 @@ impl Component {
                         &cream_dom_name(rendered_child.root_dom_id)
                     )
                 ));
-                child_script = wrap_directive(&rendered_child.dirs, child_script);
 
+                println!("{:?}", &rendered_child.dirs);
+                child_script = wrap_directive(&rendered_child.dirs, child_script);
                 render_self.push_str(&child_script);
             } else {
                 let rendered_child = self.rendering_script_from_desc(child, true);
@@ -410,8 +419,9 @@ impl Component {
                     cream_object(comp_attr_map_id),
                     &cream_dom_name(rendered_child.root_dom_id)
                 ));
-                child_script = wrap_directive(&rendered_child.dirs, child_script);
 
+                println!("{:?}", &rendered_child.dirs);
+                child_script = wrap_directive(&rendered_child.dirs, child_script);
                 render_self.push_str(&child_script);
             }
         }
@@ -436,8 +446,8 @@ impl Component {
             &format!("render_fn{:X}", rand),
             vec!["false".to_string()],
         ));
-        rendering_script.push(';');
 
+        rendering_script.push(';');
         RenderReturn {
             rendering_script,
             script,
